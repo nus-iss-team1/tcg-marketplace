@@ -15,9 +15,11 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "web-build": " docker build -f frontend/Dockerfile -t ghcr.io/nus-iss-team1/tcg-marketplace:latest .",
+    "web-run": "docker run -d -p 3000:3000 ghcr.io/nus-iss-team1/tcg-marketplace:latest    "
   },
-  "workspaces" : [
+  "workspaces": [
     "frontend",
     "backend",
     "infra"
