@@ -1,0 +1,25 @@
+{
+  "name": "tcg-marketplace",
+  "version": "1.0.0",
+  "description": "A full-stack web application designed for the trading card game market. This project serves as a technical implementation of a React-based frontend and a Next.js backend, integrated with AWS cloud services for data and asset management.",
+  "homepage": "https://github.com/nus-iss-team1/tcg-marketplace#readme",
+  "bugs": {
+    "url": "https://github.com/nus-iss-team1/tcg-marketplace/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nus-iss-team1/tcg-marketplace.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "workspaces" : [
+    "frontend",
+    "backend",
+    "infra"
+  ]
+}
