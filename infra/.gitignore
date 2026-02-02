@@ -1,0 +1,31 @@
+# ----------------------------------------------------------------------------
+# Terraform Core Files
+# ----------------------------------------------------------------------------
+# Local .terraform directory (contains provider binaries/plugins)
+.terraform/
+
+# Local state files (MUST stay in S3, never in Git)
+*.tfstate
+*.tfstate.*
+
+# Lock files (temporary files created during execution)
+.terraform.tfstate.lock.info
+
+# ----------------------------------------------------------------------------
+# Variables and Secrets (The "Danger Zone")
+# ----------------------------------------------------------------------------
+# Ignore all variable files which may contain sensitive data
+*.tfvars
+*.tfvars.json
+
+# Ignore local override files
+override.tf
+override.tf.json
+
+# ----------------------------------------------------------------------------
+# Logs and System Files
+# ----------------------------------------------------------------------------
+terraform.tflog
+crash.log
+*.log
+.DS_Store
