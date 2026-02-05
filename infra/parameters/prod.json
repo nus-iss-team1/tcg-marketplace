@@ -1,0 +1,14 @@
+[
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "prod"
+  },
+  {
+    "ParameterKey": "Region",
+    "ParameterValue": "ap-southeast-1"
+  },
+  {
+    "ParameterKey": "ProjectName",
+    "ParameterValue": "tcg-marketplace"
+  }
+]

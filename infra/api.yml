@@ -1,0 +1,452 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'TCG Marketplace - API Gateway Infrastructure'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Environment name
+  
+  ProjectName:
+    Type: String
+    Default: tcg-marketplace
+    Description: Project name for resource naming
+
+Resources:
+  # VPC Link for API Gateway to ECS integration
+  VPCLink:
+    Type: AWS::ApiGateway::VpcLink
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-vpc-link'
+      Description: VPC Link for API Gateway to ECS Fargate
+      TargetArns:
+        - !GetAtt NetworkLoadBalancer.Arn
+
+  # Network Load Balancer for ECS service
+  NetworkLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-nlb'
+      Type: network
+      Scheme: internal
+      Subnets:
+        - !ImportValue 
+            Fn::Sub: '${ProjectName}-${Environment}-private-subnet-1-id'
+        - !ImportValue 
+            Fn::Sub: '${ProjectName}-${Environment}-private-subnet-2-id'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${Environment}-nlb'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+
+  # Target Group for ECS service
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-tg'
+      Port: 3000
+      Protocol: TCP
+      TargetType: ip
+      VpcId: !ImportValue 
+        Fn::Sub: '${ProjectName}-${Environment}-vpc-id'
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /health
+      HealthCheckPort: 3000
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+
+  # NLB Listener
+  NLBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+      LoadBalancerArn: !Ref NetworkLoadBalancer
+      Port: 3000
+      Protocol: TCP
+
+  # REST API
+  RestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-api'
+      Description: TCG Marketplace API
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Policy:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: execute-api:Invoke
+            Resource: '*'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+
+  # Cognito Authorizer
+  CognitoAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-cognito-auth'
+      RestApiId: !Ref RestApi
+      Type: COGNITO_USER_POOLS
+      ProviderARNs:
+        - !ImportValue 
+            Fn::Sub: '${ProjectName}-${Environment}-user-pool-arn'
+      IdentitySource: method.request.header.Authorization
+
+  # API Gateway Request Validator
+  RequestValidator:
+    Type: AWS::ApiGateway::RequestValidator
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-validator'
+      RestApiId: !Ref RestApi
+      ValidateRequestBody: true
+      ValidateRequestParameters: true
+
+  # CORS Options Method (for preflight requests)
+  OptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RestApi
+      ResourceId: !GetAtt RestApi.RootResourceId
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: '200'
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+
+  # Health endpoint resource
+  HealthResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref RestApi
+      ParentId: !GetAtt RestApi.RootResourceId
+      PathPart: health
+
+  # Health GET method
+  HealthGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RestApi
+      ResourceId: !Ref HealthResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: HTTP_PROXY
+        IntegrationHttpMethod: GET
+        Uri: !Sub 'http://${NetworkLoadBalancer.DNSName}:3000/health'
+        ConnectionType: VPC_LINK
+        ConnectionId: !Ref VPCLink
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: '200'
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+
+  # Media resource
+  MediaResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref RestApi
+      ParentId: !GetAtt RestApi.RootResourceId
+      PathPart: media
+
+  # Media presign resource
+  MediaPresignResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref RestApi
+      ParentId: !Ref MediaResource
+      PathPart: presign
+
+  # Media presign POST method
+  MediaPresignPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RestApi
+      ResourceId: !Ref MediaPresignResource
+      HttpMethod: POST
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref CognitoAuthorizer
+      RequestValidatorId: !Ref RequestValidator
+      RequestModels:
+        application/json: !Ref PresignRequestModel
+      Integration:
+        Type: HTTP_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'http://${NetworkLoadBalancer.DNSName}:3000/media/presign'
+        ConnectionType: VPC_LINK
+        ConnectionId: !Ref VPCLink
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: '200'
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+        - StatusCode: '400'
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+        - StatusCode: '401'
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+
+  # Listings resource
+  ListingsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref RestApi
+      ParentId: !GetAtt RestApi.RootResourceId
+      PathPart: listings
+
+  # Listings GET method
+  ListingsGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RestApi
+      ResourceId: !Ref ListingsResource
+      HttpMethod: GET
+      AuthorizationType: NONE  # Public endpoint for browsing
+      Integration:
+        Type: HTTP_PROXY
+        IntegrationHttpMethod: GET
+        Uri: !Sub 'http://${NetworkLoadBalancer.DNSName}:3000/listings'
+        ConnectionType: VPC_LINK
+        ConnectionId: !Ref VPCLink
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: '200'
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+
+  # Listings POST method
+  ListingsPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RestApi
+      ResourceId: !Ref ListingsResource
+      HttpMethod: POST
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref CognitoAuthorizer
+      RequestValidatorId: !Ref RequestValidator
+      RequestModels:
+        application/json: !Ref ListingRequestModel
+      Integration:
+        Type: HTTP_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'http://${NetworkLoadBalancer.DNSName}:3000/listings'
+        ConnectionType: VPC_LINK
+        ConnectionId: !Ref VPCLink
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+          - StatusCode: '201'
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: '200'
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+        - StatusCode: '201'
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+        - StatusCode: '400'
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+        - StatusCode: '401'
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+
+  # Request Models for validation
+  PresignRequestModel:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      RestApiId: !Ref RestApi
+      ContentType: application/json
+      Name: PresignRequest
+      Schema:
+        $schema: http://json-schema.org/draft-04/schema#
+        type: object
+        properties:
+          filename:
+            type: string
+            minLength: 1
+            maxLength: 255
+          contentType:
+            type: string
+            pattern: '^image\/(jpeg|jpg|png|gif|webp)$'
+        required:
+          - filename
+          - contentType
+        additionalProperties: false
+
+  ListingRequestModel:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      RestApiId: !Ref RestApi
+      ContentType: application/json
+      Name: ListingRequest
+      Schema:
+        $schema: http://json-schema.org/draft-04/schema#
+        type: object
+        properties:
+          title:
+            type: string
+            minLength: 1
+            maxLength: 200
+          description:
+            type: string
+            maxLength: 2000
+          price:
+            type: number
+            minimum: 0
+          category:
+            type: string
+            enum: [vintage, modern, sealed, singles]
+          images:
+            type: array
+            items:
+              type: string
+            maxItems: 10
+        required:
+          - title
+          - price
+          - category
+        additionalProperties: false
+
+  # Usage Plan for rate limiting
+  UsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      UsagePlanName: !Sub '${ProjectName}-${Environment}-usage-plan'
+      Description: Usage plan for TCG Marketplace API
+      Throttle:
+        RateLimit: 1000  # requests per second
+        BurstLimit: 2000
+      Quota:
+        Limit: 100000  # requests per day
+        Period: DAY
+      ApiStages:
+        - ApiId: !Ref RestApi
+          Stage: !Ref ApiStage
+
+  # API Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - HealthGetMethod
+      - MediaPresignPostMethod
+      - ListingsGetMethod
+      - ListingsPostMethod
+    Properties:
+      RestApiId: !Ref RestApi
+      Description: !Sub 'Deployment for ${Environment}'
+
+  # API Stage
+  ApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref RestApi
+      DeploymentId: !Ref ApiDeployment
+      StageName: !Ref Environment
+      Description: !Sub '${Environment} stage'
+      ThrottleSettings:
+        RateLimit: 1000
+        BurstLimit: 2000
+      MethodSettings:
+        - ResourcePath: '/*'
+          HttpMethod: '*'
+          LoggingLevel: INFO
+          DataTraceEnabled: true
+          MetricsEnabled: true
+      Variables:
+        environment: !Ref Environment
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+
+  # CloudWatch Log Group for API Gateway
+  ApiGatewayLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/apigateway/${ProjectName}-${Environment}'
+      RetentionInDays: 14
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+
+Outputs:
+  RestApiId:
+    Description: REST API ID
+    Value: !Ref RestApi
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-api-id'
+
+  RestApiUrl:
+    Description: REST API URL
+    Value: !Sub 'https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-api-url'
+
+  VPCLinkId:
+    Description: VPC Link ID
+    Value: !Ref VPCLink
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-vpc-link-id'
+
+  NetworkLoadBalancerArn:
+    Description: Network Load Balancer ARN
+    Value: !Ref NetworkLoadBalancer
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-nlb-arn'
+
+  TargetGroupArn:
+    Description: Target Group ARN
+    Value: !Ref TargetGroup
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-target-group-arn'

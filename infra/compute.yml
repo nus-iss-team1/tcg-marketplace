@@ -1,0 +1,278 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'TCG Marketplace - ECS Compute Infrastructure'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Environment name
+  
+  ProjectName:
+    Type: String
+    Default: tcg-marketplace
+    Description: Project name for resource naming
+  
+  ImageUri:
+    Type: String
+    Default: 'nginx:latest'  # Placeholder until we build the NestJS image
+    Description: Docker image URI for the backend application
+
+Resources:
+  # ECS Cluster
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub '${ProjectName}-${Environment}-cluster'
+      CapacityProviders:
+        - FARGATE
+        - FARGATE_SPOT  # Cost optimization for non-critical workloads
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Weight: 1
+        - CapacityProvider: FARGATE_SPOT
+          Weight: !If [IsProduction, 0, 1]  # Use SPOT for dev/staging
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${Environment}-cluster'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+
+  # CloudWatch Log Group for ECS
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/${ProjectName}-${Environment}'
+      RetentionInDays: 14
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+
+  # ECS Task Definition
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub '${ProjectName}-${Environment}-backend'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      # Cost-optimized for 100 users
+      Cpu: !If [IsProduction, '512', '256']      # 0.5 vCPU prod, 0.25 vCPU dev
+      Memory: !If [IsProduction, '1024', '512']  # 1GB prod, 512MB dev
+      ExecutionRoleArn: !ImportValue 
+        Fn::Sub: '${ProjectName}-${Environment}-ecs-execution-role-arn'
+      TaskRoleArn: !ImportValue 
+        Fn::Sub: '${ProjectName}-${Environment}-ecs-task-role-arn'
+      ContainerDefinitions:
+        - Name: backend
+          Image: !Ref ImageUri
+          Essential: true
+          PortMappings:
+            - ContainerPort: 3000
+              Protocol: tcp
+          Environment:
+            - Name: NODE_ENV
+              Value: !Ref Environment
+            - Name: PORT
+              Value: '3000'
+            - Name: AWS_REGION
+              Value: !Ref 'AWS::Region'
+            - Name: BUCKET_NAME
+              Value: !ImportValue 
+                Fn::Sub: '${ProjectName}-${Environment}-s3-bucket-name'
+            - Name: TABLE_NAME
+              Value: !ImportValue 
+                Fn::Sub: '${ProjectName}-${Environment}-dynamodb-table-name'
+            - Name: USER_POOL_ID
+              Value: !ImportValue 
+                Fn::Sub: '${ProjectName}-${Environment}-user-pool-id'
+            - Name: USER_POOL_CLIENT_ID
+              Value: !ImportValue 
+                Fn::Sub: '${ProjectName}-${Environment}-user-pool-client-id'
+            - Name: LOG_LEVEL
+              Value: !If [IsProduction, 'info', 'debug']
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref ECSLogGroup
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: backend
+          HealthCheck:
+            Command:
+              - CMD-SHELL
+              - 'curl -f http://localhost:3000/health || exit 1'
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+            StartPeriod: 60
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+
+  # ECS Service
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub '${ProjectName}-${Environment}-backend'
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref TaskDefinition
+      LaunchType: FARGATE
+      DesiredCount: !If [IsProduction, 2, 1]  # 2 for prod HA, 1 for dev cost savings
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          SecurityGroups:
+            - !ImportValue 
+                Fn::Sub: '${ProjectName}-${Environment}-ecs-sg-id'
+          Subnets:
+            - !ImportValue 
+                Fn::Sub: '${ProjectName}-${Environment}-private-subnet-1-id'
+            - !ImportValue 
+                Fn::Sub: '${ProjectName}-${Environment}-private-subnet-2-id'
+          AssignPublicIp: DISABLED
+      LoadBalancers:
+        - TargetGroupArn: !ImportValue 
+            Fn::Sub: '${ProjectName}-${Environment}-target-group-arn'
+          ContainerName: backend
+          ContainerPort: 3000
+      HealthCheckGracePeriodSeconds: 300
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      EnableExecuteCommand: true  # For debugging
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+
+  # Auto Scaling Target
+  ServiceScalingTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: !If [IsProduction, 10, 3]  # Max 10 for prod, 3 for dev
+      MinCapacity: !If [IsProduction, 2, 1]   # Min 2 for prod, 1 for dev
+      ResourceId: !Sub 'service/${ECSCluster}/${ECSService.Name}'
+      RoleARN: !GetAtt ApplicationAutoScalingECSRole.Arn
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+
+  # Auto Scaling Policy - CPU
+  ServiceScalingPolicyCPU:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub '${ProjectName}-${Environment}-cpu-scaling'
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ServiceScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        TargetValue: 70.0
+        ScaleOutCooldown: 300
+        ScaleInCooldown: 300
+
+  # Auto Scaling Policy - Memory
+  ServiceScalingPolicyMemory:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub '${ProjectName}-${Environment}-memory-scaling'
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ServiceScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageMemoryUtilization
+        TargetValue: 80.0
+        ScaleOutCooldown: 300
+        ScaleInCooldown: 300
+
+  # IAM Role for Application Auto Scaling
+  ApplicationAutoScalingECSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: application-autoscaling.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSServiceRolePolicy
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+
+  # Service Discovery for internal communication (optional)
+  ServiceDiscoveryNamespace:
+    Type: AWS::ServiceDiscovery::PrivateDnsNamespace
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}.local'
+      Vpc: !ImportValue 
+        Fn::Sub: '${ProjectName}-${Environment}-vpc-id'
+      Description: Service discovery namespace for TCG Marketplace
+
+  ServiceDiscoveryService:
+    Type: AWS::ServiceDiscovery::Service
+    Properties:
+      Name: backend
+      NamespaceId: !Ref ServiceDiscoveryNamespace
+      DnsConfig:
+        DnsRecords:
+          - Type: A
+            TTL: 60
+        NamespaceId: !Ref ServiceDiscoveryNamespace
+      HealthCheckCustomConfig:
+        FailureThreshold: 1
+
+Conditions:
+  IsProduction: !Equals [!Ref Environment, 'prod']
+
+Outputs:
+  ECSClusterName:
+    Description: ECS Cluster Name
+    Value: !Ref ECSCluster
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-ecs-cluster-name'
+
+  ECSClusterArn:
+    Description: ECS Cluster ARN
+    Value: !GetAtt ECSCluster.Arn
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-ecs-cluster-arn'
+
+  ECSServiceName:
+    Description: ECS Service Name
+    Value: !GetAtt ECSService.Name
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-ecs-service-name'
+
+  ECSServiceArn:
+    Description: ECS Service ARN
+    Value: !Ref ECSService
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-ecs-service-arn'
+
+  TaskDefinitionArn:
+    Description: Task Definition ARN
+    Value: !Ref TaskDefinition
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-task-definition-arn'
+
+  ServiceDiscoveryServiceArn:
+    Description: Service Discovery Service ARN
+    Value: !GetAtt ServiceDiscoveryService.Arn
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-service-discovery-arn'

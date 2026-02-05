@@ -1,29 +1,31 @@
 {
   "name": "tcg-marketplace",
   "version": "1.0.0",
-  "description": "A full-stack web application designed for the trading card game market. This project serves as a technical implementation of a React-based frontend and a Next.js backend, integrated with AWS cloud services for data and asset management.",
-  "homepage": "https://github.com/nus-iss-team1/tcg-marketplace#readme",
-  "bugs": {
-    "url": "https://github.com/nus-iss-team1/tcg-marketplace/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/nus-iss-team1/tcg-marketplace.git"
-  },
-  "license": "ISC",
-  "author": "",
-  "type": "commonjs",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "web-build": " docker build -f frontend/Dockerfile -t ghcr.io/nus-iss-team1/tcg-marketplace:latest .",
-    "web-run": "docker run -d -p 3000:3000 ghcr.io/nus-iss-team1/tcg-marketplace:latest    ",
-    "backend-build": " docker build -f backend/Dockerfile -t ghcr.io/nus-iss-team1/tcg-marketplace:latest .",
-    "backend-run": "docker run -d -p 3001:3001 ghcr.io/nus-iss-team1/tcg-marketplace:latest    "
-  },
+  "description": "TCG Marketplace - Trading Card Game marketplace platform",
+  "private": true,
   "workspaces": [
     "frontend",
-    "backend",
-    "infra"
-  ]
+    "backend"
+  ],
+  "scripts": {
+    "install": "npm install --workspaces",
+    "build": "npm run build --workspaces",
+    "dev": "concurrently \"npm run dev --workspace=frontend\" \"npm run start:dev --workspace=backend\"",
+    "web-build": "docker build -t tcg-marketplace-frontend ./frontend",
+    "web-run": "docker run -p 3000:3000 tcg-marketplace-frontend",
+    "backend-build": "docker build -t tcg-marketplace-backend ./backend",
+    "backend-run": "docker run -p 3001:3000 tcg-marketplace-backend",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "format": "npm run format --workspaces"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "author": "TCG Marketplace Team",
+  "license": "UNLICENSED"
 }
