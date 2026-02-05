@@ -80,14 +80,36 @@ The infrastructure must be deployed in this order due to dependencies:
 - Enhanced monitoring and alerting
 - Longer log retention
 
+### Environment Variables
+
+The following environment variables are automatically configured through CloudFormation outputs:
+
+- `BUCKET_NAME` - S3 bucket for file storage
+- `TABLE_NAME` - DynamoDB table name
+- `USER_POOL_ID` - Cognito User Pool ID
+- `USER_POOL_CLIENT_ID` - Cognito App Client ID
+- `USER_POOL_GROUPS` - Available user groups (Sellers, Viewers, Admins)
+- `AWS_REGION` - AWS region (ap-southeast-1)
+- `NODE_ENV` - Environment name (dev/prod)
+
+## User Roles and Authentication
+
+The system supports three distinct user roles managed through Cognito User Groups:
+
+- **Sellers**: Users who can create and manage trading card listings
+- **Viewers**: Users who can browse and view listings (read-only access)  
+- **Admins**: Users with administrative privileges for content moderation
+
+User group membership is included in JWT tokens and used for role-based authorization at the API Gateway level.
+
 ## API Endpoints
 
-The deployed API Gateway exposes these endpoints:
+The deployed API Gateway exposes these endpoints with role-based access control:
 
 - `GET /health` - Health check (public)
-- `POST /media/presign` - Generate S3 presigned URLs (authenticated)
-- `GET /listings` - Retrieve trading card listings (public)
-- `POST /listings` - Create new listings (authenticated)
+- `POST /media/presign` - Generate S3 presigned URLs (Sellers, Admins)
+- `GET /listings` - Retrieve trading card listings (all authenticated users)
+- `POST /listings` - Create new listings (Sellers, Admins)
 
 ## Monitoring
 
