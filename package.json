@@ -8,7 +8,6 @@
     "backend"
   ],
   "scripts": {
-    "install": "npm install --workspaces",
     "build": "npm run build --workspaces",
     "dev": "concurrently \"npm run dev --workspace=frontend\" \"npm run start:dev --workspace=backend\"",
     "web-build": "docker build -t tcg-marketplace-frontend ./frontend",

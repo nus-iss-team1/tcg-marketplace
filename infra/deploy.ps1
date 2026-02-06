@@ -8,7 +8,7 @@ param(
     [string]$Environment,
     
     [Parameter(Mandatory=$false)]
-    [ValidateSet("base", "storage", "auth", "compute", "api", "monitoring", "all")]
+    [ValidateSet("base", "storage", "storage-simple", "auth", "compute", "api", "monitoring", "all")]
     [string]$Template = "all",
     
     [Parameter(Mandatory=$false)]
@@ -25,10 +25,10 @@ Write-Host "Region: $Region" -ForegroundColor Yellow
 # Validate AWS CLI is configured
 try {
     $identity = aws sts get-caller-identity --output json | ConvertFrom-Json
-    Write-Host "✓ AWS CLI configured" -ForegroundColor Green
+    Write-Host "[OK] AWS CLI configured" -ForegroundColor Green
     Write-Host "  Account: $($identity.Account)" -ForegroundColor Cyan
 } catch {
-    Write-Host "✗ AWS CLI not configured or credentials invalid" -ForegroundColor Red
+    Write-Host "[ERROR] AWS CLI not configured or credentials invalid" -ForegroundColor Red
     exit 1
 }
 
@@ -45,12 +45,12 @@ function Deploy-Stack {
     Write-Host "Deploying stack: $stackName" -ForegroundColor Yellow
     
     if (-not (Test-Path $templateFile)) {
-        Write-Host "✗ Template file $templateFile not found" -ForegroundColor Red
+        Write-Host "[ERROR] Template file $templateFile not found" -ForegroundColor Red
         return $false
     }
     
     if (-not (Test-Path $parametersFile)) {
-        Write-Host "✗ Parameters file $parametersFile not found" -ForegroundColor Red
+        Write-Host "[ERROR] Parameters file $parametersFile not found" -ForegroundColor Red
         return $false
     }
     
@@ -64,14 +64,14 @@ function Deploy-Stack {
             --no-fail-on-empty-changeset
         
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "✓ Successfully deployed $stackName" -ForegroundColor Green
+            Write-Host "[OK] Successfully deployed $stackName" -ForegroundColor Green
             return $true
         } else {
-            Write-Host "✗ Failed to deploy $stackName" -ForegroundColor Red
+            Write-Host "[ERROR] Failed to deploy $stackName" -ForegroundColor Red
             return $false
         }
     } catch {
-        Write-Host "✗ Error deploying $stackName : $_" -ForegroundColor Red
+        Write-Host "[ERROR] Error deploying $stackName : $_" -ForegroundColor Red
         return $false
     }
 }
@@ -83,6 +83,9 @@ switch ($Template) {
     }
     "storage" {
         Deploy-Stack "storage"
+    }
+    "storage-simple" {
+        Deploy-Stack "storage-simple"
     }
     "auth" {
         Deploy-Stack "auth"
@@ -111,15 +114,15 @@ switch ($Template) {
         }
         
         if (-not $success) {
-            Write-Host "✗ Deployment failed" -ForegroundColor Red
+            Write-Host "[ERROR] Deployment failed" -ForegroundColor Red
             exit 1
         }
     }
     default {
-        Write-Host "✗ Unknown template '$Template'" -ForegroundColor Red
-        Write-Host "Available templates: base, storage, auth, compute, api, monitoring, all"
+        Write-Host "[ERROR] Unknown template '$Template'" -ForegroundColor Red
+        Write-Host "Available templates: base, storage, storage-simple, auth, compute, api, monitoring, all"
         exit 1
     }
 }
 
-Write-Host "✓ Deployment completed successfully!" -ForegroundColor Green
+Write-Host "[OK] Deployment completed successfully!" -ForegroundColor Green

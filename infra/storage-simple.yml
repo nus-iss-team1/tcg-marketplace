@@ -1,10 +1,11 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'TCG Marketplace - Simple Storage Infrastructure'
+Description: 'TCG Marketplace - Simplified Storage for Local Testing (S3 and DynamoDB only)'
 
 Parameters:
   Environment:
     Type: String
     Default: dev
+    AllowedValues: [dev, staging, prod]
     Description: Environment name
   
   ProjectName:
@@ -26,6 +27,12 @@ Resources:
             Status: Enabled
             Prefix: temp/uploads/
             ExpirationInDays: 1
+          - Id: StandardToIA
+            Status: Enabled
+            Prefix: images/
+            Transitions:
+              - TransitionInDays: 30
+                StorageClass: STANDARD_IA
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders:
@@ -50,6 +57,8 @@ Resources:
           Value: !Sub '${ProjectName}-${Environment}-storage'
         - Key: Environment
           Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
 
   # DynamoDB Table with cost-optimized on-demand billing
   DynamoDBTable:
@@ -66,6 +75,10 @@ Resources:
           AttributeType: S
         - AttributeName: GSI1SK
           AttributeType: S
+        - AttributeName: GSI2PK
+          AttributeType: S
+        - AttributeName: GSI2SK
+          AttributeType: S
       KeySchema:
         - AttributeName: PK
           KeyType: HASH
@@ -80,8 +93,18 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
+        - IndexName: GSI2
+          KeySchema:
+            - AttributeName: GSI2PK
+              KeyType: HASH
+            - AttributeName: GSI2SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
       PointInTimeRecoverySpecification:
-        PointInTimeRecoveryEnabled: true
+        PointInTimeRecoveryEnabled: false
       SSESpecification:
         SSEEnabled: true
       Tags:
@@ -89,28 +112,30 @@ Resources:
           Value: !Sub '${ProjectName}-${Environment}-data'
         - Key: Environment
           Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
 
 Outputs:
-  S3BucketName:
+  BucketName:
     Description: S3 Bucket Name
     Value: !Ref S3Bucket
     Export:
-      Name: !Sub '${ProjectName}-${Environment}-s3-bucket-name'
+      Name: !Sub '${ProjectName}-${Environment}-bucket-name'
 
-  S3BucketArn:
+  BucketArn:
     Description: S3 Bucket ARN
     Value: !GetAtt S3Bucket.Arn
     Export:
-      Name: !Sub '${ProjectName}-${Environment}-s3-bucket-arn'
+      Name: !Sub '${ProjectName}-${Environment}-bucket-arn'
 
-  DynamoDBTableName:
+  TableName:
     Description: DynamoDB Table Name
     Value: !Ref DynamoDBTable
     Export:
-      Name: !Sub '${ProjectName}-${Environment}-dynamodb-table-name'
+      Name: !Sub '${ProjectName}-${Environment}-table-name'
 
-  DynamoDBTableArn:
+  TableArn:
     Description: DynamoDB Table ARN
     Value: !GetAtt DynamoDBTable.Arn
     Export:
-      Name: !Sub '${ProjectName}-${Environment}-dynamodb-table-arn'
+      Name: !Sub '${ProjectName}-${Environment}-table-arn'

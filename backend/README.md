@@ -23,13 +23,65 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+NestJS backend for the TCG Marketplace application. This service provides REST API endpoints for trading card listings, media management via S3 presigned URLs, and integrates with AWS services (DynamoDB, S3, Cognito).
+
+## Architecture
+
+- **Adapters**: AWS service integrations (DynamoDB, S3, Cognito)
+- **Controllers**: HTTP request handlers for API endpoints
+- **Modules**: NestJS dependency injection and service organization
 
 ## Project setup
 
 ```bash
 $ npm install
 ```
+
+## Local Testing
+
+For comprehensive local testing instructions including AWS resource setup, environment configuration, and test scenarios, see:
+
+- **[../DEVELOPER_SETUP.md](../DEVELOPER_SETUP.md)** - Complete setup guide for new developers (start here)
+- **[test/LOCAL_TESTING.md](./test/LOCAL_TESTING.md)** - Detailed guide for local AWS integration testing
+- **[test/TESTING_CHECKLIST.md](./test/TESTING_CHECKLIST.md)** - Quick reference checklist
+- **[../LOCAL_TESTING_GUIDE.md](../LOCAL_TESTING_GUIDE.md)** - Root-level testing guide
+
+### Quick Start
+
+1. Deploy AWS resources (S3 + DynamoDB):
+   ```powershell
+   cd ../infra
+   aws cloudformation create-stack `
+     --stack-name tcg-marketplace-dev-storage-simple `
+     --template-body file://storage-simple.yml `
+     --parameters ParameterKey=Environment,ParameterValue=dev ParameterKey=ProjectName,ParameterValue=tcg-marketplace `
+     --region ap-southeast-1
+   ```
+
+2. Configure environment variables with AWS resource names:
+   
+   Create `.env.local` (recommended for local development):
+   ```bash
+   NODE_ENV=development
+   PORT=3000
+   AWS_REGION=ap-southeast-1
+   BUCKET_NAME=tcg-marketplace-dev-storage-{account-id}
+   TABLE_NAME=tcg-marketplace-dev-data
+   CORS_ORIGINS=http://localhost:3000,http://localhost:3001
+   ```
+   
+   **Note**: The application loads `.env.local` first, then falls back to `.env`. Use `.env.local` for local development to avoid committing sensitive values.
+
+3. Start backend:
+   ```bash
+   npm run start:dev
+   ```
+
+4. Run integration tests:
+   ```powershell
+   cd test
+   .\integration-local.ps1
+   ```
 
 ## Compile and run the project
 
@@ -48,14 +100,26 @@ $ npm run start:prod
 
 ```bash
 # unit tests
-$ npm run test
+npm run test
 
 # e2e tests
-$ npm run test:e2e
+npm run test:e2e
 
 # test coverage
-$ npm run test:cov
+npm run test:cov
 ```
+
+### Local Integration Tests
+
+Test real AWS service integration (S3 + DynamoDB):
+
+```powershell
+# Requires: Backend running on port 3000, AWS resources deployed
+cd test
+.\integration-local.ps1
+```
+
+See [test/README.md](./test/README.md) for complete testing documentation.
 
 ## Deployment
 
