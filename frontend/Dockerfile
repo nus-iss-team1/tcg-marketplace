@@ -1,41 +1,41 @@
-# Build stage
-FROM node:25.1-alpine3.22 AS build
-
+# --- STAGE 1: Install Dependencies ---
+FROM node:22-alpine AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy root package files for workspaces
+# Only copy files that affect 'npm ci'
 COPY package.json package-lock.json ./
+RUN npm ci
 
-# Copy frontend workspace
-COPY frontend ./frontend
-
-# Install dependencies for all workspaces
-RUN npm ci --workspace=frontend
-
-# Build the Next.js app
-RUN npm run build --workspace=frontend
-
-# Production stage
-FROM node:25.1-alpine3.22
-
-ARG REVISION
-
-LABEL org.opencontainers.image.source=https://github.com/nus-iss-team1/tcg-marketplace
-LABEL org.opencontainers.image.revision=${REVISION}
-
+FROM node:22-alpine AS builder
 WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 
-# Copy built app and dependencies
-COPY --from=build /app/frontend/.next ./frontend/.next
-COPY --from=build /app/frontend/public ./frontend/public
-COPY --from=build /app/frontend/package.json ./frontend/
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./
+# Disable telemetry during build for privacy/speed
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+# --- STAGE 3: Production Runner ---
+FROM node:22-alpine AS runner
+WORKDIR /app
 
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Create a non-root user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy the standalone build output
+# Note: standalone includes a minimal node_modules
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
 
 EXPOSE 3000
+ENV PORT=3000
 
-WORKDIR /app/frontend
-
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
