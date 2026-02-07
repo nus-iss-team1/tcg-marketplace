@@ -20,10 +20,5 @@
     "web-run": "docker run -d -p 3000:3000 ghcr.io/nus-iss-team1/tcg-marketplace:latest    ",
     "backend-build": " docker build -f backend/Dockerfile -t ghcr.io/nus-iss-team1/tcg-marketplace:latest .",
     "backend-run": "docker run -d -p 3001:3001 ghcr.io/nus-iss-team1/tcg-marketplace:latest    "
-  },
-  "workspaces": [
-    "frontend",
-    "backend",
-    "infra"
-  ]
+  }
 }
