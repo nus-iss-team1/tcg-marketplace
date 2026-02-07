@@ -8,25 +8,21 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Copy backend workspace
-COPY backend ./backend
+COPY . .
 
-RUN npm ci --workspace=backend
+RUN npm ci
 
 # Build the NestJS project
-RUN npm run build --workspace=backend
+RUN npm run build
 
 # 2️⃣ Production stage
 FROM node:20-alpine AS runner
 
-ARG REVISION
-
-LABEL org.opencontainers.image.source=https://github.com/nus-iss-team1/tcg-marketplace
-LABEL org.opencontainers.image.revision=${REVISION}
-
 WORKDIR /app
 
 # Copy build output from builder
-COPY --from=builder /app/backend/dist ./backend/dist
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 
 # Copy any static files if needed (optional)
@@ -39,7 +35,7 @@ ENV PORT=3001
 # Expose port
 EXPOSE 3001
 
-WORKDIR /app/backend
+WORKDIR /app
 
 # Start the app
 CMD ["node", "dist/main.js"]
