@@ -170,13 +170,16 @@ For detailed test scenarios and troubleshooting, see:
 - Frontend Testing Strategy: [frontend/test/TESTING_SUMMARY.md](./frontend/test/TESTING_SUMMARY.md)
 - Overview: [LOCAL_TESTING_GUIDE.md](./LOCAL_TESTING_GUIDE.md)
 
-## 🖥️ VS Code Configuration
+## 🖥️ IDE Configuration
 
-This project includes recommended VS Code settings for consistent formatting, linting, and debugging.
+This project includes recommended settings for consistent formatting, linting, and debugging.
 
-1. Open the project in VS Code.
-2. Install the recommended extensions when prompted.
-3. The `.vscode/settings.json` automatically configures:
+**Recommended IDE:** [Kiro](https://kiro.ai) - An AI-powered IDE built for developers with intelligent code assistance and automation.
+This is AWS's successor to VS Code IDE.
+
+If using VS Code or other IDEs:
+1. Install the recommended extensions when prompted.
+2. The `.vscode/settings.json` automatically configures:
    - Auto-format on save
    - ESLint fixes
    - TypeScript version
