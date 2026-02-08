@@ -123,7 +123,38 @@ See [test/README.md](./test/README.md) for complete testing documentation.
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Deploy to AWS ECS Fargate
+
+For step-by-step instructions on deploying the backend to AWS ECS Fargate with ECR, see:
+
+**[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Complete backend deployment guide
+
+The guide covers:
+- Creating ECR repository
+- Building and pushing Docker images
+- Deploying to ECS via CloudFormation
+- Environment variable configuration
+- Testing and troubleshooting
+
+### Quick Deployment
+
+```powershell
+# 1. Create ECR repository
+aws ecr create-repository --repository-name tcg-marketplace-backend --region ap-southeast-1
+
+# 2. Build and push Docker image
+cd tcg-marketplace/backend
+docker build -t tcg-marketplace-backend:latest .
+aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.ap-southeast-1.amazonaws.com
+docker tag tcg-marketplace-backend:latest <account-id>.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-backend:latest
+docker push <account-id>.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-backend:latest
+
+# 3. Deploy compute stack
+cd ../infra
+./deploy.ps1 -Environment dev -Template compute -ImageUri "<account-id>.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-backend:latest"
+```
+
+### Alternative Deployment Options
 
 If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 

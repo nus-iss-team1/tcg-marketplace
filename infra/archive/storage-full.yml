@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'TCG Marketplace - Storage Infrastructure (S3, DynamoDB, and IAM Roles)'
+Description: 'TCG Marketplace - Storage Infrastructure (S3 and DynamoDB)'
 
 Parameters:
   Environment:
@@ -18,7 +18,7 @@ Resources:
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub '${ProjectName}-${Environment}-storage-${AWS::AccountId}'
+      BucketName: !Sub '${ProjectName}-${Environment}-storage'
       VersioningConfiguration:
         Status: Enabled
       LifecycleConfiguration:
@@ -33,6 +33,12 @@ Resources:
             Transitions:
               - TransitionInDays: 30
                 StorageClass: STANDARD_IA
+          - Id: IAToGlacier
+            Status: Enabled
+            Prefix: images/
+            Transitions:
+              - TransitionInDays: 90
+                StorageClass: GLACIER
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders:
@@ -43,7 +49,7 @@ Resources:
               - POST
               - DELETE
             AllowedOrigins:
-              - '*'
+              - '*'  # Will be restricted to specific domains in production
             ExposedHeaders:
               - ETag
             MaxAge: 3000
@@ -60,12 +66,49 @@ Resources:
         - Key: Project
           Value: !Ref ProjectName
 
+  # S3 Bucket Policy for presigned URL access
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowPresignedURLAccess
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt ECSTaskRole.Arn
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+              - s3:DeleteObject
+            Resource: !Sub '${S3Bucket}/*'
+          - Sid: AllowListBucket
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt ECSTaskRole.Arn
+            Action:
+              - s3:ListBucket
+            Resource: !Ref S3Bucket
+
+  # CloudWatch Log Group for S3 events
+  S3LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/s3/${ProjectName}-${Environment}'
+      RetentionInDays: 14
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+
   # DynamoDB Table with cost-optimized on-demand billing
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: !Sub '${ProjectName}-${Environment}-data'
-      BillingMode: PAY_PER_REQUEST
+      BillingMode: PAY_PER_REQUEST  # Cost-effective for low traffic
       AttributeDefinitions:
         - AttributeName: PK
           AttributeType: S
@@ -104,7 +147,7 @@ Resources:
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
       PointInTimeRecoverySpecification:
-        PointInTimeRecoveryEnabled: false
+        PointInTimeRecoveryEnabled: true
       SSESpecification:
         SSEEnabled: true
       Tags:
@@ -127,6 +170,8 @@ Resources:
             Principal:
               Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
       Policies:
         - PolicyName: S3Access
           PolicyDocument:
@@ -138,12 +183,12 @@ Resources:
                   - s3:PutObject
                   - s3:DeleteObject
                   - s3:GetObjectVersion
-                Resource: !Sub '${S3Bucket.Arn}/*'
+                Resource: !Sub '${S3Bucket}/*'
               - Effect: Allow
                 Action:
                   - s3:ListBucket
                   - s3:GetBucketLocation
-                Resource: !GetAtt S3Bucket.Arn
+                Resource: !Ref S3Bucket
         - PolicyName: DynamoDBAccess
           PolicyDocument:
             Version: '2012-10-17'
@@ -210,29 +255,29 @@ Resources:
           Value: !Ref ProjectName
 
 Outputs:
-  BucketName:
+  S3BucketName:
     Description: S3 Bucket Name
     Value: !Ref S3Bucket
     Export:
-      Name: !Sub '${ProjectName}-${Environment}-bucket-name'
+      Name: !Sub '${ProjectName}-${Environment}-s3-bucket-name'
 
-  BucketArn:
+  S3BucketArn:
     Description: S3 Bucket ARN
     Value: !GetAtt S3Bucket.Arn
     Export:
-      Name: !Sub '${ProjectName}-${Environment}-bucket-arn'
+      Name: !Sub '${ProjectName}-${Environment}-s3-bucket-arn'
 
-  TableName:
+  DynamoDBTableName:
     Description: DynamoDB Table Name
     Value: !Ref DynamoDBTable
     Export:
-      Name: !Sub '${ProjectName}-${Environment}-table-name'
+      Name: !Sub '${ProjectName}-${Environment}-dynamodb-table-name'
 
-  TableArn:
+  DynamoDBTableArn:
     Description: DynamoDB Table ARN
     Value: !GetAtt DynamoDBTable.Arn
     Export:
-      Name: !Sub '${ProjectName}-${Environment}-table-arn'
+      Name: !Sub '${ProjectName}-${Environment}-dynamodb-table-arn'
 
   ECSTaskRoleArn:
     Description: ECS Task Role ARN
@@ -245,4 +290,3 @@ Outputs:
     Value: !GetAtt ECSTaskExecutionRole.Arn
     Export:
       Name: !Sub '${ProjectName}-${Environment}-ecs-execution-role-arn'
-

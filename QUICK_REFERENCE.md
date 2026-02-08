@@ -10,7 +10,7 @@ npm install
 
 # 2. Deploy AWS resources
 cd infra
-aws cloudformation create-stack --stack-name tcg-marketplace-dev-storage-simple --template-body file://storage-simple.yml --parameters ParameterKey=Environment,ParameterValue=dev --region ap-southeast-1
+aws cloudformation deploy --template-file storage.yml --stack-name tcg-marketplace-dev-storage --parameter-overrides Environment=dev ProjectName=tcg-marketplace --capabilities CAPABILITY_NAMED_IAM --region ap-southeast-1
 
 # 3. Configure environment
 cd ../backend
@@ -48,12 +48,15 @@ cd frontend && npm run test  # (when added)
 
 ## 🔧 Common Commands
 
-### Infrastructure Cost Management
+### Infrastructure Management
 ```powershell
-cd infra/scripts
-.\dev-start.ps1        # Start infrastructure (~$1.58/day)
-.\dev-stop.ps1         # Stop infrastructure (saves ~$47/month)
-.\dev-status.ps1       # Check status and costs
+# Deploy infrastructure
+cd infra
+.\deploy.ps1 -Environment dev
+
+# Scale ECS to save costs
+aws ecs update-service --cluster tcg-marketplace-dev-cluster --service tcg-marketplace-dev-backend --desired-count 0 --region ap-southeast-1  # Stop (~$8/month savings)
+aws ecs update-service --cluster tcg-marketplace-dev-cluster --service tcg-marketplace-dev-backend --desired-count 1 --region ap-southeast-1  # Start
 ```
 
 ### Backend
@@ -81,7 +84,7 @@ npm run test:e2e       # Run integration tests
 
 ### Get Resource Names
 ```powershell
-aws cloudformation describe-stacks --stack-name tcg-marketplace-dev-storage-simple --region ap-southeast-1 --query "Stacks[0].Outputs"
+aws cloudformation describe-stacks --stack-name tcg-marketplace-dev-storage --region ap-southeast-1 --query "Stacks[0].Outputs"
 ```
 
 ### Verify Resources
@@ -153,7 +156,9 @@ aws sts get-caller-identity
 | `frontend/.env.local` | Frontend configuration (API URL) |
 | `backend/test/integration-local.ps1` | Backend integration tests |
 | `frontend/test/integration-e2e.ps1` | Frontend integration tests |
-| `infra/storage-simple.yml` | AWS resources for local dev |
+| `infra/storage.yml` | AWS resources (S3 + DynamoDB) |
+| `infra/base.yml` | VPC and networking |
+| `infra/compute.yml` | ECS Fargate with ALB |
 
 ## 🔗 API Endpoints
 
@@ -194,7 +199,9 @@ curl -X POST http://localhost:3000/media/presign `
 | [backend/test/README.md](./backend/test/README.md) | Backend testing |
 | [frontend/test/README.md](./frontend/test/README.md) | Frontend testing |
 | [infra/README.md](./infra/README.md) | Infrastructure guide |
-| [infra/scripts/README.md](./infra/scripts/README.md) | Cost management scripts |
+| [infra/INFRASTRUCTURE_REVIEW.md](./infra/INFRASTRUCTURE_REVIEW.md) | Comprehensive template review |
+| [infra/DEPLOYMENT_SIMPLE.md](./infra/DEPLOYMENT_SIMPLE.md) | AWS deployment guide |
+| [infra/ARCHITECTURE_CHANGES.md](./infra/ARCHITECTURE_CHANGES.md) | Architecture overview |
 | [HANDOFF_CHECKLIST.md](./HANDOFF_CHECKLIST.md) | Team onboarding guide |
 
 ## 🎯 Before Committing

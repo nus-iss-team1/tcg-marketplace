@@ -17,21 +17,38 @@ A full-stack web application designed for the trading card game market. This pro
 - [JWT](https://jwt.io/) for authentication
 
 ### Cloud Infrastructure
-- [AWS Cognito](https://aws.amazon.com/cognito/) - User authentication and authorization
-- [AWS API Gateway](https://aws.amazon.com/api-gateway/) - API management with role-based access
 - [AWS ECS Fargate](https://aws.amazon.com/fargate/) - Containerized backend deployment
-- [AWS DynamoDB](https://aws.amazon.com/dynamodb/) - NoSQL database
-- [AWS S3](https://aws.amazon.com/s3/) - File storage with presigned URLs
+- [AWS Application Load Balancer](https://aws.amazon.com/elasticloadbalancing/) - Load balancing and HTTPS termination
+- [AWS DynamoDB](https://aws.amazon.com/dynamodb/) - NoSQL database for listings
+- [AWS S3](https://aws.amazon.com/s3/) - File storage for card images with presigned URLs
+- [AWS CloudFormation](https://aws.amazon.com/cloudformation/) - Infrastructure as Code
+- [AWS Cognito](https://aws.amazon.com/cognito/) - User authentication (optional)
 
-## 🔐 User Roles
+**Architecture:**
+- **Simplified Design**: ECS Fargate with public IP + Application Load Balancer
+- **Cost**: ~$25-35/month for development/small-scale production
+- **Deployment Guide**: [infra/DEPLOYMENT_SIMPLE.md](./infra/DEPLOYMENT_SIMPLE.md)
+- **Template Review**: [INFRASTRUCTURE_REVIEW.md](./INFRASTRUCTURE_REVIEW.md)
+- **Deployment Guide**: [DEPLOYMENT_SIMPLE.md](./DEPLOYMENT_SIMPLE.md)
+- **Archived Complex Architecture**: The original architecture with private subnets, NAT Gateway, and API Gateway has been archived to [infra/archive/](./infra/archive/). See [infra/archive/README.md](./infra/archive/README.md) for details.
 
-The application supports three user roles managed through AWS Cognito:
+## 🔐 Authentication (Optional)
 
-- **Sellers**: Can create and manage trading card listings, upload images
-- **Viewers**: Can browse and view listings (read-only access)
-- **Admins**: Full administrative privileges including content moderation
+The application can be deployed with or without authentication:
 
-Role-based authorization is enforced at the API Gateway level using Cognito User Groups.
+**Without Authentication** (Simplified):
+- All endpoints are public
+- Suitable for development and testing
+- Faster setup and lower cost
+
+**With AWS Cognito** (Optional):
+- User registration and login
+- Role-based access control with three user groups:
+  - **Admins** (Precedence 0): Full system access and content moderation
+  - **Sellers** (Precedence 1): Can create and manage listings
+  - **Viewers** (Precedence 2): Read-only access to browse listings
+- JWT token authentication with group membership
+- See [infra/auth.yml](./infra/auth.yml) for deployment
 
 ## 📦 Installation
 
@@ -57,8 +74,10 @@ New to the project? Start here:
 1. **[DEVELOPER_SETUP.md](./DEVELOPER_SETUP.md)** - Complete setup guide (10 minutes)
 2. **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** - One-page cheat sheet for common tasks
 3. **[LOCAL_TESTING_GUIDE.md](./LOCAL_TESTING_GUIDE.md)** - Validate your setup with tests
-4. **[infra/scripts/README.md](./infra/scripts/README.md)** - Cost management scripts (save ~$47/month!)
-5. **Backend/Frontend READMEs** - Component-specific documentation
+4. **[backend/DEPLOYMENT_GUIDE.md](./backend/DEPLOYMENT_GUIDE.md)** - Deploy backend to AWS ECS
+5. **[infra/DEPLOYMENT_SIMPLE.md](./infra/DEPLOYMENT_SIMPLE.md)** - Deploy infrastructure to AWS
+6. **[infra/archive/README.md](./infra/archive/README.md)** - Archived complex architecture (if needed)
+7. **Backend/Frontend READMEs** - Component-specific documentation
 
 ### Team Onboarding
 

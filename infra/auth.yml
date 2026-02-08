@@ -143,7 +143,7 @@ Resources:
                 Resource: !Sub 
                   - '${BucketArn}/images/listings/*'
                   - BucketArn: !ImportValue 
-                      Fn::Sub: '${ProjectName}-${Environment}-s3-bucket-arn'
+                      Fn::Sub: '${ProjectName}-${Environment}-bucket-arn'
               - Effect: Allow
                 Action:
                   - s3:PutObject
@@ -151,7 +151,7 @@ Resources:
                 Resource: !Sub 
                   - '${BucketArn}/temp/uploads/*'
                   - BucketArn: !ImportValue 
-                      Fn::Sub: '${ProjectName}-${Environment}-s3-bucket-arn'
+                      Fn::Sub: '${ProjectName}-${Environment}-bucket-arn'
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -199,6 +199,31 @@ Resources:
       Roles:
         authenticated: !GetAtt AuthenticatedRole.Arn
         unauthenticated: !GetAtt UnauthenticatedRole.Arn
+
+  # User Groups for role-based access control
+  SellersGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Sellers
+      Description: Users who can create and manage trading card listings
+      UserPoolId: !Ref UserPool
+      Precedence: 1
+
+  ViewersGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Viewers
+      Description: Users who can browse and view listings (read-only)
+      UserPoolId: !Ref UserPool
+      Precedence: 2
+
+  AdminsGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Admins
+      Description: Users with administrative privileges
+      UserPoolId: !Ref UserPool
+      Precedence: 0
 
   # CloudWatch Log Group for Cognito events
   CognitoLogGroup:
@@ -248,3 +273,9 @@ Outputs:
     Value: !GetAtt AuthenticatedRole.Arn
     Export:
       Name: !Sub '${ProjectName}-${Environment}-authenticated-role-arn'
+
+  UserGroups:
+    Description: Available user groups
+    Value: Sellers,Viewers,Admins
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-user-groups'

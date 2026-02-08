@@ -31,21 +31,17 @@ npm install
 ```powershell
 cd infra
 
-# Deploy simplified storage stack (S3 + DynamoDB)
-aws cloudformation create-stack `
-  --stack-name tcg-marketplace-dev-storage-simple `
-  --template-body file://storage-simple.yml `
-  --parameters ParameterKey=Environment,ParameterValue=dev ParameterKey=ProjectName,ParameterValue=tcg-marketplace `
-  --region ap-southeast-1
-
-# Wait for stack to complete (2-3 minutes)
-aws cloudformation wait stack-create-complete `
-  --stack-name tcg-marketplace-dev-storage-simple `
+# Deploy storage stack (S3 + DynamoDB + IAM roles)
+aws cloudformation deploy `
+  --template-file storage.yml `
+  --stack-name tcg-marketplace-dev-storage `
+  --parameter-overrides Environment=dev ProjectName=tcg-marketplace `
+  --capabilities CAPABILITY_NAMED_IAM `
   --region ap-southeast-1
 
 # Get resource names
 aws cloudformation describe-stacks `
-  --stack-name tcg-marketplace-dev-storage-simple `
+  --stack-name tcg-marketplace-dev-storage `
   --region ap-southeast-1 `
   --query "Stacks[0].Outputs"
 ```
@@ -144,32 +140,23 @@ git pull
 # 2. Install any new dependencies
 npm install
 
-# 3. Start AWS infrastructure (if using full stack)
-cd infra/scripts
-.\dev-start.ps1  # Starts VPC/NAT Gateway (~$1.58/day)
-cd ../..
-
-# 4. Start backend (Terminal 1)
+# 3. Start backend (Terminal 1)
 cd backend
 npm run start:dev
 
-# 5. Start frontend (Terminal 2)
+# 4. Start frontend (Terminal 2)
 cd frontend
 npm run dev
 
-# 6. Make your changes
+# 5. Make your changes
 # Edit files in backend/src or frontend/src
 
-# 7. Test your changes
+# 6. Test your changes
 cd backend/test
 .\integration-local.ps1
-
-# 8. Stop infrastructure when done (saves costs)
-cd ../../infra/scripts
-.\dev-stop.ps1  # Saves ~$1.58/day
 ```
 
-**Cost Tip:** Use `dev-start.ps1` and `dev-stop.ps1` daily to save ~60% on infrastructure costs. See [infra/scripts/README.md](./infra/scripts/README.md) for details.
+**Cost Tip:** For AWS deployments, scale ECS to 0 tasks when not in use to save ~$8/month. See [infra/DEPLOYMENT_SIMPLE.md](./infra/DEPLOYMENT_SIMPLE.md) for details.
 
 ### Before Committing
 
@@ -272,6 +259,20 @@ tcg-marketplace/
 - **Database**: DynamoDB (AWS)
 - **Storage**: S3 (AWS)
 - **Region**: ap-southeast-1 (Singapore)
+
+### Deployment Options
+
+For deploying to AWS, see:
+
+- **[infra/DEPLOYMENT_SIMPLE.md](./infra/DEPLOYMENT_SIMPLE.md)** - Complete deployment guide
+- **[infra/README.md](./infra/README.md)** - Infrastructure overview
+- **[infra/ARCHITECTURE_CHANGES.md](./infra/ARCHITECTURE_CHANGES.md)** - Architecture details
+
+**Architecture:**
+- ECS Fargate with Application Load Balancer
+- Public subnets (no NAT Gateway)
+- Direct AWS SDK access to S3/DynamoDB
+- **Cost**: ~$25-35/month
 
 ## Getting Help
 

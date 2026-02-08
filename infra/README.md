@@ -4,15 +4,31 @@ This directory contains CloudFormation templates and deployment scripts for the 
 
 ## Architecture Overview
 
-The infrastructure follows a serverless-first approach optimized for cost and supporting up to 100 users:
+The infrastructure uses a simplified, cost-effective approach optimized for up to 100 users:
 
-- **VPC**: Multi-AZ setup with public/private subnets and VPC endpoints for cost optimization
-- **ECS Fargate**: Containerized NestJS backend (0.25-0.5 vCPU, 512MB-1GB RAM)
-- **API Gateway**: REST API with Cognito authentication and rate limiting
-- **DynamoDB**: On-demand billing for metadata storage
+**Simplified Architecture (Recommended):**
+- **VPC**: Public subnets only (no NAT Gateway)
+- **ECS Fargate**: Containerized NestJS backend with public IP (0.25 vCPU, 512MB RAM)
+- **Application Load Balancer**: HTTPS termination and routing
+- **DynamoDB**: On-demand billing for listings data
 - **S3**: File storage with lifecycle policies and presigned URLs
-- **Cognito**: User authentication and authorization
-- **CloudWatch**: Monitoring, logging, and alerting
+- **CloudWatch**: Monitoring and logging
+- **Cost**: ~$25-35/month
+
+**Full Architecture (Advanced):**
+- Adds private subnets, NAT Gateway, API Gateway, VPC Link
+- Enhanced security isolation
+- **Cost**: ~$90-120/month
+- See templates: base.yml, api.yml, compute.yml
+
+**Comprehensive Review:** See [INFRASTRUCTURE_REVIEW.md](./INFRASTRUCTURE_REVIEW.md) for a complete review of all templates including:
+- Detailed analysis of each YAML template (base.yml, storage.yml, compute.yml, auth.yml, monitoring.yml)
+- Deployment order with dependency mapping
+- Import/export validation across stacks
+- Security review (network, IAM, data, application)
+- Cost breakdown and optimization strategies
+- Documentation status verification
+- Action items and verification checklist
 
 ## Prerequisites
 
@@ -22,30 +38,47 @@ The infrastructure follows a serverless-first approach optimized for cost and su
 
 ## Quick Start
 
-For a complete setup guide, see **[../DEVELOPER_SETUP.md](../DEVELOPER_SETUP.md)**.
-
-### Cost Management Scripts
-
-For daily development, use the cost management scripts in the `scripts/` folder to save ~60% on infrastructure costs:
+### Deploy Infrastructure
 
 ```powershell
-# Start infrastructure (morning) - Deploys VPC + NAT Gateway
-cd scripts
-.\dev-start.ps1
+cd tcg-marketplace/infra
 
-# Check status and costs - Shows daily/monthly projections
-.\dev-status.ps1
+# Deploy all stacks
+.\deploy.ps1 -Environment dev
 
-# Stop infrastructure (evening) - Saves ~$1.58/day (~$47/month)!
-.\dev-stop.ps1
+# Or deploy with your backend image
+.\deploy.ps1 -Environment dev -ImageUri "<account-id>.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-backend:latest"
 ```
 
-**Key Benefits:**
-- Preserves all data in S3 and DynamoDB (free tier)
-- Quick restart in 2-3 minutes
-- Saves ~60% on monthly costs with daily stop/start workflow
+**Complete guide:** [DEPLOYMENT_SIMPLE.md](./DEPLOYMENT_SIMPLE.md)
 
-See **[scripts/README.md](./scripts/README.md)** for detailed cost management documentation, daily workflows, and optimization tips.
+**What you get:**
+- S3 bucket for images
+- DynamoDB table for listings
+- ECS Fargate with Application Load Balancer
+- Public backend URL (http://your-alb-dns.amazonaws.com)
+- **Cost**: ~$25-35/month
+
+### Cost Management
+
+**Simplified Architecture:**
+- Scale ECS service to 0 tasks when not in use
+- Saves ~$0.50/day (Fargate costs)
+- ALB costs $0.53/day even when idle
+- S3 and DynamoDB are pay-per-use
+
+```powershell
+# Stop ECS tasks (save ~$15/month)
+aws ecs update-service --cluster tcg-marketplace-dev-cluster --service tcg-marketplace-dev-backend --desired-count 0 --region ap-southeast-1
+
+# Start ECS tasks
+aws ecs update-service --cluster tcg-marketplace-dev-cluster --service tcg-marketplace-dev-backend --desired-count 1 --region ap-southeast-1
+```
+
+**Full Architecture (Archived):**
+- The complex architecture with NAT Gateway has been archived
+- See [archive/README.md](./archive/README.md) for cost management scripts
+- Archived scripts can save ~$1.58/day (~$47/month) on NAT Gateway costs
 
 ### 1. Validate Setup
 ```powershell
@@ -73,95 +106,177 @@ Check the AWS Console for:
 
 ## CloudFormation Templates
 
-### Full Infrastructure Templates
+### Current Infrastructure Templates (Simplified Architecture)
 
-1. **base.yml** - VPC, networking, security groups
-2. **storage.yml** - S3 bucket, DynamoDB table, IAM roles
-3. **auth.yml** - Cognito User Pool and Identity Pool
-4. **compute.yml** - ECS cluster, task definition, service
-5. **api.yml** - API Gateway, VPC Link, Network Load Balancer
-6. **monitoring.yml** - CloudWatch dashboards and alarms
+The project uses a simplified, cost-effective architecture optimized for development and small-scale production:
 
-### Simplified Templates
+1. **storage.yml** - S3 bucket, DynamoDB table, IAM roles (no VPC dependencies)
+2. **base.yml** - VPC with public subnets only, security groups (no NAT Gateway)
+3. **compute.yml** - ECS Fargate with Application Load Balancer (no API Gateway)
+4. **auth.yml** - Cognito User Pool and Identity Pool (optional)
+5. **monitoring.yml** - CloudWatch dashboards and alarms (optional)
 
-- **storage-simple.yml** - Standalone S3 and DynamoDB for local testing (no VPC dependencies)
+**Benefits:**
+- 65-70% cost reduction (~$60-85/month savings)
+- Simpler architecture and faster deployment
+- Easier troubleshooting and maintenance
+- Suitable for development and small-scale production
+
+**Documentation:**
+- **[DEPLOYMENT_SIMPLE.md](./DEPLOYMENT_SIMPLE.md)** - Complete deployment guide
+- **[INFRASTRUCTURE_REVIEW.md](./INFRASTRUCTURE_REVIEW.md)** - Comprehensive template review and validation
+
+### Archived Full Architecture Templates
+
+The original complex architecture with private subnets, NAT Gateway, API Gateway, and VPC Link has been archived to the **[archive/](./archive/)** directory. These templates are preserved for reference and can be restored if needed for:
+
+- Private subnet isolation for compliance (PCI, HIPAA)
+- API Gateway features (caching, throttling, API keys)
+- Large-scale production (1000+ concurrent users)
+
+See **[archive/README.md](./archive/README.md)** for details on the archived architecture and restoration instructions.
 
 ## Deployment Order
 
-### Full Infrastructure Deployment
+Deploy the infrastructure in this order due to dependencies:
 
-The infrastructure must be deployed in this order due to dependencies:
+1. **storage.yml** - S3 bucket, DynamoDB table, IAM roles
+2. **base.yml** - VPC with public subnets, security groups
+3. **compute.yml** - ECS Fargate with Application Load Balancer
+4. **auth.yml** - Cognito User Pool (optional)
+5. **monitoring.yml** - CloudWatch dashboards (optional)
 
-1. **base.yml** - VPC, networking, security groups
-2. **storage.yml** - S3 bucket, DynamoDB table, IAM roles
-3. **auth.yml** - Cognito User Pool and Identity Pool
-4. **compute.yml** - ECS cluster, task definition, service
-5. **api.yml** - API Gateway, VPC Link, Network Load Balancer
-6. **monitoring.yml** - CloudWatch dashboards and alarms
+**Complete guide:** [DEPLOYMENT_SIMPLE.md](./DEPLOYMENT_SIMPLE.md)
 
-### Local Testing Deployment
+**Template details:** [INFRASTRUCTURE_REVIEW.md](./INFRASTRUCTURE_REVIEW.md)
 
-For local backend testing without full infrastructure:
+### Monitoring and Alerting
 
+The optional `monitoring.yml` template provides comprehensive CloudWatch monitoring for the simplified architecture:
+
+**Status:** ⚠️ Needs update - Currently contains API Gateway references that should be removed for simplified architecture. See [INFRASTRUCTURE_REVIEW.md](./INFRASTRUCTURE_REVIEW.md) for details.
+
+**CloudWatch Dashboard:**
+- ECS service metrics (CPU, memory utilization)
+- Application Load Balancer metrics (request count, response time, error rates)
+- DynamoDB metrics (capacity units, throttling)
+- S3 storage metrics (bucket size, object count)
+
+**CloudWatch Alarms:**
+- ECS service health (unhealthy tasks)
+- ECS high CPU/memory utilization
+- ALB high error rates (5XX errors)
+- ALB high latency (response time)
+- DynamoDB throttling
+- Application error rates (from logs)
+
+**Cost Monitoring:**
+- Cost anomaly detection for ECS, ALB, DynamoDB, S3, and ECR
+- Email alerts for cost anomalies > $100
+
+Deploy monitoring:
 ```powershell
-# Deploy only storage resources (S3 + DynamoDB)
-.\deploy.ps1 -Environment dev -Template storage-simple
+aws cloudformation deploy `
+  --template-file monitoring.yml `
+  --stack-name tcg-marketplace-dev-monitoring `
+  --parameter-overrides Environment=dev ProjectName=tcg-marketplace AlertEmail=your-email@example.com `
+  --region ap-southeast-1
 ```
 
-This simplified template:
-- Creates S3 bucket with lifecycle policies and CORS configuration
-- Creates DynamoDB table with GSI1 and GSI2 indexes
-- Enables DynamoDB Streams for future event processing
-- No VPC or networking dependencies
-- Optimized for local development and testing
+**Note:** The monitoring template is functional but contains legacy API Gateway references. It will be updated in a future revision to fully align with the simplified architecture.
 
-## Cost Optimization Features
+### Template Features
 
-- **Single NAT Gateway** for dev/staging (dual for production)
-- **VPC Endpoints** to avoid NAT Gateway charges for AWS services
-- **Fargate Spot** for non-production workloads
-- **On-demand DynamoDB** billing for low traffic
-- **S3 Lifecycle policies** for automatic cost optimization
-- **Minimal resource sizing** for 100-user capacity
+**storage.yml:**
+- S3 bucket with lifecycle policies and CORS configuration
+- DynamoDB table with GSI1 and GSI2 indexes
+- IAM roles for ECS tasks (task role and execution role)
+- DynamoDB Streams enabled
+- No VPC dependencies
+- Exports: BucketName, BucketArn, TableName, TableArn, ECSTaskRoleArn, ECSTaskExecutionRoleArn
+
+**base.yml:**
+- VPC with public subnets only (no NAT Gateway)
+- Two availability zones for high availability
+- Security groups for ECS and ALB
+- Internet Gateway for direct internet access
+- Saves ~$32/month vs private subnets with NAT Gateway
+
+**compute.yml:**
+- ECS Fargate cluster
+- Application Load Balancer (public)
+- ECS service with public IP
+- Auto-scaling configuration (CPU, memory, and request-based)
+- CloudWatch Logs integration
+
+**Detailed review:** See [INFRASTRUCTURE_REVIEW.md](./INFRASTRUCTURE_REVIEW.md) for comprehensive template analysis including:
+- Resource-by-resource breakdown of each template
+- Export/import dependency validation
+- Security model review (network, IAM, data, application layers)
+- Cost optimization features and monthly cost estimates
+- Auto-scaling configuration analysis
+- Known issues and recommended updates (monitoring.yml needs API Gateway references removed)
+
+**Outputs:**
+- Storage: `BucketName`, `BucketArn`, `TableName`, `TableArn`, `ECSTaskRoleArn`, `ECSTaskExecutionRoleArn`
+- Base: `VPCId`, `PublicSubnet1Id`, `PublicSubnet2Id`, `ECSSecurityGroupId`, `ALBSecurityGroupId`
+- Compute: `LoadBalancerURL`, `ECSClusterName`, `ECSServiceName`, `TargetGroupArn`
+
+## Cost Optimization
+
+The simplified architecture provides significant cost savings:
+
+**Simplified Architecture (~$25-35/month):**
+- Application Load Balancer: ~$16/month
+- ECS Fargate (0.25 vCPU, 512MB): ~$8/month
+- S3 + DynamoDB: ~$1-5/month (pay-per-use)
+- No NAT Gateway, no API Gateway, no VPC Link
+
+**Additional Savings:**
+- Scale ECS to 0 tasks when not in use (saves ~$8/month)
+- Use S3 lifecycle policies (automatic)
+- DynamoDB on-demand billing (pay only for what you use)
+
+**Full Architecture (~$90-120/month):**
+- All simplified costs plus:
+- NAT Gateway: ~$32/month
+- API Gateway: ~$3.50/million requests
+- VPC Link: ~$36/month
+- Network Load Balancer: ~$16/month
 
 ### Cost Management Scripts
 
-The project includes automated scripts to manage infrastructure costs during development. See **[scripts/README.md](./scripts/README.md)** for detailed documentation.
+**For Simplified Architecture:**
+The simplified architecture doesn't require daily start/stop scripts since there's no NAT Gateway. Simply scale ECS to 0 tasks when not in use:
 
-**Quick Commands:**
 ```powershell
-# Start development infrastructure (~$1.58/day)
-cd tcg-marketplace/infra/scripts
-.\dev-start.ps1
+# Stop ECS tasks (save ~$8/month)
+aws ecs update-service --cluster tcg-marketplace-dev-cluster --service tcg-marketplace-dev-backend --desired-count 0 --region ap-southeast-1
 
-# Stop infrastructure to save costs (saves ~$47/month)
-.\dev-stop.ps1
-
-# Check current status and costs
-.\dev-status.ps1
+# Start ECS tasks
+aws ecs update-service --cluster tcg-marketplace-dev-cluster --service tcg-marketplace-dev-backend --desired-count 1 --region ap-southeast-1
 ```
 
-**Key Benefits:**
-- Start/stop VPC and NAT Gateway daily to save ~60% on costs
-- Preserves all data in S3 and DynamoDB
-- Quick restart (2-3 minutes)
-- Free tier resources (S3, DynamoDB, Cognito) can run 24/7
-
-For detailed cost optimization strategies and daily workflows, see [scripts/README.md](./scripts/README.md).
+**For Archived Full Architecture:**
+If using the archived full architecture with NAT Gateway, cost management scripts are available in the **[archive/scripts/](./archive/scripts/)** directory. See **[archive/README.md](./archive/README.md)** for details.
 
 ## Environment Configuration
 
 ### Development (dev)
-- 1 ECS task, 0.25 vCPU, 512MB RAM
-- Single AZ deployment where possible
-- Fargate Spot for cost savings
+- 1-3 ECS tasks (auto-scaling enabled), 0.25 vCPU, 512MB RAM
+- Auto-scaling triggers: CPU > 70%, Memory > 80%, or 1000 requests/target/minute
+- Public subnets (simplified architecture)
 - Minimal monitoring retention
+- **Cost**: ~$25-35/month (base), scales up to ~$50/month at max capacity
 
 ### Production (prod)
-- 2+ ECS tasks, 0.5 vCPU, 1GB RAM
+- 1-10 ECS tasks (auto-scaling enabled), 0.5 vCPU, 1GB RAM
+- Auto-scaling triggers: CPU > 70%, Memory > 80%, or 1000 requests/target/minute
 - Multi-AZ deployment for high availability
 - Enhanced monitoring and alerting
 - Longer log retention
+- Consider full architecture for enhanced security
+- **Cost**: ~$50-70/month (simplified) or ~$120-150/month (full)
 
 ### Environment Variables
 
@@ -169,9 +284,9 @@ The following environment variables are automatically configured through CloudFo
 
 - `BUCKET_NAME` - S3 bucket for file storage
 - `TABLE_NAME` - DynamoDB table name
-- `USER_POOL_ID` - Cognito User Pool ID
-- `USER_POOL_CLIENT_ID` - Cognito App Client ID
-- `USER_POOL_GROUPS` - Available user groups (Sellers, Viewers, Admins)
+- `USER_POOL_ID` - Cognito User Pool ID (when auth.yml is deployed)
+- `USER_POOL_CLIENT_ID` - Cognito App Client ID (when auth.yml is deployed)
+- `USER_POOL_GROUPS` - Available user groups: Sellers, Viewers, Admins (when auth.yml is deployed)
 - `AWS_REGION` - AWS region (ap-southeast-1)
 - `NODE_ENV` - Environment name (dev/prod)
 
@@ -179,22 +294,45 @@ The following environment variables are automatically configured through CloudFo
 
 The system supports three distinct user roles managed through Cognito User Groups:
 
-- **Sellers**: Users who can create and manage trading card listings
-- **Viewers**: Users who can browse and view listings (read-only access)  
-- **Admins**: Users with administrative privileges for content moderation
+- **Admins** (Precedence: 0): Users with administrative privileges for content moderation and system management
+- **Sellers** (Precedence: 1): Users who can create and manage trading card listings
+- **Viewers** (Precedence: 2): Users who can browse and view listings (read-only access)
 
-User group membership is included in JWT tokens and used for role-based authorization at the API Gateway level.
+User group membership is included in JWT tokens and can be used for role-based authorization at the application level. Groups are automatically created when deploying the `auth.yml` CloudFormation template.
+
+**Group Precedence**: Lower numbers have higher priority. When a user belongs to multiple groups, the group with the lowest precedence value takes effect.
 
 ## API Endpoints
 
-The deployed API Gateway exposes these endpoints with role-based access control:
+The deployed Application Load Balancer exposes these endpoints:
 
-- `GET /health` - Health check (public)
-- `POST /media/presign` - Generate S3 presigned URLs (Sellers, Admins)
-- `GET /listings` - Retrieve trading card listings (all authenticated users)
-- `POST /listings` - Create new listings (Sellers, Admins)
+**Simplified Architecture (No Authentication):**
+- `GET /health` - Health check
+- `POST /media/presign` - Generate S3 presigned URLs
+- `GET /listings` - Retrieve trading card listings
+- `POST /listings` - Create new listings
+
+**With Cognito (Optional):**
+- Add authentication to protect endpoints
+- Deploy auth.yml stack
+- Configure API Gateway for role-based access
+- See full architecture documentation
 
 ## Monitoring
+
+### Simplified Architecture
+
+View ECS logs:
+```powershell
+aws logs tail /ecs/tcg-marketplace-dev --follow --region ap-southeast-1
+```
+
+Check service health:
+```powershell
+aws ecs describe-services --cluster tcg-marketplace-dev-cluster --services tcg-marketplace-dev-backend --region ap-southeast-1
+```
+
+### Full Architecture
 
 Access the CloudWatch dashboard at:
 ```
@@ -223,30 +361,26 @@ https://ap-southeast-1.console.aws.amazon.com/cloudwatch/home?region=ap-southeas
 ### Useful Commands
 
 ```powershell
-# Check infrastructure status and costs
-cd scripts
-.\dev-status.ps1
-
 # Check stack status
 aws cloudformation describe-stacks --stack-name tcg-marketplace-dev-base --region ap-southeast-1
 
 # View ECS service status
 aws ecs describe-services --cluster tcg-marketplace-dev-cluster --services tcg-marketplace-dev-backend --region ap-southeast-1
 
-# Check API Gateway
-aws apigateway get-rest-apis --region ap-southeast-1
+# Check ECS task logs
+aws logs tail /ecs/tcg-marketplace-dev --follow --region ap-southeast-1
 ```
 
-For cost management and daily start/stop workflows, see [scripts/README.md](./scripts/README.md).
+For archived full architecture cost management, see [archive/README.md](./archive/README.md).
 
 ## Next Steps
 
 After infrastructure deployment:
 
-1. **Build and push Docker image** for the NestJS backend
+1. **Build and push Docker image** for the NestJS backend - See [backend/DEPLOYMENT_GUIDE.md](../backend/DEPLOYMENT_GUIDE.md)
 2. **Update ECS task definition** with the real image URI
-3. **Test locally** using the [backend/LOCAL_TESTING.md](../backend/LOCAL_TESTING.md) guide
-4. **Configure frontend** with API Gateway URL and Cognito settings
+3. **Test locally** using the [backend/test/LOCAL_TESTING.md](../backend/test/LOCAL_TESTING.md) guide
+4. **Configure frontend** with ALB URL and Cognito settings (if using auth)
 5. **Set up CI/CD pipeline** for automated deployments (Phase 2)
 
 ## Local Development Testing

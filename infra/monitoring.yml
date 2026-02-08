@@ -73,15 +73,15 @@ Resources:
               "height": 6,
               "properties": {
                 "metrics": [
-                  [ "AWS/ApiGateway", "Count", "ApiName", "${ProjectName}-${Environment}-api" ],
-                  [ ".", "Latency", ".", "." ],
-                  [ ".", "4XXError", ".", "." ],
-                  [ ".", "5XXError", ".", "." ]
+                  [ "AWS/ApplicationELB", "RequestCount", "LoadBalancer", "${ProjectName}-${Environment}-alb" ],
+                  [ ".", "TargetResponseTime", ".", "." ],
+                  [ ".", "HTTPCode_Target_4XX_Count", ".", "." ],
+                  [ ".", "HTTPCode_Target_5XX_Count", ".", "." ]
                 ],
                 "view": "timeSeries",
                 "stacked": false,
                 "region": "${AWS::Region}",
-                "title": "API Gateway Metrics",
+                "title": "Application Load Balancer Metrics",
                 "period": 300
               }
             },
@@ -189,42 +189,42 @@ Resources:
       AlarmActions:
         - !Ref AlertTopic
 
-  # API Gateway High Error Rate Alarm
-  APIGatewayErrorAlarm:
+  # ALB High Error Rate Alarm
+  ALBErrorAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub '${ProjectName}-${Environment}-api-high-errors'
-      AlarmDescription: API Gateway error rate is high
-      MetricName: 5XXError
-      Namespace: AWS/ApiGateway
+      AlarmName: !Sub '${ProjectName}-${Environment}-alb-high-errors'
+      AlarmDescription: ALB target 5XX error rate is high
+      MetricName: HTTPCode_Target_5XX_Count
+      Namespace: AWS/ApplicationELB
       Statistic: Sum
       Period: 300
       EvaluationPeriods: 2
       Threshold: 10
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
-        - Name: ApiName
-          Value: !Sub '${ProjectName}-${Environment}-api'
+        - Name: LoadBalancer
+          Value: !Sub '${ProjectName}-${Environment}-alb'
       AlarmActions:
         - !Ref AlertTopic
       TreatMissingData: notBreaching
 
-  # API Gateway High Latency Alarm
-  APIGatewayLatencyAlarm:
+  # ALB High Latency Alarm
+  ALBLatencyAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub '${ProjectName}-${Environment}-api-high-latency'
-      AlarmDescription: API Gateway latency is high
-      MetricName: Latency
-      Namespace: AWS/ApiGateway
+      AlarmName: !Sub '${ProjectName}-${Environment}-alb-high-latency'
+      AlarmDescription: ALB target response time is high
+      MetricName: TargetResponseTime
+      Namespace: AWS/ApplicationELB
       Statistic: Average
       Period: 300
       EvaluationPeriods: 3
-      Threshold: 5000  # 5 seconds
+      Threshold: 5  # 5 seconds
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
-        - Name: ApiName
-          Value: !Sub '${ProjectName}-${Environment}-api'
+        - Name: LoadBalancer
+          Value: !Sub '${ProjectName}-${Environment}-alb'
       AlarmActions:
         - !Ref AlertTopic
 
@@ -258,7 +258,7 @@ Resources:
         {
           "Dimension": "SERVICE",
           "Key": "SERVICE",
-          "Values": ["Amazon Elastic Container Service", "Amazon API Gateway", "Amazon DynamoDB", "Amazon Simple Storage Service"],
+          "Values": ["Amazon Elastic Container Service", "Amazon EC2 Container Registry (ECR)", "Amazon DynamoDB", "Amazon Simple Storage Service", "Amazon Elastic Load Balancing"],
           "MatchOptions": ["EQUALS"]
         }
 
