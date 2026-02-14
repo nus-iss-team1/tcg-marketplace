@@ -1,9 +1,10 @@
 import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import Joi from "joi";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
-import { ConfigModule } from "@nestjs/config";
 import { AuthModule } from "./auth/auth.module";
-import Joi from "joi";
+import { LoggingModule } from "./logger/logging.module";
 
 @Module({
   imports: [
@@ -25,7 +26,8 @@ import Joi from "joi";
         abortEarly: true
       }
     }),
-    AuthModule
+    AuthModule,
+    LoggingModule
   ],
   controllers: [AppController],
   providers: [AppService]
