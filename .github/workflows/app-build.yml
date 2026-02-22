@@ -36,6 +36,7 @@ jobs:
         working-directory: ./backend
 
   build-and-push:
+    needs: lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
