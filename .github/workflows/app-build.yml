@@ -35,8 +35,24 @@ jobs:
         run: npm run lint -- --max-warnings 0
         working-directory: ./backend
 
-  build-and-push:
+  security-scan:
     needs: lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high # Fails only on High/Critical issues
+
+  build-and-push:
+    needs: security-scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
