@@ -1,0 +1,218 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Cognito User Pool Authentication Stack
+
+Parameters:
+  ProjectNamespace:
+    Type: String
+    Default: tcg-marketplace
+    Description: Project namespace used for naming resources
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Deployment environment
+  SuperAdminUsername:
+    Type: String
+    Default: superadmin
+    Description: Username for the super admin account
+  SuperAdminPassword:
+    Type: String
+    NoEcho: true
+    MinLength: 8
+    Description: Password for the super admin account
+
+Resources:
+  # 1. Cognito User Pool
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${ProjectNamespace}-${Environment}-user-pool"
+      UsernameConfiguration:
+        CaseSensitive: false
+      MfaConfiguration: "OFF"
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Required: false
+          Mutable: true
+        - Name: name
+          AttributeDataType: String
+          Required: false
+          Mutable: true
+
+  # 2. Admin Group
+  AdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: admin
+      UserPoolId: !Ref UserPool
+      Description: Administrators with full access
+      Precedence: 0
+
+  # 3. User Group
+  UserGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: user
+      UserPoolId: !Ref UserPool
+      Description: Standard users with limited access
+      Precedence: 1
+
+  # 4. User Pool Client (for your app)
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub "${ProjectNamespace}-${Environment}-client"
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      PreventUserExistenceErrors: ENABLED
+      AccessTokenValidity: 1
+      IdTokenValidity: 1
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: hours
+        IdToken: hours
+        RefreshToken: days
+      SupportedIdentityProviders:
+        - COGNITO
+
+  # 5. User Pool Domain (hosted UI / token endpoints)
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub "${ProjectNamespace}-${Environment}"
+      UserPoolId: !Ref UserPool
+
+  # 6. Lambda Execution Role for Super Admin creation
+  SuperAdminLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectNamespace}-${Environment}-super-admin-lambda-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: CognitoAdminPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cognito-idp:AdminCreateUser
+                  - cognito-idp:AdminSetUserPassword
+                  - cognito-idp:AdminAddUserToGroup
+                  - cognito-idp:AdminGetUser
+                Resource: !GetAtt UserPool.Arn
+
+  # 7. Lambda Function to create super admin user
+  SuperAdminLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${ProjectNamespace}-${Environment}-create-super-admin"
+      Runtime: python3.12
+      Handler: index.handler
+      Timeout: 30
+      Role: !GetAtt SuperAdminLambdaRole.Arn
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+
+          def handler(event, context):
+              if event['RequestType'] in ['Update', 'Delete']:
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                  return
+
+              try:
+                  client = boto3.client('cognito-idp')
+                  props = event['ResourceProperties']
+                  user_pool_id = props['UserPoolId']
+                  username = props['Username']
+                  password = props['Password']
+                  group = props['GroupName']
+
+                  # Create the super admin user
+                  client.admin_create_user(
+                      UserPoolId=user_pool_id,
+                      Username=username,
+                      TemporaryPassword=password,
+                      MessageAction='SUPPRESS',
+                  )
+
+                  # Set permanent password so no forced change on first login
+                  client.admin_set_user_password(
+                      UserPoolId=user_pool_id,
+                      Username=username,
+                      Password=password,
+                      Permanent=True,
+                  )
+
+                  # Add user to admin group
+                  client.admin_add_user_to_group(
+                      UserPoolId=user_pool_id,
+                      Username=username,
+                      GroupName=group,
+                  )
+
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {
+                      'Username': username,
+                  })
+              except client.exceptions.UsernameExistsException:
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {
+                      'Username': username,
+                      'Message': 'User already exists',
+                  })
+              except Exception as e:
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {
+                      'Error': str(e),
+                  })
+
+  # 8. Custom Resource to trigger super admin creation
+  SuperAdminUser:
+    Type: Custom::SuperAdmin
+    DependsOn:
+      - AdminGroup
+    Properties:
+      ServiceToken: !GetAtt SuperAdminLambda.Arn
+      UserPoolId: !Ref UserPool
+      Username: !Ref SuperAdminUsername
+      Password: !Ref SuperAdminPassword
+      GroupName: admin
+
+Outputs:
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref UserPool
+    Export:
+      Name: !Sub "${ProjectNamespace}-${Environment}-UserPoolId"
+  UserPoolArn:
+    Description: Cognito User Pool ARN
+    Value: !GetAtt UserPool.Arn
+    Export:
+      Name: !Sub "${ProjectNamespace}-${Environment}-UserPoolArn"
+  UserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value: !Ref UserPoolClient
+    Export:
+      Name: !Sub "${ProjectNamespace}-${Environment}-UserPoolClientId"
+  UserPoolDomainUrl:
+    Description: Cognito Hosted UI Domain
+    Value: !Sub "https://${ProjectNamespace}-${Environment}.auth.${AWS::Region}.amazoncognito.com"
+    Export:
+      Name: !Sub "${ProjectNamespace}-${Environment}-UserPoolDomainUrl"
