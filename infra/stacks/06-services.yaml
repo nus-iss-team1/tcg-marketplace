@@ -1,0 +1,195 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECS Task Definitions, Services, IAM Roles, Log Groups
+
+Parameters:
+  ProjectNamespace:
+    Type: String
+    Default: tcg-marketplace
+  AppImageTag:
+    Type: String
+    Default: develop-latest
+  WebImageTag:
+    Type: String
+    Default: develop-latest
+
+Resources:
+  # IAM Roles
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectNamespace}-ecs-execution-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: CloudWatchLogs
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+
+  ECSTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectNamespace}-ecs-task-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !ImportValue
+                      Fn::Sub: "${ProjectNamespace}-TableArn"
+                  - !Sub
+                    - "${TableArn}/index/*"
+                    - TableArn: !ImportValue
+                        Fn::Sub: "${ProjectNamespace}-TableArn"
+
+  # Log Groups
+  AppLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/ecs/${ProjectNamespace}/app"
+      RetentionInDays: 14
+
+  WebLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/ecs/${ProjectNamespace}/web"
+      RetentionInDays: 14
+
+  # Task Definitions
+  AppTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub "${ProjectNamespace}-app"
+      Cpu: "256"
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt ECSTaskRole.Arn
+      ContainerDefinitions:
+        - Name: app
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectNamespace}/tcgm-app:${AppImageTag}"
+          PortMappings:
+            - ContainerPort: 3000
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref AppLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: app
+          Environment:
+            - Name: DYNAMODB_TABLE_NAME
+              Value: !ImportValue
+                Fn::Sub: "${ProjectNamespace}-TableName"
+
+  WebTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub "${ProjectNamespace}-web"
+      Cpu: "256"
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt ECSTaskRole.Arn
+      ContainerDefinitions:
+        - Name: web
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectNamespace}/tcgm-web:${WebImageTag}"
+          PortMappings:
+            - ContainerPort: 3000
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref WebLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: web
+
+  # Services
+  AppService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub "${ProjectNamespace}-app-service"
+      Cluster: !ImportValue
+        Fn::Sub: "${ProjectNamespace}-ClusterArn"
+      TaskDefinition: !Ref AppTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: !Split
+            - ","
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-PublicSubnetIds"
+          SecurityGroups:
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-ECSSecurityGroupId"
+      LoadBalancers:
+        - ContainerName: app
+          ContainerPort: 3000
+          TargetGroupArn: !ImportValue
+            Fn::Sub: "${ProjectNamespace}-AppTargetGroupArn"
+
+  WebService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub "${ProjectNamespace}-web-service"
+      Cluster: !ImportValue
+        Fn::Sub: "${ProjectNamespace}-ClusterArn"
+      TaskDefinition: !Ref WebTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: !Split
+            - ","
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-PublicSubnetIds"
+          SecurityGroups:
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-ECSSecurityGroupId"
+      LoadBalancers:
+        - ContainerName: web
+          ContainerPort: 3000
+          TargetGroupArn: !ImportValue
+            Fn::Sub: "${ProjectNamespace}-WebTargetGroupArn"
+
+Outputs:
+  AppServiceName:
+    Value: !GetAtt AppService.Name
+    Export:
+      Name: !Sub "${ProjectNamespace}-AppServiceName"
+
+  WebServiceName:
+    Value: !GetAtt WebService.Name
+    Export:
+      Name: !Sub "${ProjectNamespace}-WebServiceName"

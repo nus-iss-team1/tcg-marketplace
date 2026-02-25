@@ -1,0 +1,141 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECS Cluster, ALB, Security Groups, Target Groups, Listener
+
+Parameters:
+  ProjectNamespace:
+    Type: String
+    Default: tcg-marketplace
+
+Resources:
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub "${ProjectNamespace}-cluster"
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow inbound HTTP to ALB
+      VpcId: !ImportValue
+        Fn::Sub: "${ProjectNamespace}-VpcId"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectNamespace}-alb-sg"
+
+  ECSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow inbound from ALB only
+      VpcId: !ImportValue
+        Fn::Sub: "${ProjectNamespace}-VpcId"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectNamespace}-ecs-sg"
+
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub "${ProjectNamespace}-alb"
+      Scheme: internet-facing
+      Type: application
+      Subnets: !Split
+        - ","
+        - !ImportValue
+            Fn::Sub: "${ProjectNamespace}-PublicSubnetIds"
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectNamespace}-alb"
+
+  AppTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub "${ProjectNamespace}-app-tg"
+      Port: 3000
+      Protocol: HTTP
+      VpcId: !ImportValue
+        Fn::Sub: "${ProjectNamespace}-VpcId"
+      TargetType: ip
+      HealthCheckPath: /api/health
+      HealthCheckIntervalSeconds: 30
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+
+  WebTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub "${ProjectNamespace}-web-tg"
+      Port: 3000
+      Protocol: HTTP
+      VpcId: !ImportValue
+        Fn::Sub: "${ProjectNamespace}-VpcId"
+      TargetType: ip
+      HealthCheckPath: /
+      HealthCheckIntervalSeconds: 30
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+      DefaultAction:
+        - Type: forward
+          TargetGroupArn: !Ref WebTargetGroup
+
+  APIListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref ALBListener
+      Priority: 1
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - "/api/*"
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref AppTargetGroup
+
+Outputs:
+  ClusterArn:
+    Value: !GetAtt ECSCluster.Arn
+    Export:
+      Name: !Sub "${ProjectNamespace}-ClusterArn"
+
+  ClusterName:
+    Value: !Ref ECSCluster
+    Export:
+      Name: !Sub "${ProjectNamespace}-ClusterName"
+
+  ALBDnsName:
+    Value: !GetAtt ALB.DNSName
+    Export:
+      Name: !Sub "${ProjectNamespace}-ALBDnsName"
+
+  AppTargetGroupArn:
+    Value: !Ref AppTargetGroup
+    Export:
+      Name: !Sub "${ProjectNamespace}-AppTargetGroupArn"
+
+  WebTargetGroupArn:
+    Value: !Ref WebTargetGroup
+    Export:
+      Name: !Sub "${ProjectNamespace}-WebTargetGroupArn"
+
+  ECSSecurityGroupId:
+    Value: !Ref ECSSecurityGroup
+    Export:
+      Name: !Sub "${ProjectNamespace}-ECSSecurityGroupId"
