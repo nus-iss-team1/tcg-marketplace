@@ -63,12 +63,27 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:Scan
                 Resource:
+                  # GameCardLookup table + indexes
                   - !ImportValue
-                      Fn::Sub: "${ProjectNamespace}-TableArn"
+                      Fn::Sub: "${ProjectNamespace}-GameCardLookupTableArn"
                   - !Sub
                     - "${TableArn}/index/*"
                     - TableArn: !ImportValue
-                        Fn::Sub: "${ProjectNamespace}-TableArn"
+                        Fn::Sub: "${ProjectNamespace}-GameCardLookupTableArn"
+                  # MessagingPlatform table + indexes
+                  - !ImportValue
+                      Fn::Sub: "${ProjectNamespace}-MessagingPlatformTableArn"
+                  - !Sub
+                    - "${TableArn}/index/*"
+                    - TableArn: !ImportValue
+                        Fn::Sub: "${ProjectNamespace}-MessagingPlatformTableArn"
+                  # TCGMarketplace table + indexes
+                  - !ImportValue
+                      Fn::Sub: "${ProjectNamespace}-TCGMarketplaceTableArn"
+                  - !Sub
+                    - "${TableArn}/index/*"
+                    - TableArn: !ImportValue
+                        Fn::Sub: "${ProjectNamespace}-TCGMarketplaceTableArn"
 
   # Log Groups
   AppLogGroup:
@@ -106,9 +121,15 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: app
           Environment:
-            - Name: DYNAMODB_TABLE_NAME
+            - Name: GAME_CARD_LOOKUP_TABLE
               Value: !ImportValue
-                Fn::Sub: "${ProjectNamespace}-TableName"
+                Fn::Sub: "${ProjectNamespace}-GameCardLookupTableName"
+            - Name: MESSAGING_PLATFORM_TABLE
+              Value: !ImportValue
+                Fn::Sub: "${ProjectNamespace}-MessagingPlatformTableName"
+            - Name: TCG_MARKETPLACE_TABLE
+              Value: !ImportValue
+                Fn::Sub: "${ProjectNamespace}-TCGMarketplaceTableName"
 
   WebTaskDefinition:
     Type: AWS::ECS::TaskDefinition
