@@ -1,38 +1,297 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: DynamoDB Table (on-demand billing)
+Description: DynamoDB Tables (on-demand billing)
 
 Parameters:
   ProjectNamespace:
     Type: String
     Default: tcg-marketplace
-  TableName:
-    Type: String
-    Default: tcg-marketplace-table
 
 Resources:
-  DynamoDBTable:
+  # ──────────────────────────────────────────────
+  # Game Card Lookup Table
+  # ──────────────────────────────────────────────
+  GameCardLookup:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Ref TableName
+      TableName: GameCardLookup
       BillingMode: PAY_PER_REQUEST
+
+      # primary table attributes
       AttributeDefinitions:
-        - AttributeName: PK
+        - AttributeName: cardId
           AttributeType: S
-        - AttributeName: SK
+        - AttributeName: gameName
           AttributeType: S
+        - AttributeName: cardName
+          AttributeType: S
+
+      # primary key of the table
       KeySchema:
-        - AttributeName: PK
+        - AttributeName: cardId
           KeyType: HASH
-        - AttributeName: SK
+
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+      # server side encryption
+      SSESpecification:
+        SSEEnabled: true
+
+      # dynamodb streams for triggers
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+      # gsi
+      GlobalSecondaryIndexes:
+        # filter by game name and card name
+        - IndexName: CardNameIndex
+          KeySchema:
+            - AttributeName: gameName
+              KeyType: HASH
+            - AttributeName: cardName
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  # ──────────────────────────────────────────────
+  # Messaging Platform Table
+  # ──────────────────────────────────────────────
+  MessagingPlatform:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MessagingPlatform
+      BillingMode: PAY_PER_REQUEST
+
+      # primary table attributes
+      AttributeDefinitions:
+        - AttributeName: entityId
+          AttributeType: S
+        - AttributeName: entitySortKey
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: lastMsgTimestamp
+          AttributeType: N
+        - AttributeName: roomId
+          AttributeType: S
+        - AttributeName: senderId
+          AttributeType: S
+        - AttributeName: receiverId
+          AttributeType: S
+        - AttributeName: msgTimestamp
+          AttributeType: N
+
+      # primary key of the table
+      KeySchema:
+        - AttributeName: entityId
+          KeyType: HASH
+        - AttributeName: entitySortKey
           KeyType: RANGE
 
-Outputs:
-  TableName:
-    Value: !Ref DynamoDBTable
-    Export:
-      Name: !Sub "${ProjectNamespace}-TableName"
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
 
-  TableArn:
-    Value: !GetAtt DynamoDBTable.Arn
+      # server side encryption
+      SSESpecification:
+        SSEEnabled: true
+
+      # dynamodb streams for triggers
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+      # gsi
+      GlobalSecondaryIndexes:
+        # fetch private rooms for a user, order by lastMsgTimestamp
+        - IndexName: PrivateRoomByUserIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: lastMsgTimestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+        # fetch messages in a private room, order by msgTimestamp
+        - IndexName: MessageByRoomIndex
+          KeySchema:
+            - AttributeName: roomId
+              KeyType: HASH
+            - AttributeName: msgTimestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - text
+              - isDeleted
+              - readAt
+
+        # fetch messages sent by user
+        - IndexName: MessageBySenderIndex
+          KeySchema:
+            - AttributeName: senderId
+              KeyType: HASH
+            - AttributeName: msgTimestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - text
+              - isDeleted
+              - readAt
+
+        # fetch messages received by user
+        - IndexName: MessageByReceiverIndex
+          KeySchema:
+            - AttributeName: receiverId
+              KeyType: HASH
+            - AttributeName: msgTimestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - text
+              - isDeleted
+              - readAt
+
+  # ──────────────────────────────────────────────
+  # TCG Marketplace Table
+  # ──────────────────────────────────────────────
+  TCGMarketplace:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: TCGMarketplace
+      BillingMode: PAY_PER_REQUEST
+
+      # primary table attributes
+      AttributeDefinitions:
+        - AttributeName: listingId
+          AttributeType: S
+        - AttributeName: sellerId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+        - AttributeName: gameName
+          AttributeType: S
+        - AttributeName: cardName
+          AttributeType: S
+        - AttributeName: price
+          AttributeType: N
+        - AttributeName: cardCondition
+          AttributeType: S
+        - AttributeName: psaGrade
+          AttributeType: S
+
+      # primary key of the table
+      KeySchema:
+        - AttributeName: listingId
+          KeyType: HASH
+
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+      # server side encryption
+      SSESpecification:
+        SSEEnabled: true
+
+      # dynamodb streams for triggers
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+      # gsi
+      GlobalSecondaryIndexes:
+        # seller dashboard
+        - IndexName: SellerCreatedAtIndex
+          KeySchema:
+            - AttributeName: sellerId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+        # all listings by game - newest listing first
+        - IndexName: GameCreatedAtIndex
+          KeySchema:
+            - AttributeName: gameName
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+        # dropdown filter by card name
+        - IndexName: CardNameIndex
+          KeySchema:
+            - AttributeName: gameName
+              KeyType: HASH
+            - AttributeName: cardName
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+        # sort/filter by card price
+        - IndexName: GamePriceIndex
+          KeySchema:
+            - AttributeName: gameName
+              KeyType: HASH
+            - AttributeName: price
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+        # filter by card condition
+        - IndexName: CardConditionIndex
+          KeySchema:
+            - AttributeName: cardCondition
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+        # filter by psa grade
+        - IndexName: PsaGradeIndex
+          KeySchema:
+            - AttributeName: psaGrade
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+Outputs:
+  GameCardLookupTableName:
+    Description: "The name of the DynamoDB table GameCardLookup"
+    Value: !Ref GameCardLookup
     Export:
-      Name: !Sub "${ProjectNamespace}-TableArn"
+      Name: !Sub "${ProjectNamespace}-GameCardLookupTableName"
+
+  GameCardLookupTableArn:
+    Description: "The ARN of the DynamoDB table GameCardLookup"
+    Value: !GetAtt GameCardLookup.Arn
+    Export:
+      Name: !Sub "${ProjectNamespace}-GameCardLookupTableArn"
+
+  MessagingPlatformTableName:
+    Description: "The name of the DynamoDB table MessagingPlatform"
+    Value: !Ref MessagingPlatform
+    Export:
+      Name: !Sub "${ProjectNamespace}-MessagingPlatformTableName"
+
+  MessagingPlatformTableArn:
+    Description: "The ARN of the DynamoDB table MessagingPlatform"
+    Value: !GetAtt MessagingPlatform.Arn
+    Export:
+      Name: !Sub "${ProjectNamespace}-MessagingPlatformTableArn"
+
+  TCGMarketplaceTableName:
+    Description: "The name of the DynamoDB table TCGMarketplace"
+    Value: !Ref TCGMarketplace
+    Export:
+      Name: !Sub "${ProjectNamespace}-TCGMarketplaceTableName"
+
+  TCGMarketplaceTableArn:
+    Description: "The ARN of the DynamoDB table TCGMarketplace"
+    Value: !GetAtt TCGMarketplace.Arn
+    Export:
+      Name: !Sub "${ProjectNamespace}-TCGMarketplaceTableArn"
