@@ -12,6 +12,16 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Build arguments for Cognito configuration
+ARG NEXT_PUBLIC_USER_POOL_ID
+ARG NEXT_PUBLIC_CLIENT_ID
+ARG NEXT_PUBLIC_AWS_REGION
+
+# Set environment variables for build
+ENV NEXT_PUBLIC_USER_POOL_ID=$NEXT_PUBLIC_USER_POOL_ID
+ENV NEXT_PUBLIC_CLIENT_ID=$NEXT_PUBLIC_CLIENT_ID
+ENV NEXT_PUBLIC_AWS_REGION=$NEXT_PUBLIC_AWS_REGION
+
 # Disable telemetry during build for privacy/speed
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build

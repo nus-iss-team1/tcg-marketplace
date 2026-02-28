@@ -15,6 +15,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+export const dynamic = 'force-dynamic';
+
 export default function SignUpPage() {
   const { signUp } = useAuth();
   const router = useRouter();

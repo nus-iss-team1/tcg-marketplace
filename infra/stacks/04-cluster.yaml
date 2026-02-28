@@ -92,7 +92,7 @@ Resources:
       LoadBalancerArn: !Ref ALB
       Port: 80
       Protocol: HTTP
-      DefaultAction:
+      DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref WebTargetGroup
 

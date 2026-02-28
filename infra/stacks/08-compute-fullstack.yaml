@@ -144,6 +144,10 @@ Resources:
               Value: production
             - Name: PORT
               Value: "3000"
+            - Name: TZ
+              Value: Asia/Singapore
+            - Name: LOG_DIR
+              Value: /tmp/logs
             - Name: GAME_CARD_LOOKUP_TABLE
               Value: !ImportValue
                 Fn::Sub: "${ProjectNamespace}-GameCardLookupTableName"
@@ -191,6 +195,14 @@ Resources:
                 - "http://${ALBDns}/api"
                 - ALBDns: !ImportValue
                     Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+            - Name: NEXT_PUBLIC_USER_POOL_ID
+              Value: !ImportValue
+                Fn::Sub: "${ProjectNamespace}-dev-UserPoolId"
+            - Name: NEXT_PUBLIC_CLIENT_ID
+              Value: !ImportValue
+                Fn::Sub: "${ProjectNamespace}-dev-UserPoolClientId"
+            - Name: NEXT_PUBLIC_AWS_REGION
+              Value: !Ref AWS::Region
 
   # Backend ECS Service
   AppService:

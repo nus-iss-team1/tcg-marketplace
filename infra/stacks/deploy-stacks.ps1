@@ -134,12 +134,30 @@ if (-not (Deploy-Stack -StackName "$ProjectNamespace-storage" -TemplateFile "05-
     exit 1
 }
 
-# Stack 07: Auth (Optional)
+# Stack 07: Auth (Required for Stack 08)
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Stack 07: Authentication (Optional)" -ForegroundColor Cyan
+Write-Host "Stack 07: Authentication (Required)" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Skipping auth stack (deploy manually if needed)" -ForegroundColor Yellow
+Write-Host "WARNING: Stack 07 requires SuperAdminUsername and SuperAdminPassword parameters" -ForegroundColor Yellow
+Write-Host "Please deploy manually with:" -ForegroundColor Yellow
+Write-Host "  aws cloudformation deploy --template-file 07-auth.yaml --stack-name $ProjectNamespace-auth --parameter-overrides ProjectNamespace=$ProjectNamespace Environment=dev SuperAdminUsername=admin SuperAdminPassword=YourSecurePassword123 --capabilities CAPABILITY_NAMED_IAM --region $Region" -ForegroundColor Gray
 Write-Host ""
+Write-Host "Checking if auth stack exists..." -ForegroundColor Gray
+try {
+    aws cloudformation describe-stacks --stack-name "$ProjectNamespace-auth" --region $Region 2>$null | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "SUCCESS: Auth stack already deployed" -ForegroundColor Green
+        Write-Host ""
+    } else {
+        Write-Host "ERROR: Auth stack not found. Please deploy Stack 07 before continuing." -ForegroundColor Red
+        Write-Host "Stack 08 requires Cognito User Pool exports from Stack 07." -ForegroundColor Red
+        exit 1
+    }
+} catch {
+    Write-Host "ERROR: Auth stack not found. Please deploy Stack 07 before continuing." -ForegroundColor Red
+    Write-Host "Stack 08 requires Cognito User Pool exports from Stack 07." -ForegroundColor Red
+    exit 1
+}
 
 if ($StacksOnly) {
     Write-Host "========================================" -ForegroundColor Green
@@ -162,7 +180,7 @@ if (-not $SkipBuild) {
     
     # Build and push backend
     Write-Host "Building backend..." -ForegroundColor Gray
-    Set-Location ../backend
+    Set-Location ../../backend
     docker build -t "$ProjectNamespace/tcgm-app:latest" .
     docker tag "$ProjectNamespace/tcgm-app:latest" "$AccountId.dkr.ecr.$Region.amazonaws.com/$ProjectNamespace/tcgm-app:latest"
     
