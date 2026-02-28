@@ -1,40 +1,49 @@
-# TCG Marketplace - Complete Deployment Guide
+# TCG Marketplace - Infrastructure Deployment Guide
 
-This guide walks you through deploying the TCG Marketplace application to a new AWS account from scratch.
+This guide walks you through deploying the AWS infrastructure foundation for the TCG Marketplace application.
 
-## ⚠️ CRITICAL: Read This First
+## 🎯 Purpose
 
-**Before deploying, review `DEPLOYMENT_CHECKLIST.md` to avoid common issues:**
-- Frontend calling `localhost:3000` instead of `/api`
-- `.env.local` files being baked into Docker images
-- Docker cache preventing configuration updates
+This guide sets up the **infrastructure foundation only**. Frontend and backend engineers will implement the application logic on top of this infrastructure.
 
-The checklist contains verification steps and troubleshooting for issues we've already resolved.
+## 📦 What This Deploys
+
+**3 CloudFormation Stacks:**
+1. **base.yml** - VPC, public subnets, security groups
+2. **storage.yml** - S3 bucket, DynamoDB table, IAM roles
+3. **compute-fullstack.yml** - ECS Fargate cluster, ALB, container services
+
+**What's NOT included:** Application code implementation (frontend/backend engineers will handle this)
 
 ## Prerequisites
 
 ### Required Tools
 - **AWS CLI** - Configured with credentials for your AWS account
-- **Docker** - For building container images
-- **Node.js** - Version 18+ (for local development/testing)
 - **PowerShell** - For running deployment scripts (Windows)
+- **Docker** - For building container images (when application code is ready)
 
 ### AWS Account Requirements
 - AWS account with admin access
 - Account ID (you'll need this for configuration)
-- Choose a region (default: `ap-southeast-1`)
+- Region: `ap-southeast-1` (Singapore)
+
+### Knowledge Requirements
+- Basic understanding of AWS CloudFormation
+- Familiarity with VPC, ECS, and ALB concepts
 
 ## Deployment Overview
 
-The deployment consists of 4 main steps:
+The infrastructure deployment consists of 4 main steps:
 
 1. **Configure Parameters** - Update account ID and settings
-2. **Deploy Infrastructure** - VPC, S3, DynamoDB, ECS, ALB
-3. **Build & Push Docker Images** - Backend and Frontend containers
-4. **Deploy Application** - Update ECS services with new images
+2. **Deploy Base Infrastructure** - VPC, subnets, security groups
+3. **Deploy Storage** - S3 bucket and DynamoDB table
+4. **Deploy Compute** - ECS Fargate cluster and ALB
 
-**Estimated Time**: 30-45 minutes  
+**Estimated Time**: 15-20 minutes  
 **Estimated Monthly Cost**: $25-35 USD
+
+**Note:** Application deployment (Docker images) will be handled by frontend/backend engineers after infrastructure is ready.
 
 ---
 
@@ -72,9 +81,9 @@ aws configure set region ap-southeast-1
 
 ---
 
-## Step 2: Deploy Infrastructure
+## Step 2: Deploy Base Infrastructure
 
-### 2.1 Deploy Base Infrastructure (VPC, Subnets, Security Groups)
+### 2.1 Deploy VPC, Subnets, and Security Groups
 
 ```powershell
 cd tcg-marketplace/infra
@@ -91,7 +100,16 @@ aws cloudformation wait stack-create-complete `
   --region ap-southeast-1
 ```
 
-### 2.2 Deploy Storage (S3, DynamoDB, IAM Roles)
+**What this creates:**
+- VPC with public subnets (no NAT Gateway for cost savings)
+- Security groups for ALB and ECS tasks
+- Internet Gateway for public access
+
+---
+
+## Step 3: Deploy Storage Infrastructure
+
+### 3.1 Deploy S3 Bucket and DynamoDB Table
 
 ```powershell
 aws cloudformation create-stack `
@@ -107,7 +125,16 @@ aws cloudformation wait stack-create-complete `
   --region ap-southeast-1
 ```
 
-### 2.3 Create ECR Repositories
+**What this creates:**
+- S3 bucket for card images
+- DynamoDB table for listings data
+- IAM roles for ECS tasks to access S3 and DynamoDB
+
+---
+
+## Step 4: Create ECR Repositories
+
+### 4.1 Create Container Registries
 
 ```powershell
 # Create backend repository
@@ -121,62 +148,15 @@ aws ecr create-repository `
   --region ap-southeast-1
 ```
 
----
-
-## Step 3: Build & Push Docker Images
-
-**⚠️ IMPORTANT**: Clear Docker cache first to ensure fresh builds with correct configuration:
-
-```powershell
-cd tcg-marketplace
-
-# Clear Docker build cache (CRITICAL for config changes)
-docker builder prune -af
-
-# Build backend
-docker build -t tcg-marketplace-dev-backend:latest -f backend/Dockerfile .
-
-# Tag for ECR
-docker tag tcg-marketplace-dev-backend:latest `
-  YOUR_ACCOUNT_ID.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-dev-backend:latest
-```
-
-### 3.2 Build Frontend Image
-
-```powershell
-# Build frontend with BUILD_ID to force cache invalidation
-docker build `
-  --build-arg BUILD_ID=$(Get-Date -Format "yyyyMMddHHmmss") `
-  -t tcg-marketplace-dev-frontend:latest `
-  -f frontend/Dockerfile .
-
-# Tag for ECR
-docker tag tcg-marketplace-dev-frontend:latest `
-  YOUR_ACCOUNT_ID.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-dev-frontend:latest
-```
-
-### 3.3 Push Images to ECR
-
-```powershell
-# Login to ECR
-aws ecr get-login-password --region ap-southeast-1 | `
-  docker login --username AWS --password-stdin `
-  YOUR_ACCOUNT_ID.dkr.ecr.ap-southeast-1.amazonaws.com
-
-# Push backend
-docker push YOUR_ACCOUNT_ID.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-dev-backend:latest
-
-# Push frontend
-docker push YOUR_ACCOUNT_ID.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-dev-frontend:latest
-```
-
-**Replace `YOUR_ACCOUNT_ID`** in all commands above.
+**What this creates:**
+- ECR repositories for Docker images
+- Frontend and backend engineers will push their images here
 
 ---
 
-## Step 4: Deploy Application (ECS, ALB)
+## Step 5: Deploy Compute Infrastructure
 
-### 4.1 Deploy Compute Stack
+### 5.1 Deploy ECS Cluster and ALB
 
 ```powershell
 cd tcg-marketplace/infra
@@ -194,7 +174,15 @@ aws cloudformation wait stack-create-complete `
   --region ap-southeast-1
 ```
 
-### 4.2 Get Application URL
+**What this creates:**
+- ECS Fargate cluster
+- Application Load Balancer (ALB)
+- Target groups for frontend and backend
+- ECS services (will start once Docker images are available)
+- Auto-scaling configuration
+- CloudWatch log groups
+
+### 5.2 Get Application URL
 
 ```powershell
 # Get ALB DNS name
@@ -207,39 +195,92 @@ aws cloudformation describe-stacks `
 
 The output will be something like: `tcg-marketplace-dev-alb-123456789.ap-southeast-1.elb.amazonaws.com`
 
+**Save this URL** - frontend/backend engineers will need it for testing.
+
 ---
 
-## Step 5: Verify Deployment
+## Step 6: Verify Infrastructure Deployment
 
-### 5.1 Check Backend Health
+### 6.1 Check All Stacks
 
 ```powershell
-# Replace with your ALB DNS
-$ALB_DNS = "tcg-marketplace-dev-alb-123456789.ap-southeast-1.elb.amazonaws.com"
-
-# Test backend health endpoint
-curl "http://$ALB_DNS/api/health"
+aws cloudformation list-stacks `
+  --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE `
+  --region ap-southeast-1 `
+  --query "StackSummaries[?contains(StackName, 'tcg-marketplace')].{Name:StackName, Status:StackStatus}" `
+  --output table
 ```
 
-Expected response: `{"status":"ok","timestamp":"..."}`
+**Expected output:**
+```
+tcg-marketplace-dev-base            CREATE_COMPLETE
+tcg-marketplace-dev-storage         CREATE_COMPLETE
+tcg-marketplace-dev-compute         CREATE_COMPLETE
+```
 
-### 5.2 Check Frontend
+### 6.2 Check ECS Cluster
 
-Open in browser: `http://YOUR_ALB_DNS/`
+```powershell
+aws ecs describe-clusters `
+  --clusters tcg-marketplace-dev-cluster `
+  --region ap-southeast-1
+```
 
-You should see the TCG Marketplace homepage.
+### 6.3 Check ECR Repositories
 
-### 5.3 Test Full Flow
+```powershell
+aws ecr describe-repositories `
+  --region ap-southeast-1 `
+  --query "repositories[?contains(repositoryName, 'tcg-marketplace')].repositoryUri" `
+  --output table
+```
 
-1. Click "Sell Card" button
-2. Fill out the form:
-   - Title: "Test Card"
-   - Description: "Test listing"
-   - Price: 100
-   - Category: Vintage
-3. Click "Create Listing"
-4. Go back to homepage
-5. Verify the new listing appears
+---
+
+## Next Steps for Engineers
+
+### For Backend Engineers
+
+**What's ready:**
+- ✅ ECS Fargate cluster configured
+- ✅ Backend ECS service created (waiting for Docker image)
+- ✅ DynamoDB table: `tcg-marketplace-dev-listings`
+- ✅ S3 bucket for image storage
+- ✅ IAM roles with permissions to access DynamoDB and S3
+- ✅ ALB routing: `/api/*` → backend service
+- ✅ Health check endpoint: `/api/health`
+
+**What to do:**
+1. Build backend Docker image
+2. Push to ECR: `274603886128.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-dev-backend:latest`
+3. Update ECS service to deploy the image
+4. Implement API endpoints using the provided adapter interfaces
+
+**Environment variables available in ECS:**
+- `AWS_REGION`: ap-southeast-1
+- `BUCKET_NAME`: tcg-marketplace-dev-storage-xxxxx
+- `TABLE_NAME`: tcg-marketplace-dev-listings
+- `NODE_ENV`: dev
+- `PORT`: 3000
+
+### For Frontend Engineers
+
+**What's ready:**
+- ✅ ECS Fargate cluster configured
+- ✅ Frontend ECS service created (waiting for Docker image)
+- ✅ ALB routing: `/` → frontend service
+- ✅ Backend API available at: `/api/*` (relative path)
+
+**What to do:**
+1. Build frontend Docker image
+2. Push to ECR: `274603886128.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-dev-frontend:latest`
+3. Update ECS service to deploy the image
+4. Configure API calls to use relative path `/api` (not hardcoded URLs)
+
+**Important configuration:**
+- Use `process.env.NEXT_PUBLIC_API_URL || '/api'` for API calls
+- Do NOT hardcode `localhost:3000` in configuration
+- ALB handles routing between frontend and backend
 
 ---
 
@@ -250,7 +291,7 @@ Instead of manual steps, you can use the automated script:
 ```powershell
 cd tcg-marketplace/infra
 
-# Deploy all infrastructure
+# Deploy all infrastructure stacks
 .\deploy.ps1 -Environment dev -ParameterFile parameters/dev-fullstack.json
 ```
 
@@ -258,8 +299,6 @@ This script will:
 - Deploy base, storage, and compute stacks in order
 - Wait for each stack to complete
 - Show you the ALB URL at the end
-
-**Note**: You still need to build and push Docker images manually (Step 3).
 
 ---
 
@@ -270,19 +309,27 @@ Internet
     ↓
 Application Load Balancer (ALB)
     ↓
-    ├─→ / (root path) → Frontend (Next.js on ECS Fargate)
-    └─→ /api/* → Backend (NestJS on ECS Fargate)
+    ├─→ / (root path) → Frontend ECS Service (port 3000)
+    └─→ /api/* → Backend ECS Service (port 3000)
                      ↓
-                     ├─→ DynamoDB (listings data)
-                     └─→ S3 (card images)
+                     ├─→ DynamoDB (listings table)
+                     └─→ S3 (images bucket)
 ```
 
-**Key Features:**
-- Path-based routing: Frontend at `/`, Backend at `/api/*`
-- Single ALB for both services (cost-effective)
-- Public subnets (no NAT Gateway needed)
-- ECS Fargate (serverless containers)
-- Auto-scaling enabled (1-3 tasks per service)
+**Infrastructure Components:**
+- **VPC**: Public subnets in 2 availability zones
+- **ALB**: Path-based routing (single load balancer for cost efficiency)
+- **ECS Fargate**: Serverless containers for frontend and backend
+- **DynamoDB**: NoSQL database for listings data
+- **S3**: Object storage for card images
+- **ECR**: Docker image registry
+- **CloudWatch**: Logging and monitoring
+
+**Key Design Decisions:**
+- Public subnets (no NAT Gateway) - saves ~$35/month
+- Single ALB with path-based routing - saves ~$16/month vs separate ALBs
+- ECS Fargate - no EC2 instance management
+- On-demand DynamoDB - pay per request, no provisioned capacity
 
 ---
 
@@ -311,51 +358,51 @@ aws cloudformation describe-stack-events `
   --max-items 10
 ```
 
-### Issue: ECS tasks not starting
+### Issue: ECS services show 0 running tasks
 
-**Solution**: Check ECS service events:
+**Cause**: No Docker images pushed to ECR yet (expected at this stage)
+
+**Solution**: This is normal. ECS services will start once engineers push Docker images to ECR.
+
+### Issue: Cannot access ALB URL
+
+**Cause**: Security group or routing issue
+
+**Solution**: 
+1. Check security groups allow HTTP (port 80) from 0.0.0.0/0
+2. Verify ALB is in "active" state
+3. Check target groups have registered targets (will be empty until images are deployed)
+
+### Issue: Stack deletion fails
+
+**Cause**: Resources have dependencies or are not empty
+
+**Solution**:
 ```powershell
-aws ecs describe-services `
-  --cluster tcg-marketplace-dev-cluster `
-  --services tcg-marketplace-dev-backend tcg-marketplace-dev-frontend `
-  --region ap-southeast-1 `
-  --query 'services[*].events[0:3]'
-```
+# Empty S3 bucket first
+aws s3 rm s3://tcg-marketplace-dev-storage-xxxxx --recursive --region ap-southeast-1
 
-### Issue: Frontend shows "Failed to fetch"
-
-**Possible causes:**
-1. Backend not healthy - check `/api/health` endpoint
-2. Browser cache - clear cache and hard refresh (Ctrl+Shift+R)
-3. CORS issues - check backend logs
-
-**Check backend logs:**
-```powershell
-aws logs tail /ecs/tcg-marketplace-dev-backend `
-  --follow `
-  --region ap-southeast-1
-```
-
-### Issue: Docker build fails
-
-**Solution**: Clear Docker cache and rebuild:
-```powershell
-docker builder prune -af
-docker build --no-cache -t IMAGE_NAME -f Dockerfile .
+# Then delete stacks in reverse order
+aws cloudformation delete-stack --stack-name tcg-marketplace-dev-compute --region ap-southeast-1
+aws cloudformation delete-stack --stack-name tcg-marketplace-dev-storage --region ap-southeast-1
+aws cloudformation delete-stack --stack-name tcg-marketplace-dev-base --region ap-southeast-1
 ```
 
 ---
 
 ## Cleanup / Teardown
 
-To delete all resources and stop incurring costs:
+To delete all infrastructure and stop incurring costs:
 
 ```powershell
 cd tcg-marketplace/infra
 
-# Delete in reverse order
+# Delete in reverse order (compute → storage → base)
 aws cloudformation delete-stack --stack-name tcg-marketplace-dev-compute --region ap-southeast-1
 aws cloudformation wait stack-delete-complete --stack-name tcg-marketplace-dev-compute --region ap-southeast-1
+
+# Empty S3 bucket before deleting storage stack
+aws s3 rm s3://BUCKET_NAME --recursive --region ap-southeast-1
 
 aws cloudformation delete-stack --stack-name tcg-marketplace-dev-storage --region ap-southeast-1
 aws cloudformation wait stack-delete-complete --stack-name tcg-marketplace-dev-storage --region ap-southeast-1
@@ -363,29 +410,45 @@ aws cloudformation wait stack-delete-complete --stack-name tcg-marketplace-dev-s
 aws cloudformation delete-stack --stack-name tcg-marketplace-dev-base --region ap-southeast-1
 aws cloudformation wait stack-delete-complete --stack-name tcg-marketplace-dev-base --region ap-southeast-1
 
-# Delete ECR repositories (optional - will delete images)
+# Delete ECR repositories (optional - will delete all images)
 aws ecr delete-repository --repository-name tcg-marketplace-dev-backend --force --region ap-southeast-1
 aws ecr delete-repository --repository-name tcg-marketplace-dev-frontend --force --region ap-southeast-1
 ```
 
----
-
-## Next Steps
-
-After successful deployment:
-
-1. **Set up custom domain** (optional) - Use Route 53 and ACM for HTTPS
-2. **Enable authentication** (optional) - Deploy `auth.yml` for Cognito
-3. **Set up monitoring** (optional) - Deploy `monitoring.yml` for CloudWatch dashboards
-4. **Configure CI/CD** - Automate deployments with GitHub Actions or AWS CodePipeline
+**Note**: Get the S3 bucket name from CloudFormation outputs:
+```powershell
+aws cloudformation describe-stacks `
+  --stack-name tcg-marketplace-dev-storage `
+  --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' `
+  --output text `
+  --region ap-southeast-1
+```
 
 ---
 
-## Support
+## Additional Resources
 
-For issues or questions:
-- Check `infra/README.md` for infrastructure details
-- Check `backend/README.md` for backend documentation
-- Check `frontend/README.md` for frontend documentation
-- Review CloudFormation stack events for deployment errors
-- Check ECS service logs for runtime errors
+**Infrastructure Documentation:**
+- `infra/README.md` - Detailed infrastructure documentation
+- `infra/ARCHITECTURE_CHANGES.md` - Architecture evolution and decisions
+- `infra/base.yml` - VPC template with inline comments
+- `infra/storage.yml` - Storage template with inline comments
+- `infra/compute-fullstack.yml` - Compute template with inline comments
+
+**For Engineers:**
+- `backend/README.md` - Backend setup and development guide
+- `frontend/README.md` - Frontend setup and development guide
+- `DEVELOPER_SETUP.md` - Complete developer onboarding guide
+
+---
+
+## Summary
+
+You've successfully deployed the infrastructure foundation:
+
+✅ **3 CloudFormation stacks** (base, storage, compute)  
+✅ **2 ECR repositories** (backend, frontend)  
+✅ **Cost-optimized architecture** (~$25-35/month)  
+✅ **Ready for application deployment** by engineering teams
+
+**Next:** Share the ALB URL and ECR repository URIs with frontend/backend engineers to begin application deployment.
