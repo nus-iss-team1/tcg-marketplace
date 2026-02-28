@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: DynamoDB Tables (on-demand billing)
+Description: Storage Infrastructure - S3 Bucket and DynamoDB Tables
 
 Parameters:
   ProjectNamespace:
@@ -7,6 +7,51 @@ Parameters:
     Default: tcg-marketplace
 
 Resources:
+  # ──────────────────────────────────────────────
+  # S3 Bucket for Media Storage
+  # ──────────────────────────────────────────────
+  MediaBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectNamespace}-media-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: TempUploadsCleanup
+            Status: Enabled
+            Prefix: temp/uploads/
+            ExpirationInDays: 1
+          - Id: StandardToIA
+            Status: Enabled
+            Prefix: images/
+            Transitions:
+              - TransitionInDays: 30
+                StorageClass: STANDARD_IA
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              - DELETE
+            AllowedOrigins:
+              - '*'
+            ExposedHeaders:
+              - ETag
+            MaxAge: 3000
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectNamespace}-media'
+        - Key: Project
+          Value: !Ref ProjectNamespace
   # ──────────────────────────────────────────────
   # Game Card Lookup Table
   # ──────────────────────────────────────────────
@@ -260,6 +305,18 @@ Resources:
             ProjectionType: ALL
 
 Outputs:
+  MediaBucketName:
+    Description: "S3 Bucket for media storage"
+    Value: !Ref MediaBucket
+    Export:
+      Name: !Sub "${ProjectNamespace}-MediaBucketName"
+
+  MediaBucketArn:
+    Description: "ARN of the S3 media bucket"
+    Value: !GetAtt MediaBucket.Arn
+    Export:
+      Name: !Sub "${ProjectNamespace}-MediaBucketArn"
+
   GameCardLookupTableName:
     Description: "The name of the DynamoDB table GameCardLookup"
     Value: !Ref GameCardLookup

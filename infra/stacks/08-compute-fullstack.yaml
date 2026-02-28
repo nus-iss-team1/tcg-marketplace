@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: ECS Task Definitions, Services, IAM Roles, Log Groups
+Description: Full Stack ECS Services - Frontend and Backend with Path-Based Routing
 
 Parameters:
   ProjectNamespace:
@@ -7,17 +7,32 @@ Parameters:
     Default: tcg-marketplace
   AppImageTag:
     Type: String
-    Default: develop-latest
+    Default: latest
+    Description: Docker image tag for backend
   WebImageTag:
     Type: String
-    Default: develop-latest
+    Default: latest
+    Description: Docker image tag for frontend
 
 Resources:
+  # CloudWatch Log Groups
+  AppLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/ecs/${ProjectNamespace}/app-fullstack"
+      RetentionInDays: 14
+
+  WebLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/ecs/${ProjectNamespace}/web-fullstack"
+      RetentionInDays: 14
+
   # IAM Roles
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${ProjectNamespace}-ecs-execution-role"
+      RoleName: !Sub "${ProjectNamespace}-ecs-execution-role-fullstack"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -41,7 +56,7 @@ Resources:
   ECSTaskRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${ProjectNamespace}-ecs-task-role"
+      RoleName: !Sub "${ProjectNamespace}-ecs-task-role-fullstack"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -63,21 +78,18 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:Scan
                 Resource:
-                  # GameCardLookup table + indexes
                   - !ImportValue
                       Fn::Sub: "${ProjectNamespace}-GameCardLookupTableArn"
                   - !Sub
                     - "${TableArn}/index/*"
                     - TableArn: !ImportValue
                         Fn::Sub: "${ProjectNamespace}-GameCardLookupTableArn"
-                  # MessagingPlatform table + indexes
                   - !ImportValue
                       Fn::Sub: "${ProjectNamespace}-MessagingPlatformTableArn"
                   - !Sub
                     - "${TableArn}/index/*"
                     - TableArn: !ImportValue
                         Fn::Sub: "${ProjectNamespace}-MessagingPlatformTableArn"
-                  # TCGMarketplace table + indexes
                   - !ImportValue
                       Fn::Sub: "${ProjectNamespace}-TCGMarketplaceTableArn"
                   - !Sub
@@ -105,24 +117,11 @@ Resources:
                 Resource: !ImportValue
                   Fn::Sub: "${ProjectNamespace}-MediaBucketArn"
 
-  # Log Groups
-  AppLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub "/ecs/${ProjectNamespace}/app"
-      RetentionInDays: 14
-
-  WebLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub "/ecs/${ProjectNamespace}/web"
-      RetentionInDays: 14
-
-  # Task Definitions
+  # Backend Task Definition
   AppTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub "${ProjectNamespace}-app"
+      Family: !Sub "${ProjectNamespace}-app-fullstack"
       Cpu: "256"
       Memory: "512"
       NetworkMode: awsvpc
@@ -141,6 +140,10 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: app
           Environment:
+            - Name: NODE_ENV
+              Value: production
+            - Name: PORT
+              Value: "3000"
             - Name: GAME_CARD_LOOKUP_TABLE
               Value: !ImportValue
                 Fn::Sub: "${ProjectNamespace}-GameCardLookupTableName"
@@ -156,10 +159,11 @@ Resources:
             - Name: AWS_REGION
               Value: !Ref AWS::Region
 
+  # Frontend Task Definition
   WebTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub "${ProjectNamespace}-web"
+      Family: !Sub "${ProjectNamespace}-web-fullstack"
       Cpu: "256"
       Memory: "512"
       NetworkMode: awsvpc
@@ -177,12 +181,22 @@ Resources:
               awslogs-group: !Ref WebLogGroup
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: web
+          Environment:
+            - Name: NODE_ENV
+              Value: production
+            - Name: PORT
+              Value: "3000"
+            - Name: NEXT_PUBLIC_API_URL
+              Value: !Sub
+                - "http://${ALBDns}/api"
+                - ALBDns: !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-ALBDnsName"
 
-  # Services
+  # Backend ECS Service
   AppService:
     Type: AWS::ECS::Service
     Properties:
-      ServiceName: !Sub "${ProjectNamespace}-app-service"
+      ServiceName: !Sub "${ProjectNamespace}-app-fullstack"
       Cluster: !ImportValue
         Fn::Sub: "${ProjectNamespace}-ClusterArn"
       TaskDefinition: !Ref AppTaskDefinition
@@ -203,11 +217,16 @@ Resources:
           ContainerPort: 3000
           TargetGroupArn: !ImportValue
             Fn::Sub: "${ProjectNamespace}-AppTargetGroupArn"
+      HealthCheckGracePeriodSeconds: 120
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
 
+  # Frontend ECS Service
   WebService:
     Type: AWS::ECS::Service
     Properties:
-      ServiceName: !Sub "${ProjectNamespace}-web-service"
+      ServiceName: !Sub "${ProjectNamespace}-web-fullstack"
       Cluster: !ImportValue
         Fn::Sub: "${ProjectNamespace}-ClusterArn"
       TaskDefinition: !Ref WebTaskDefinition
@@ -228,14 +247,32 @@ Resources:
           ContainerPort: 3000
           TargetGroupArn: !ImportValue
             Fn::Sub: "${ProjectNamespace}-WebTargetGroupArn"
+      HealthCheckGracePeriodSeconds: 120
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
 
 Outputs:
   AppServiceName:
     Value: !GetAtt AppService.Name
     Export:
-      Name: !Sub "${ProjectNamespace}-AppServiceName"
+      Name: !Sub "${ProjectNamespace}-AppServiceName-Fullstack"
 
   WebServiceName:
     Value: !GetAtt WebService.Name
     Export:
-      Name: !Sub "${ProjectNamespace}-WebServiceName"
+      Name: !Sub "${ProjectNamespace}-WebServiceName-Fullstack"
+
+  ApplicationURL:
+    Description: Full Stack Application URL
+    Value: !Sub
+      - "http://${ALBDns}"
+      - ALBDns: !ImportValue
+          Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+
+  BackendAPIURL:
+    Description: Backend API URL
+    Value: !Sub
+      - "http://${ALBDns}/api"
+      - ALBDns: !ImportValue
+          Fn::Sub: "${ProjectNamespace}-ALBDnsName"
