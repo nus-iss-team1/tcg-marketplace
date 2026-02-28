@@ -1,5 +1,11 @@
 # Backend Deployment Guide
 
+This guide covers building and pushing your backend Docker image to ECR. For complete deployment workflows, see:
+
+- **[../infra/MANUAL_DEPLOYMENT_GUIDE.md](../infra/MANUAL_DEPLOYMENT_GUIDE.md)** - Complete manual command reference (START HERE)
+- **[../infra/DEPLOYMENT_SIMPLE.md](../infra/DEPLOYMENT_SIMPLE.md)** - Step-by-step deployment workflow
+- **[../infra/DEPLOYMENT_FLOW.md](../infra/DEPLOYMENT_FLOW.md)** - Visual deployment diagrams
+
 ## Prerequisites
 
 - AWS CLI configured

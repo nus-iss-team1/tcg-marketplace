@@ -264,7 +264,9 @@ tcg-marketplace/
 
 For deploying to AWS, see:
 
-- **[infra/DEPLOYMENT_SIMPLE.md](./infra/DEPLOYMENT_SIMPLE.md)** - Complete deployment guide
+- **[infra/MANUAL_DEPLOYMENT_GUIDE.md](./infra/MANUAL_DEPLOYMENT_GUIDE.md)** - Complete manual command reference (START HERE)
+- **[infra/DEPLOYMENT_SIMPLE.md](./infra/DEPLOYMENT_SIMPLE.md)** - Step-by-step deployment workflow
+- **[infra/DEPLOYMENT_FLOW.md](./infra/DEPLOYMENT_FLOW.md)** - Visual deployment diagrams
 - **[infra/README.md](./infra/README.md)** - Infrastructure overview
 - **[infra/ARCHITECTURE_CHANGES.md](./infra/ARCHITECTURE_CHANGES.md)** - Architecture details
 

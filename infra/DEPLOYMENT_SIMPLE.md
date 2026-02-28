@@ -30,6 +30,10 @@ S3 + DynamoDB
 - ✅ Application Load Balancer
 - ✅ IAM roles for security
 
+## Complete Command Reference
+
+For all manual commands with detailed explanations, see [MANUAL_DEPLOYMENT_GUIDE.md](./MANUAL_DEPLOYMENT_GUIDE.md). This guide provides the complete workflow including ECR setup, Docker build/push, and stack deployment with troubleshooting tips.
+
 ## Prerequisites
 
 1. **AWS CLI configured**
@@ -182,7 +186,11 @@ NEXT_PUBLIC_API_URL=http://tcg-marketplace-dev-alb-123456789.ap-southeast-1.elb.
 
 ## Updating Your Application
 
-### Update Backend Code
+### Update Backend Code (Manual Method)
+
+For the complete workflow with all commands and troubleshooting, see [MANUAL_DEPLOYMENT_GUIDE.md](./MANUAL_DEPLOYMENT_GUIDE.md).
+
+**Quick update:**
 
 ```powershell
 # 1. Build new Docker image
@@ -516,6 +524,14 @@ aws cognito-idp admin-add-user-to-group `
 4. **Monitor Auto-scaling**: Watch CloudWatch metrics to tune scaling thresholds
 5. **Production Setup**: Review auto-scaling limits (max 10 tasks for prod)
 6. **Implement Authorization**: Use Cognito groups in backend for role-based access control
+
+## Related Documentation
+
+- **[MANUAL_DEPLOYMENT_GUIDE.md](./MANUAL_DEPLOYMENT_GUIDE.md)** - Complete manual command reference (START HERE)
+- **[DEPLOYMENT_FLOW.md](./DEPLOYMENT_FLOW.md)** - Visual deployment flow and architecture diagrams
+- **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** - One-page command cheat sheet
+- **[INFRASTRUCTURE_REVIEW.md](./INFRASTRUCTURE_REVIEW.md)** - Comprehensive template review
+- **[../backend/DEPLOYMENT_GUIDE.md](../backend/DEPLOYMENT_GUIDE.md)** - Backend Docker build guide
 
 ## Comparison: Old vs New Architecture
 

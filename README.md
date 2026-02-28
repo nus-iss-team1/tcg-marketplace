@@ -74,10 +74,12 @@ New to the project? Start here:
 1. **[DEVELOPER_SETUP.md](./DEVELOPER_SETUP.md)** - Complete setup guide (10 minutes)
 2. **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** - One-page cheat sheet for common tasks
 3. **[LOCAL_TESTING_GUIDE.md](./LOCAL_TESTING_GUIDE.md)** - Validate your setup with tests
-4. **[backend/DEPLOYMENT_GUIDE.md](./backend/DEPLOYMENT_GUIDE.md)** - Deploy backend to AWS ECS
-5. **[infra/DEPLOYMENT_SIMPLE.md](./infra/DEPLOYMENT_SIMPLE.md)** - Deploy infrastructure to AWS
-6. **[infra/archive/README.md](./infra/archive/README.md)** - Archived complex architecture (if needed)
-7. **Backend/Frontend READMEs** - Component-specific documentation
+4. **[infra/MANUAL_DEPLOYMENT_GUIDE.md](./infra/MANUAL_DEPLOYMENT_GUIDE.md)** - Deploy backend to AWS (START HERE)
+5. **[infra/DEPLOYMENT_SIMPLE.md](./infra/DEPLOYMENT_SIMPLE.md)** - Step-by-step deployment workflow
+6. **[infra/DEPLOYMENT_FLOW.md](./infra/DEPLOYMENT_FLOW.md)** - Visual deployment diagrams
+8. **[backend/DEPLOYMENT_GUIDE.md](./backend/DEPLOYMENT_GUIDE.md)** - Backend-specific deployment details
+9. **[infra/archive/README.md](./infra/archive/README.md)** - Archived complex architecture (if needed)
+10. **Backend/Frontend READMEs** - Component-specific documentation
 
 ### Team Onboarding
 

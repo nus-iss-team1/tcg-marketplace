@@ -38,26 +38,70 @@ The infrastructure uses a simplified, cost-effective approach optimized for up t
 
 ## Quick Start
 
-### Deploy Infrastructure
+### Manual Deployment (Recommended)
+
+The complete deployment workflow with all commands:
 
 ```powershell
 cd tcg-marketplace/infra
-
-# Deploy all stacks
-.\deploy.ps1 -Environment dev
-
-# Or deploy with your backend image
-.\deploy.ps1 -Environment dev -ImageUri "<account-id>.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-backend:latest"
 ```
 
-**Complete guide:** [DEPLOYMENT_SIMPLE.md](./DEPLOYMENT_SIMPLE.md)
+**See [MANUAL_DEPLOYMENT_GUIDE.md](./MANUAL_DEPLOYMENT_GUIDE.md) for complete step-by-step instructions.**
+
+This includes:
+- Docker image build and push to ECR
+- CloudFormation stack deployment
+- Health check verification
+- Troubleshooting common issues (especially health check failures)
+
+**Quick deploy compute stack:**
+```powershell
+.\deploy.ps1 -Environment dev -Template compute -ImageUri "274603886128.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-backend:latest"
+```
+
+**Getting Started:** 
+- [MANUAL_DEPLOYMENT_GUIDE.md](./MANUAL_DEPLOYMENT_GUIDE.md) - Complete manual command reference (START HERE)
+- [DEPLOYMENT_SIMPLE.md](./DEPLOYMENT_SIMPLE.md) - Step-by-step deployment guide
+- [DEPLOYMENT_FLOW.md](./DEPLOYMENT_FLOW.md) - Architecture and deployment flow visualization
+- [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) - Command cheat sheet
 
 **What you get:**
 - S3 bucket for images
 - DynamoDB table for listings
 - ECS Fargate with Application Load Balancer
-- Public backend URL (http://your-alb-dns.amazonaws.com)
+- Public backend URL: `http://tcg-marketplace-dev-alb-911708205.ap-southeast-1.elb.amazonaws.com`
 - **Cost**: ~$25-35/month
+
+**Current Deployment:**
+- AWS Account: 274603886128
+- Region: ap-southeast-1
+- Backend URL: http://tcg-marketplace-dev-alb-911708205.ap-southeast-1.elb.amazonaws.com
+- Private IP: 10.0.1.87 (current task - changes on redeploy)
+
+## Access Patterns
+
+The deployed backend can be accessed in two ways:
+
+### Public Access (Recommended)
+Use the Application Load Balancer DNS name for external access:
+- **URL**: `http://tcg-marketplace-dev-alb-911708205.ap-southeast-1.elb.amazonaws.com`
+- **Use for**: Frontend-backend communication, external API access, general usage
+- **Benefits**: Works from anywhere, automatic load balancing, health check routing
+
+### Internal VPC Access
+Use the private IP for internal microservice communication:
+- **URL**: `http://10.0.1.87:3000` (current task)
+- **Use for**: Internal microservice communication, access from other ECS tasks/EC2/Lambda within VPC
+- **Benefits**: Lower latency, no ALB charges for internal traffic
+- **Important**: Private IP changes when tasks restart. For stable internal access, use AWS Service Discovery or the ALB DNS name.
+
+**Get current private IP**:
+```powershell
+$TASK_ARN = aws ecs list-tasks --cluster tcg-marketplace-dev-cluster --service-name tcg-marketplace-dev-backend --region ap-southeast-1 --query 'taskArns[0]' --output text
+aws ecs describe-tasks --cluster tcg-marketplace-dev-cluster --tasks $TASK_ARN --region ap-southeast-1 --query 'tasks[0].attachments[0].details[?name==`privateIPv4Address`].value' --output text
+```
+
+See [MANUAL_DEPLOYMENT_GUIDE.md](./MANUAL_DEPLOYMENT_GUIDE.md) for complete details on both access methods.
 
 ### Cost Management
 
@@ -373,14 +417,37 @@ aws logs tail /ecs/tcg-marketplace-dev --follow --region ap-southeast-1
 
 For archived full architecture cost management, see [archive/README.md](./archive/README.md).
 
+## Deployment Options
+
+### Manual Deployment (Recommended)
+
+For complete control and understanding of the deployment process:
+
+**See [MANUAL_DEPLOYMENT_GUIDE.md](./MANUAL_DEPLOYMENT_GUIDE.md) for complete instructions.**
+
+Key steps:
+1. Build Docker image with health check support (includes curl)
+2. Push to ECR
+3. Deploy CloudFormation stacks in order
+4. Verify health checks pass
+5. Test endpoints
+
+**Important**: Ensure Dockerfile includes `RUN apk add --no-cache curl` for health checks to work properly.
+
+**Documentation:** 
+- [MANUAL_DEPLOYMENT_GUIDE.md](./MANUAL_DEPLOYMENT_GUIDE.md) - Complete manual command reference (START HERE)
+- [DEPLOYMENT_SIMPLE.md](./DEPLOYMENT_SIMPLE.md) - Step-by-step deployment workflow
+- [DEPLOYMENT_FLOW.md](./DEPLOYMENT_FLOW.md) - Visual deployment flow and architecture diagrams
+- [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) - Command cheat sheet
+
 ## Next Steps
 
 After infrastructure deployment:
 
-1. **Build and push Docker image** for the NestJS backend - See [backend/DEPLOYMENT_GUIDE.md](../backend/DEPLOYMENT_GUIDE.md)
-2. **Update ECS task definition** with the real image URI
-3. **Test locally** using the [backend/test/LOCAL_TESTING.md](../backend/test/LOCAL_TESTING.md) guide
-4. **Configure frontend** with ALB URL and Cognito settings (if using auth)
+1. **Test your endpoints** using the provided curl commands
+2. **Test locally** using the [backend/test/LOCAL_TESTING.md](../backend/test/LOCAL_TESTING.md) guide
+3. **Configure frontend** with ALB URL and Cognito settings (if using auth)
+4. **Set up monitoring** (optional: deploy `monitoring.yml`)
 5. **Set up CI/CD pipeline** for automated deployments (Phase 2)
 
 ## Local Development Testing
