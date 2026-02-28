@@ -1,0 +1,18 @@
+[
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "dev"
+  },
+  {
+    "ParameterKey": "ProjectName",
+    "ParameterValue": "tcg-marketplace"
+  },
+  {
+    "ParameterKey": "BackendImageUri",
+    "ParameterValue": "274603886128.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-dev-backend:latest"
+  },
+  {
+    "ParameterKey": "FrontendImageUri",
+    "ParameterValue": "274603886128.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-dev-frontend:latest"
+  }
+]

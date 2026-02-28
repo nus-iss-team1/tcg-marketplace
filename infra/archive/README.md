@@ -4,6 +4,12 @@ This directory contains the old complex architecture files that have been replac
 
 ## Archived Files
 
+### Backend-Only Deployment (Not Needed)
+- **compute.yml** - Backend-only ECS deployment (use `compute-fullstack.yml` instead)
+- **dev.json** - Parameters for backend-only deployment (use `dev-fullstack.json` instead)
+
+These files deploy only the backend service. Since you need both frontend and backend with path-based routing through a single ALB, use `compute-fullstack.yml` instead.
+
 ### Full Architecture Templates (Advanced)
 - **base-full.yml** - VPC with private subnets, NAT Gateway, VPC endpoints
 - **compute-full.yml** - ECS Fargate in private subnets with Network Load Balancer
@@ -75,10 +81,14 @@ To restore and use the full architecture:
 
 The current simplified architecture uses:
 
-- **base.yml** (was base-simple.yml) - VPC with public subnets
-- **storage.yml** (was storage-simple.yml) - S3 + DynamoDB
-- **compute.yml** (was compute-simple.yml) - ECS Fargate with ALB
-- **deploy.ps1** (was deploy-simple.ps1) - Deployment script
+- **base.yml** - VPC with public subnets
+- **storage.yml** - S3 + DynamoDB
+- **compute-fullstack.yml** - ECS Fargate with ALB (frontend + backend) ✅ Use this
+- **deploy.ps1** - Deployment script
+
+Parameter files:
+- **parameters/dev-fullstack.json** - For full-stack deployment ✅ Use this
+- **parameters/prod.json** - For production deployment
 
 See [../README.md](../README.md) for current architecture documentation.
 

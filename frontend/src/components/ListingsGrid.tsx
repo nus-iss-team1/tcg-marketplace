@@ -26,7 +26,9 @@ export default function ListingsGrid() {
 
   const fetchListings = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+      // Force rebuild - using /api as default for ALB path-based routing
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
+      console.log('API URL:', apiUrl) // Debug log
       const response = await fetch(`${apiUrl}/listings?category=vintage&limit=12`)
       
       if (!response.ok) {

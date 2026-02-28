@@ -1,187 +1,225 @@
-# tcg-marketplace
+# TCG Marketplace
 
-A full-stack web application designed for the trading card game market. This project serves as a technical implementation of a React-based frontend and a Next.js backend, integrated with AWS cloud services for data and asset management.
+A full-stack trading card marketplace built with Next.js, NestJS, and AWS.
 
-## 🛠 Tech Stack
+## 🚀 Quick Start
 
-### Frontend
-- [Next.js](https://nextjs.org/) - React framework
-- [React](https://reactjs.org/) - UI library
-- [TypeScript](https://www.typescriptlang.org/) - Type safety
-- [Tailwind CSS](https://tailwindcss.com/) - Styling
+**Application is live at:**
+- Frontend: http://tcg-marketplace-dev-alb-521671472.ap-southeast-1.elb.amazonaws.com/
+- Backend API: http://tcg-marketplace-dev-alb-521671472.ap-southeast-1.elb.amazonaws.com/api
+- Health Check: http://tcg-marketplace-dev-alb-521671472.ap-southeast-1.elb.amazonaws.com/api/health
+
+## 📋 Current Status
+
+✅ **Fully Deployed and Operational**
+- Backend API serving requests
+- Frontend connected to backend
+- DynamoDB storing listings
+- S3 ready for image uploads
+- CORS configured correctly
+
+See [DEPLOYMENT_STATUS.md](./DEPLOYMENT_STATUS.md) for detailed status (✅ Fully Operational).
+
+## 🏗️ Architecture
+
+```
+Browser
+  ↓
+Application Load Balancer
+  ├── /          → Frontend (Next.js on ECS Fargate)
+  └── /api/*     → Backend (NestJS on ECS Fargate)
+                      ↓
+                   DynamoDB + S3
+```
+
+- **Frontend**: Next.js 15.0.3 + React 18.3.1 + Tailwind CSS
+- **Backend**: NestJS 10 + TypeScript
+- **Database**: DynamoDB (NoSQL)
+- **Storage**: S3 (images)
+- **Hosting**: AWS ECS Fargate
+- **Load Balancer**: Application Load Balancer with path-based routing
+
+## 📁 Project Structure
+
+```
+tcg-marketplace/
+├── frontend/          # Next.js React application
+├── backend/           # NestJS API server
+├── infra/             # AWS CloudFormation templates
+│   ├── base.yml       # VPC and networking
+│   ├── storage.yml    # S3 and DynamoDB
+│   ├── compute-fullstack.yml  # ECS services (backend + frontend)
+│   └── deploy-automated.ps1   # Automated deployment script
+└── README.md
+```
+
+## 🚢 Deployment
+
+### Automated Deployment (Recommended)
+
+```powershell
+cd tcg-marketplace/infra
+./deploy-automated.ps1 -Environment dev
+```
+
+This will:
+1. Build Docker images for backend and frontend
+2. Push images to ECR
+3. Deploy all CloudFormation stacks
+4. Output the application URL
+
+### Manual Deployment
+
+See [infra/DEPLOYMENT_SIMPLE.md](./infra/DEPLOYMENT_SIMPLE.md) for step-by-step instructions.
+
+## 💻 Local Development
 
 ### Backend
 
-- [NestJS](https://nestjs.com/) - Node.js framework
-- [TypeScript](https://www.typescriptlang.org/)
-- [JWT](https://jwt.io/) for authentication
-
-### Cloud Infrastructure
-- [AWS ECS Fargate](https://aws.amazon.com/fargate/) - Containerized backend deployment
-- [AWS Application Load Balancer](https://aws.amazon.com/elasticloadbalancing/) - Load balancing and HTTPS termination
-- [AWS DynamoDB](https://aws.amazon.com/dynamodb/) - NoSQL database for listings
-- [AWS S3](https://aws.amazon.com/s3/) - File storage for card images with presigned URLs
-- [AWS CloudFormation](https://aws.amazon.com/cloudformation/) - Infrastructure as Code
-- [AWS Cognito](https://aws.amazon.com/cognito/) - User authentication (optional)
-
-**Architecture:**
-- **Simplified Design**: ECS Fargate with public IP + Application Load Balancer
-- **Cost**: ~$25-35/month for development/small-scale production
-- **Deployment Guide**: [infra/DEPLOYMENT_SIMPLE.md](./infra/DEPLOYMENT_SIMPLE.md)
-- **Template Review**: [INFRASTRUCTURE_REVIEW.md](./INFRASTRUCTURE_REVIEW.md)
-- **Deployment Guide**: [DEPLOYMENT_SIMPLE.md](./DEPLOYMENT_SIMPLE.md)
-- **Archived Complex Architecture**: The original architecture with private subnets, NAT Gateway, and API Gateway has been archived to [infra/archive/](./infra/archive/). See [infra/archive/README.md](./infra/archive/README.md) for details.
-
-## 🔐 Authentication (Optional)
-
-The application can be deployed with or without authentication:
-
-**Without Authentication** (Simplified):
-- All endpoints are public
-- Suitable for development and testing
-- Faster setup and lower cost
-
-**With AWS Cognito** (Optional):
-- User registration and login
-- Role-based access control with three user groups:
-  - **Admins** (Precedence 0): Full system access and content moderation
-  - **Sellers** (Precedence 1): Can create and manage listings
-  - **Viewers** (Precedence 2): Read-only access to browse listings
-- JWT token authentication with group membership
-- See [infra/auth.yml](./infra/auth.yml) for deployment
-
-## 📦 Installation
-
-For a complete step-by-step setup guide, see **[DEVELOPER_SETUP.md](./DEVELOPER_SETUP.md)**.
-
-### Quick Install
-
 ```bash
-# Clone the repository
-git clone https://github.com/nus-iss-team1/tcg-marketplace.git
-
-# Navigate into the project
-cd tcg-marketplace
-
-# Install dependencies (automatically installs all workspace dependencies)
+cd backend
 npm install
+npm run start:dev
 ```
 
-## 🚀 Getting Started
+Backend runs on http://localhost:3000
 
-New to the project? Start here:
-
-1. **[DEVELOPER_SETUP.md](./DEVELOPER_SETUP.md)** - Complete setup guide (10 minutes)
-2. **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** - One-page cheat sheet for common tasks
-3. **[LOCAL_TESTING_GUIDE.md](./LOCAL_TESTING_GUIDE.md)** - Validate your setup with tests
-4. **[infra/MANUAL_DEPLOYMENT_GUIDE.md](./infra/MANUAL_DEPLOYMENT_GUIDE.md)** - Deploy backend to AWS (START HERE)
-5. **[infra/DEPLOYMENT_SIMPLE.md](./infra/DEPLOYMENT_SIMPLE.md)** - Step-by-step deployment workflow
-6. **[infra/DEPLOYMENT_FLOW.md](./infra/DEPLOYMENT_FLOW.md)** - Visual deployment diagrams
-8. **[backend/DEPLOYMENT_GUIDE.md](./backend/DEPLOYMENT_GUIDE.md)** - Backend-specific deployment details
-9. **[infra/archive/README.md](./infra/archive/README.md)** - Archived complex architecture (if needed)
-10. **Backend/Frontend READMEs** - Component-specific documentation
-
-### Team Onboarding
-
-Handing off the project to team members? See **[HANDOFF_CHECKLIST.md](./HANDOFF_CHECKLIST.md)** for a comprehensive checklist covering:
-- Pre-handoff verification (documentation, tests, configuration)
-- 30-minute handoff meeting agenda
-- Success criteria for team members
-- Common issues and troubleshooting
-- Support plan and resources
-
-## 🧪 Local Testing
-
-### Testing Documentation
-
-The project includes comprehensive testing documentation:
-
-- **[LOCAL_TESTING_GUIDE.md](./LOCAL_TESTING_GUIDE.md)** - Complete guide for testing locally before AWS deployment
-- **[backend/test/LOCAL_TESTING.md](./backend/test/LOCAL_TESTING.md)** - Detailed backend testing guide with AWS setup and test scenarios
-- **[backend/test/TESTING_CHECKLIST.md](./backend/test/TESTING_CHECKLIST.md)** - Quick reference checklist with prerequisites and validation steps
-- **[frontend/test/README.md](./frontend/test/README.md)** - Frontend-backend integration testing guide with automated test scripts
-- **[frontend/test/TESTING_SUMMARY.md](./frontend/test/TESTING_SUMMARY.md)** - Complete overview of frontend testing strategy, workflows, and success metrics
-- **[frontend/test/BROWSER_TESTING.md](./frontend/test/BROWSER_TESTING.md)** - Comprehensive manual browser testing checklist (300+ test cases)
-- **Automated test scripts**: `integration-local.ps1` (backend) and `integration-e2e.ps1` (frontend) in respective test directories
-
-### Quick Test Workflow
+### Frontend
 
 ```bash
-# 1. Deploy storage infrastructure
-cd tcg-marketplace/infra
-aws cloudformation create-stack `
-  --stack-name tcg-marketplace-dev-storage-simple `
-  --template-body file://storage-simple.yml `
-  --parameters ParameterKey=Environment,ParameterValue=dev ParameterKey=ProjectName,ParameterValue=tcg-marketplace `
-  --region ap-southeast-1
-
-# 2. Configure backend environment
-cd ../backend
-# Create .env.local with CloudFormation outputs (see DEVELOPER_SETUP.md)
-
-# 3. Start backend
-npm run start:dev
-
-# 4. Run backend automated tests
-cd test
-.\integration-local.ps1          # Windows
-
-# 5. Start frontend (in new terminal)
-cd ../frontend
+cd frontend
+npm install
 npm run dev
-
-# 6. Run frontend-backend integration tests
-npm run test:e2e
-
-# 7. Verify health check
-curl http://localhost:3000/health
 ```
 
-### Test Coverage
+Frontend runs on http://localhost:3001
 
-The testing suite validates:
+## 🔧 Configuration
 
-**Backend Integration Tests:**
-- ✅ S3 presigned URL generation (PUT and GET)
-- ✅ Direct S3 uploads from client
-- ✅ DynamoDB listing creation and queries
-- ✅ GSI-based category queries
-- ✅ Health check endpoints
-- ✅ AWS SDK integration and IAM permissions
+### Backend Environment Variables
 
-**Frontend-Backend Integration Tests:**
-- ✅ Backend and frontend availability
-- ✅ CORS configuration
-- ✅ API endpoint integration (listings, media, health)
-- ✅ Complete image upload flow
-- ✅ Data integrity validation
+```bash
+NODE_ENV=development
+PORT=3000
+AWS_REGION=ap-southeast-1
+TABLE_NAME=tcg-marketplace-dev-data
+BUCKET_NAME=tcg-marketplace-dev-storage-274603886128
+```
 
-**Manual Browser Testing:**
-- ✅ UI/UX validation across all pages
-- ✅ Responsive design (desktop, tablet, mobile)
-- ✅ Performance testing (page load, API calls)
-- ✅ Accessibility compliance (WCAG AA)
-- ✅ Cross-browser compatibility (Chrome, Firefox, Safari, Edge)
-- ✅ Security testing (input validation, CORS, data privacy)
+### Frontend Environment Variables
 
-For detailed test scenarios and troubleshooting, see:
-- **Getting Started**: [DEVELOPER_SETUP.md](../DEVELOPER_SETUP.md)
-- **Quick Reference**: [QUICK_REFERENCE.md](./QUICK_REFERENCE.md)
-- Backend: [backend/test/LOCAL_TESTING.md](./backend/test/LOCAL_TESTING.md)
-- Frontend: [frontend/test/README.md](./frontend/test/README.md)
-- Frontend Testing Strategy: [frontend/test/TESTING_SUMMARY.md](./frontend/test/TESTING_SUMMARY.md)
-- Overview: [LOCAL_TESTING_GUIDE.md](./LOCAL_TESTING_GUIDE.md)
+```bash
+NODE_ENV=development
+PORT=3000
+```
 
-## 🖥️ IDE Configuration
+The frontend uses relative URLs (`/api`) for all API calls, which works seamlessly when deployed behind the same ALB as the backend. No API URL configuration needed.
 
-This project includes recommended settings for consistent formatting, linting, and debugging.
+## 📊 Features
 
-**Recommended IDE:** [Kiro](https://kiro.ai) - An AI-powered IDE built for developers with intelligent code assistance and automation.
-This is AWS's successor to VS Code IDE.
+- ✅ Browse trading card listings
+- ✅ Create new listings
+- ✅ Filter by category
+- ✅ Responsive design
+- ⏳ Image upload to S3 (in progress)
+- ⏳ User authentication with Cognito (optional)
 
-If using VS Code or other IDEs:
-1. Install the recommended extensions when prompted.
-2. The `.vscode/settings.json` automatically configures:
-   - Auto-format on save
-   - ESLint fixes
-   - TypeScript version
+## 🧪 Testing
+
+### Backend
+
+```bash
+cd backend
+npm run test           # Unit tests
+npm run test:e2e       # E2E tests
+npm run test:cov       # Coverage
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm run lint
+npm run type-check
+```
+
+## 💰 Cost Estimate
+
+**Monthly AWS costs (development):**
+- Application Load Balancer: ~$16/month
+- ECS Fargate (2 tasks): ~$16/month
+- S3 + DynamoDB: ~$1-5/month
+- **Total**: ~$33-37/month
+
+**Cost savings:**
+- No NAT Gateway: $32/month saved
+- No API Gateway: $3.50/million requests saved
+- Public subnets only: Simplified architecture
+
+## 📚 Documentation
+
+- [DEPLOYMENT_STATUS.md](./DEPLOYMENT_STATUS.md) - Current deployment status (✅ Fully Operational)
+- [infra/DEPLOYMENT_SIMPLE.md](./infra/DEPLOYMENT_SIMPLE.md) - Deployment guide
+- [infra/MANUAL_DEPLOYMENT_GUIDE.md](./infra/MANUAL_DEPLOYMENT_GUIDE.md) - Manual deployment steps
+- [infra/QUICK_REFERENCE.md](./infra/QUICK_REFERENCE.md) - Command cheat sheet
+- [backend/README.md](./backend/README.md) - Backend documentation
+- [frontend/README.md](./frontend/README.md) - Frontend documentation
+
+## 🛠️ Tech Stack
+
+### Frontend
+- Next.js 15.0.3
+- React 18.3.1
+- TypeScript 5+
+- Tailwind CSS 3.4
+- Lucide React (icons)
+
+### Backend
+- NestJS 10+
+- TypeScript 5+
+- AWS SDK v3
+- class-validator
+- uuid
+
+### Infrastructure
+- AWS ECS Fargate
+- Application Load Balancer
+- DynamoDB
+- S3
+- CloudWatch
+- ECR (Docker registry)
+
+## 🔐 Security
+
+- IAM roles for ECS tasks (least privilege)
+- Security groups restrict traffic
+- CORS configured for same-origin requests
+- Environment variables for sensitive data
+- No hardcoded credentials
+
+## 🐛 Troubleshooting
+
+### "Failed to fetch" error in browser
+- Hard refresh: Ctrl+Shift+R
+- Clear browser cache
+- Check browser console for errors
+
+### ECS tasks not starting
+- Check CloudWatch logs: `/ecs/tcg-marketplace-dev-backend` and `/ecs/tcg-marketplace-dev-frontend`
+- Verify environment variables are set
+- Check ECR image exists
+
+### Health checks failing
+- Verify backend responds at `/api/health`
+- Check security groups allow traffic
+- Review ECS task logs
+
+See [DEPLOYMENT_STATUS.md](./DEPLOYMENT_STATUS.md) for more troubleshooting tips.
+
+## 📝 License
+
+This project is for educational purposes.
+
+## 👥 Contributors
+
+Built as a demonstration of modern full-stack development with AWS.

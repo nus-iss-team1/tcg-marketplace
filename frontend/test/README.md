@@ -182,8 +182,11 @@ Wait for: `✓ Ready on http://localhost:3001`
 
 **Solution**: Check backend `.env.local`:
 ```bash
+# Optional - backend defaults to allow all origins in dev
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 ```
+
+**Note**: The backend now defaults to allowing all origins in development. For production with separate domains, configure `CORS_ORIGINS` in the ECS task definition.
 
 Restart backend after changing environment variables.
 

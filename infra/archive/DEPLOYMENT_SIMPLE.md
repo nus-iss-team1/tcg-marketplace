@@ -7,14 +7,18 @@ This guide covers the simplified architecture using ECS Fargate with public IP (
 ## Architecture Overview
 
 ```
-Frontend (Next.js on Vercel/Amplify)
-    ↓ HTTPS
-Application Load Balancer (Public)
+Frontend (Next.js on ECS)
     ↓
-ECS Fargate (Public IP)
-    ↓ AWS SDK
-S3 + DynamoDB
+Application Load Balancer (Public)
+    ├── /          → Frontend ECS Service
+    └── /api/*     → Backend ECS Service
+        ↓ AWS SDK
+    S3 + DynamoDB
 ```
+
+**Deployment Options:**
+1. **Full Stack on ECS** (Backend + Frontend with Path-Based Routing) - Use `compute-fullstack.yml` (Recommended)
+2. **Backend Only on ECS** - Use `compute.yml` (if deploying frontend elsewhere)
 
 **What's removed:**
 - ❌ Private subnets
@@ -31,6 +35,26 @@ S3 + DynamoDB
 - ✅ IAM roles for security
 
 ## Complete Command Reference
+
+**Current Deployment Status**: ✅ Fully Operational - See [../DEPLOYMENT_STATUS.md](../DEPLOYMENT_STATUS.md) for complete deployment details and application URLs.
+
+### Automated Deployment (Fastest)
+
+Use the automated deployment script for the quickest deployment:
+
+```powershell
+cd tcg-marketplace/infra
+
+# Backend only
+./deploy-automated.ps1 -Environment dev -BackendOnly
+
+# Full stack (backend + frontend)
+./deploy-automated.ps1 -Environment dev
+```
+
+See [deploy-automated.ps1](./deploy-automated.ps1) for script details.
+
+### Manual Deployment (Step-by-Step)
 
 For all manual commands with detailed explanations, see [MANUAL_DEPLOYMENT_GUIDE.md](./MANUAL_DEPLOYMENT_GUIDE.md). This guide provides the complete workflow including ECR setup, Docker build/push, and stack deployment with troubleshooting tips.
 
@@ -108,37 +132,134 @@ aws cloudformation deploy `
 
 ### Step 3: Deploy Compute (ECS + ALB)
 
-```powershell
-# Get your ECR image URI first
-$ImageUri = "<account-id>.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-backend:latest"
+**Option A: Full Stack (Frontend + Backend with Path-Based Routing) - Recommended**
 
+See [FRONTEND_ECS_DEPLOYMENT.md](./FRONTEND_ECS_DEPLOYMENT.md) for complete guide.
+
+```powershell
+# Option 1: Using parameter file (recommended)
+aws cloudformation deploy `
+  --template-file compute-fullstack.yml `
+  --stack-name tcg-marketplace-dev-compute `
+  --parameter-overrides file://parameters/dev-fullstack.json `
+  --capabilities CAPABILITY_NAMED_IAM `
+  --region ap-southeast-1
+
+# Option 2: Using inline parameters
+aws cloudformation deploy `
+  --template-file compute-fullstack.yml `
+  --stack-name tcg-marketplace-dev-compute `
+  --parameter-overrides `
+    Environment=dev `
+    ProjectName=tcg-marketplace `
+    BackendImageUri=274603886128.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-backend:latest `
+    FrontendImageUri=274603886128.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-frontend:latest `
+  --capabilities CAPABILITY_NAMED_IAM `
+  --region ap-southeast-1
+```
+
+**What this creates:**
+- Application Load Balancer (public) with path-based routing
+- ECS Cluster
+- Backend ECS Service (handles /api/*)
+- Frontend ECS Service (handles /*)
+- Auto-scaling policies for both services
+- Target Groups for frontend and backend
+- CloudWatch Logs
+- **Automatic API URL configuration**: Frontend environment variable `NEXT_PUBLIC_API_URL` is automatically set to `http://<ALB-DNS>/api`
+
+**Estimated cost:** ~$33-35/month
+- ALB: ~$16/month
+- Backend ECS: ~$8/month
+- Frontend ECS: ~$8/month
+- Data transfer: ~$1-3/month
+
+**Option B: Backend Only (if deploying frontend elsewhere)**
+
+```powershell
+# Option 1: Using parameter file (recommended)
+aws cloudformation deploy `
+  --template-file compute.yml `
+  --stack-name tcg-marketplace-dev-compute `
+  --parameter-overrides file://parameters/dev.json `
+  --region ap-southeast-1
+
+# Option 2: Using inline parameters
 aws cloudformation deploy `
   --template-file compute.yml `
   --stack-name tcg-marketplace-dev-compute `
   --parameter-overrides `
     Environment=dev `
     ProjectName=tcg-marketplace `
-    ImageUri=$ImageUri `
+    ImageUri=274603886128.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-backend:latest `
   --region ap-southeast-1
 ```
 
 **What this creates:**
 - Application Load Balancer (public)
 - ECS Cluster
-- ECS Service with 1 Fargate task (auto-scales to 3 for dev, 10 for prod)
+- Backend ECS Service with 1 Fargate task (auto-scales to 3 for dev, 10 for prod)
 - Auto-scaling policies (CPU, memory, and request-based)
 - Target Group
 - CloudWatch Logs
 
-**Estimated cost:** ~$15-25/month (base)
+**Estimated cost:** ~$24-26/month (base)
 - ALB: ~$16/month
+- Backend ECS: ~$8/month
 - Fargate (0.25 vCPU, 512MB): ~$8/month (1 task)
 - Scales up to ~$24/month at max capacity (3 tasks for dev)
+
+**Option B: Full Stack (Backend + Frontend on ECS)**
+
+**Important:** Frontend Docker builds must be run from the project root directory. See [../frontend/DEPLOYMENT_FIX.md](../frontend/DEPLOYMENT_FIX.md) if you encounter build issues.
+
+```powershell
+# Option 1: Using parameter file (recommended)
+aws cloudformation deploy `
+  --template-file compute-fullstack.yml `
+  --stack-name tcg-marketplace-dev-compute `
+  --parameter-overrides file://parameters/dev-fullstack.json `
+  --capabilities CAPABILITY_NAMED_IAM `
+  --region ap-southeast-1
+
+# Option 2: Using inline parameters
+aws cloudformation deploy `
+  --template-file compute-fullstack.yml `
+  --stack-name tcg-marketplace-dev-compute `
+  --parameter-overrides `
+    Environment=dev `
+    ProjectName=tcg-marketplace `
+    BackendImageUri=274603886128.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-backend:latest `
+    FrontendImageUri=274603886128.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-frontend:latest `
+  --capabilities CAPABILITY_NAMED_IAM `
+  --region ap-southeast-1
+```
+
+**What this creates:**
+- Application Load Balancer with path-based routing
+- ECS Cluster
+- Backend ECS Service (serves `/api/*`)
+- Frontend ECS Service (serves `/`)
+- Auto-scaling for both services
+- CloudWatch Logs for both services
+
+**Estimated cost:** ~$33-35/month (base)
+- ALB: ~$16/month
+- Backend Fargate: ~$8/month (1 task)
+- Frontend Fargate: ~$8/month (1 task)
+- Scales up to ~$48/month at max capacity (3 tasks each for dev)
+
+**When to use fullstack:**
+- You need full control over frontend hosting
+- Compliance requirements for frontend
+- Want everything in AWS
+- Prefer container-based deployment
 
 **Building and pushing your backend image:** See [../backend/DEPLOYMENT_GUIDE.md](../backend/DEPLOYMENT_GUIDE.md) for complete instructions on creating an ECR repository, building your Docker image, and pushing it to ECR.
 
 ### Step 4: Get Your Backend URL
 
+**If using compute.yml (backend only):**
 ```powershell
 # Get the ALB DNS name
 aws cloudformation describe-stacks `
@@ -149,19 +270,42 @@ aws cloudformation describe-stacks `
 
 Example output: `http://tcg-marketplace-dev-alb-123456789.ap-southeast-1.elb.amazonaws.com`
 
+**If using compute-fullstack.yml:**
+```powershell
+# Get frontend URL
+aws cloudformation describe-stacks `
+  --stack-name tcg-marketplace-dev-compute `
+  --query 'Stacks[0].Outputs[?OutputKey==`FrontendURL`].OutputValue' `
+  --output text
+
+# Get backend API URL
+aws cloudformation describe-stacks `
+  --stack-name tcg-marketplace-dev-compute `
+  --query 'Stacks[0].Outputs[?OutputKey==`BackendURL`].OutputValue' `
+  --output text
+```
+
+Example output:
+- Frontend: `http://tcg-marketplace-dev-alb-123456789.ap-southeast-1.elb.amazonaws.com/`
+- Backend API: `http://tcg-marketplace-dev-alb-123456789.ap-southeast-1.elb.amazonaws.com/api`
+
 ### Step 5: Test Your Backend
 
 ```powershell
 $BackendUrl = "http://tcg-marketplace-dev-alb-123456789.ap-southeast-1.elb.amazonaws.com"
 
 # Test health endpoint
-Invoke-WebRequest -Uri "$BackendUrl/health"
+Invoke-WebRequest -Uri "$BackendUrl/api/health"
 
 # Test listings endpoint
-Invoke-WebRequest -Uri "$BackendUrl/listings?category=vintage"
+Invoke-WebRequest -Uri "$BackendUrl/api/listings?category=vintage"
 ```
 
+**Note**: All backend endpoints are prefixed with `/api`.
+
 ### Step 6: Configure Frontend
+
+**Note:** This step is only needed when using `compute.yml` (backend only). When using `compute-fullstack.yml`, the frontend environment variables are automatically configured by CloudFormation.
 
 Update your frontend `.env.local`:
 
@@ -350,7 +494,7 @@ aws ecs describe-tasks `
 Common issues:
 - Image not found in ECR
 - Environment variables missing
-- Health check failing (check /health endpoint)
+- Health check failing (check /api/health endpoint)
 
 ### ALB Health Checks Failing
 

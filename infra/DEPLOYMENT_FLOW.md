@@ -79,7 +79,7 @@
 │              Application Load Balancer (ALB)                │
 │  • Public DNS: tcg-marketplace-dev-alb-xxx.elb.amazonaws... │
 │  • Port: 80 (HTTP)                                          │
-│  • Health Check: /health                                    │
+│  • Health Check: /api/health                                │
 └─────────────────────────────────────────────────────────────┘
                             │
                             ▼

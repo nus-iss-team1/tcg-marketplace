@@ -11,6 +11,8 @@ npm run start:dev
 
 Wait for: `🚀 TCG Marketplace Backend running on port 3000`
 
+**Note**: Backend endpoints are prefixed with `/api` (e.g., `/api/health`, `/api/listings`).
+
 ## Step 2: Start Frontend (Terminal 2)
 
 ```powershell
@@ -84,7 +86,7 @@ cat .env.local
 ### Tests fail
 ```powershell
 # Check both servers are running
-curl http://localhost:3000/health
+curl http://localhost:3000/api/health
 curl http://localhost:3001
 
 # Check AWS resources exist
@@ -94,12 +96,12 @@ aws dynamodb list-tables
 
 ## What's Being Tested?
 
-1. ✅ Backend is running and healthy
+1. ✅ Backend is running and healthy (`/api/health`)
 2. ✅ Frontend is running and accessible
 3. ✅ CORS allows frontend to call backend
-4. ✅ Frontend can fetch listings from backend
-5. ✅ Frontend can create new listings
-6. ✅ Frontend can request S3 presigned URLs
+4. ✅ Frontend can fetch listings from backend (`/api/listings`)
+5. ✅ Frontend can create new listings (`/api/listings`)
+6. ✅ Frontend can request S3 presigned URLs (`/api/media/presign`)
 7. ✅ Images can be uploaded to S3
 8. ✅ Created listings appear in queries
 

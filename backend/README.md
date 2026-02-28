@@ -25,6 +25,8 @@
 
 NestJS backend for the TCG Marketplace application. This service provides REST API endpoints for trading card listings, media management via S3 presigned URLs, and integrates with AWS services (DynamoDB, S3, Cognito).
 
+**API Prefix**: All endpoints are prefixed with `/api` for path-based routing compatibility with full-stack deployments.
+
 ## Architecture
 
 - **Adapters**: AWS service integrations (DynamoDB, S3, Cognito)
@@ -71,6 +73,8 @@ For comprehensive local testing instructions including AWS resource setup, envir
    ```
    
    **Note**: The application loads `.env.local` first, then falls back to `.env`. Use `.env.local` for local development to avoid committing sensitive values.
+   
+   **CORS Configuration**: By default, CORS allows all origins in development. For production, set `CORS_ORIGINS` environment variable to a comma-separated list of allowed origins. When deployed behind an ALB with path-based routing, same-origin requests work automatically.
 
 3. Start backend:
    ```bash

@@ -1,13 +1,32 @@
 # Quick Reference Card
 
+## Current Status
+
+**Deployment Status**: See [../DEPLOYMENT_STATUS.md](../DEPLOYMENT_STATUS.md) for current progress and issues.
+
 ## Documentation
 
 - **[MANUAL_DEPLOYMENT_GUIDE.md](./MANUAL_DEPLOYMENT_GUIDE.md)** - Complete manual command reference (START HERE)
 - **[DEPLOYMENT_SIMPLE.md](./DEPLOYMENT_SIMPLE.md)** - Step-by-step workflow
 - **[DEPLOYMENT_FLOW.md](./DEPLOYMENT_FLOW.md)** - Visual diagrams
 - **[README.md](./README.md)** - Infrastructure overview
+- **[deploy-automated.ps1](./deploy-automated.ps1)** - Automated deployment script
 
-## One-Command Deploy
+## Automated Deployment
+
+```powershell
+# Backend only (fastest)
+cd tcg-marketplace/infra
+./deploy-automated.ps1 -Environment dev -BackendOnly
+
+# Full stack (backend + frontend)
+./deploy-automated.ps1 -Environment dev
+
+# Skip Docker build (use existing images)
+./deploy-automated.ps1 -Environment dev -BackendOnly -SkipBuild
+```
+
+## One-Command Deploy (Manual)
 
 ```powershell
 # Manual deployment recommended - see MANUAL_DEPLOYMENT_GUIDE.md
@@ -62,10 +81,10 @@ aws cloudformation describe-stacks --stack-name tcg-marketplace-dev-compute --qu
 $BACKEND_URL = "http://tcg-marketplace-dev-alb-911708205.ap-southeast-1.elb.amazonaws.com"
 
 # Test health
-Invoke-WebRequest -Uri "$BACKEND_URL/health" -UseBasicParsing
+Invoke-WebRequest -Uri "$BACKEND_URL/api/health" -UseBasicParsing
 
 # Test listings
-Invoke-WebRequest -Uri "$BACKEND_URL/listings?category=vintage" -UseBasicParsing
+Invoke-WebRequest -Uri "$BACKEND_URL/api/listings?category=vintage" -UseBasicParsing
 ```
 
 ## Access Methods
@@ -94,7 +113,7 @@ aws ecs describe-tasks --cluster tcg-marketplace-dev-cluster --tasks $TASK_ARN -
 **Testing internal access** (requires VPC access):
 ```bash
 # From within VPC (another ECS task, EC2 instance, etc.)
-curl http://10.0.1.87:3000/health
+curl http://10.0.1.87:3000/api/health
 ```
 
 ## Costs

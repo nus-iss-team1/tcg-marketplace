@@ -138,7 +138,7 @@ aws dynamodb scan --table-name <table-name> --max-items 5
 | `TABLE_NAME environment variable is required` | Set in `.env.local` from CloudFormation output |
 | `AccessDenied` on S3 upload | Check AWS credentials: `aws sts get-caller-identity` |
 | `ResourceNotFoundException` for DynamoDB | Verify table exists: `aws dynamodb describe-table --table-name <name>` |
-| CORS errors in browser | Add frontend URL to `CORS_ORIGINS` in `.env.local` |
+| CORS errors in browser | Backend defaults to allow all origins in dev. For specific origins, set `CORS_ORIGINS` in `.env.local` |
 | Port already in use | Change `PORT` in `.env.local` or kill process on port 3000 |
 
 ## Success Criteria

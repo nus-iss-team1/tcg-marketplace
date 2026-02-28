@@ -70,7 +70,7 @@ docker images | Select-String "tcg-marketplace"
 
 **Build Time**: 2-5 minutes (first time)
 
-**Important**: The Dockerfile includes `RUN apk add --no-cache curl` to install curl for health checks. Without this, ECS health checks will fail and the deployment will be stuck.
+**Important**: The Dockerfile includes `RUN apk add --no-cache curl` for the Docker HEALTHCHECK instruction. ECS uses ALB health checks (HTTP GET to `/api/health`) rather than Docker health checks.
 
 ### Step 4: Push Image to ECR
 
@@ -205,23 +205,25 @@ To test internal access, you need to be inside the VPC. Options:
 
 Example from within VPC:
 ```bash
-curl http://10.0.1.87:3000/health
+curl http://10.0.1.87:3000/api/health
 ```
 
 ### Step 10: Test Backend
 
 ```powershell
 # Test health endpoint
-Invoke-WebRequest -Uri "http://tcg-marketplace-dev-alb-911708205.ap-southeast-1.elb.amazonaws.com/health" -UseBasicParsing
+Invoke-WebRequest -Uri "http://tcg-marketplace-dev-alb-911708205.ap-southeast-1.elb.amazonaws.com/api/health" -UseBasicParsing
 
 # Test listings endpoint
-Invoke-WebRequest -Uri "http://tcg-marketplace-dev-alb-911708205.ap-southeast-1.elb.amazonaws.com/listings?category=vintage" -UseBasicParsing
+Invoke-WebRequest -Uri "http://tcg-marketplace-dev-alb-911708205.ap-southeast-1.elb.amazonaws.com/api/listings?category=vintage" -UseBasicParsing
 
 # Or use curl (if available)
-curl http://tcg-marketplace-dev-alb-911708205.ap-southeast-1.elb.amazonaws.com/health
+curl http://tcg-marketplace-dev-alb-911708205.ap-southeast-1.elb.amazonaws.com/api/health
 ```
 
 **Expected Response**: Status 200 OK with JSON data
+
+**Note**: All backend endpoints are prefixed with `/api` for path-based routing compatibility.
 
 ## Quick Reference - Future Updates
 
@@ -384,32 +386,41 @@ aws cloudformation list-stacks `
 
 **Problem**: ECS tasks fail health checks and deployment gets stuck in CREATE_IN_PROGRESS or triggers Circuit Breaker.
 
-**Root Cause**: The Docker HEALTHCHECK uses `curl`, but Alpine Linux doesn't include curl by default.
+**Root Cause**: The backend is not responding correctly to ALB health check requests at `/api/health`.
 
-**Solution**: Ensure Dockerfile includes curl installation:
-```dockerfile
-# In Dockerfile (already fixed)
-RUN apk add --no-cache curl
+**Solution**: Ensure your backend implements the health endpoint:
+```typescript
+// In your NestJS controller
+@Get('health')
+health() {
+  return { status: 'ok' };
+}
 ```
 
-**If Already Deployed Without Curl**:
+**If Health Endpoint Exists But Still Failing**:
 ```powershell
-# 1. Fix Dockerfile (add curl installation)
-# 2. Rebuild image
+# 1. Check backend logs for errors
+aws logs tail /ecs/tcg-marketplace-dev --region ap-southeast-1
+
+# 2. Verify health endpoint works locally
 cd tcg-marketplace/backend
+npm run start:dev
+# Test: curl http://localhost:3000/api/health
+
+# 3. Rebuild and push image
 docker build -t tcg-marketplace-backend:latest .
 
-# 3. Push to ECR
+# 4. Push to ECR
 $ECR_URI = "274603886128.dkr.ecr.ap-southeast-1.amazonaws.com/tcg-marketplace-backend"
 aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin $ECR_URI
 docker tag tcg-marketplace-backend:latest ${ECR_URI}:latest
 docker push ${ECR_URI}:latest
 
-# 4. If stack is in ROLLBACK_COMPLETE, delete it
+# 5. If stack is in ROLLBACK_COMPLETE, delete it
 aws cloudformation delete-stack --stack-name tcg-marketplace-dev-compute --region ap-southeast-1
 aws cloudformation wait stack-delete-complete --stack-name tcg-marketplace-dev-compute --region ap-southeast-1
 
-# 5. Redeploy compute stack
+# 6. Redeploy compute stack
 cd ../infra
 ./deploy.ps1 -Environment dev -Template compute -ImageUri "${ECR_URI}:latest"
 ```
@@ -474,10 +485,11 @@ AWS Services
 ## Next Steps
 
 1. ✅ Backend deployed and accessible
-2. ⏭️ Deploy frontend (see options in main README)
+2. ⏭️ Deploy frontend to ECS Fargate: [FRONTEND_ECS_DEPLOYMENT.md](./FRONTEND_ECS_DEPLOYMENT.md) (20-30 minutes)
 3. ⏭️ Configure HTTPS with ACM certificate
-4. ⏭️ Set up monitoring (deploy monitoring.yml)
-5. ⏭️ Configure CI/CD pipeline
+4. ⏭️ Add Custom Domain: Route53 + ACM for custom domain
+5. ⏭️ Add Monitoring: Deploy monitoring.yml for CloudWatch dashboards and alarms
+6. ⏭️ Implement Authorization: Use Cognito groups in backend for role-based access control
 
 ## Internal VPC Access Patterns
 
@@ -519,7 +531,7 @@ Use internal/private IP access when:
 ```typescript
 // In your other ECS service
 const backendUrl = 'http://10.0.1.87:3000';
-const response = await fetch(`${backendUrl}/listings`);
+const response = await fetch(`${backendUrl}/api/listings`);
 ```
 
 #### From EC2 Instance
@@ -529,7 +541,7 @@ const response = await fetch(`${backendUrl}/listings`);
 3. SSH into EC2 and test:
 
 ```bash
-curl http://10.0.1.87:3000/health
+curl http://10.0.1.87:3000/api/health
 ```
 
 #### From Lambda Function
@@ -539,7 +551,7 @@ curl http://10.0.1.87:3000/health
 3. Use private IP in Lambda code:
 
 ```javascript
-const response = await fetch('http://10.0.1.87:3000/listings');
+const response = await fetch('http://10.0.1.87:3000/api/listings');
 ```
 
 ### Security Group Configuration for Internal Access

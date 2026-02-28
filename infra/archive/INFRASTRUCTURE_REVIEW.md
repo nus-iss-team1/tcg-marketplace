@@ -251,7 +251,7 @@ These components were removed and are in `archive/`:
 - VPC: Security groups restrict traffic
 
 ### Application Security ✅
-- CORS configured (needs frontend origin)
+- CORS configured (defaults to allow all origins in dev, configure `CORS_ORIGINS` for production)
 - Input validation in backend (NestJS)
 - Health checks enabled
 - Container insights enabled

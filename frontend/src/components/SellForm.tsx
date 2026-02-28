@@ -53,7 +53,7 @@ export default function SellForm() {
     setError(null)
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
       
       // Create listing
       const listingData = {

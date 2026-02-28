@@ -71,8 +71,11 @@ AWS_REGION=ap-southeast-1
 BUCKET_NAME=tcg-marketplace-dev-storage-123456789012
 TABLE_NAME=tcg-marketplace-dev-data
 
+# CORS (optional - defaults to allow all in dev)
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 ```
+
+**CORS Configuration**: The backend defaults to allowing all origins in development. For local testing with specific origins, set `CORS_ORIGINS`. When deployed behind an ALB with path-based routing, same-origin requests work automatically.
 
 ### 4. Start Backend
 

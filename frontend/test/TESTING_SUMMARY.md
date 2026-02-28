@@ -172,8 +172,11 @@ cd tcg-marketplace/frontend && npm run dev
 **Cause**: Backend CORS not configured for frontend origin  
 **Fix**: Check backend `.env.local`
 ```bash
+# Optional - backend defaults to allow all origins in dev
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 ```
+
+**Note**: When deployed behind an ALB with path-based routing (full-stack deployment), CORS is handled automatically as same-origin requests.
 
 ### Issue: Listings don't appear
 **Cause**: No data in DynamoDB or API error  

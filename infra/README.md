@@ -6,20 +6,25 @@ This directory contains CloudFormation templates and deployment scripts for the 
 
 The infrastructure uses a simplified, cost-effective approach optimized for up to 100 users:
 
-**Simplified Architecture (Recommended):**
+**Full Stack Architecture (Recommended):**
 - **VPC**: Public subnets only (no NAT Gateway)
-- **ECS Fargate**: Containerized NestJS backend with public IP (0.25 vCPU, 512MB RAM)
-- **Application Load Balancer**: HTTPS termination and routing
+- **ECS Fargate**: Containerized NestJS backend + Next.js frontend with public IP (0.25 vCPU, 512MB RAM each)
+- **Application Load Balancer**: Path-based routing (/ → frontend, /api/* → backend)
 - **DynamoDB**: On-demand billing for listings data
 - **S3**: File storage with lifecycle policies and presigned URLs
 - **CloudWatch**: Monitoring and logging
-- **Cost**: ~$25-35/month
+- **Cost**: ~$33-35/month
+
+**Backend Only Architecture:**
+- Same as above but without frontend ECS service
+- Frontend deployed separately (e.g., Vercel)
+- **Cost**: ~$24-26/month
 
 **Full Architecture (Advanced):**
 - Adds private subnets, NAT Gateway, API Gateway, VPC Link
 - Enhanced security isolation
 - **Cost**: ~$90-120/month
-- See templates: base.yml, api.yml, compute.yml
+- See archived templates in archive/ directory
 
 **Comprehensive Review:** See [INFRASTRUCTURE_REVIEW.md](./INFRASTRUCTURE_REVIEW.md) for a complete review of all templates including:
 - Detailed analysis of each YAML template (base.yml, storage.yml, compute.yml, auth.yml, monitoring.yml)
@@ -38,9 +43,36 @@ The infrastructure uses a simplified, cost-effective approach optimized for up t
 
 ## Quick Start
 
-### Manual Deployment (Recommended)
+### Deployment Status
 
-The complete deployment workflow with all commands:
+**Current Status**: ✅ Fully Operational - See [../DEPLOYMENT_STATUS.md](../DEPLOYMENT_STATUS.md) for complete deployment details and application URLs.
+
+### Automated Deployment (Recommended)
+
+The fastest way to deploy is using the automated script:
+
+```powershell
+cd tcg-marketplace/infra
+
+# Backend only
+./deploy-automated.ps1 -Environment dev -BackendOnly
+
+# Full stack (backend + frontend)
+./deploy-automated.ps1 -Environment dev
+
+# Skip Docker build (use existing images)
+./deploy-automated.ps1 -Environment dev -BackendOnly -SkipBuild
+```
+
+**What it does:**
+- Builds and pushes Docker images to ECR
+- Deploys CloudFormation stacks in correct order
+- Validates prerequisites
+- Displays deployment URLs
+
+### Manual Deployment (Alternative)
+
+For complete control and understanding of each step:
 
 ```powershell
 cd tcg-marketplace/infra
@@ -70,7 +102,7 @@ This includes:
 - DynamoDB table for listings
 - ECS Fargate with Application Load Balancer
 - Public backend URL: `http://tcg-marketplace-dev-alb-911708205.ap-southeast-1.elb.amazonaws.com`
-- **Cost**: ~$25-35/month
+- **Cost**: ~$24-26/month (backend only) or ~$33-35/month (full stack)
 
 **Current Deployment:**
 - AWS Account: 274603886128
@@ -156,9 +188,10 @@ The project uses a simplified, cost-effective architecture optimized for develop
 
 1. **storage.yml** - S3 bucket, DynamoDB table, IAM roles (no VPC dependencies)
 2. **base.yml** - VPC with public subnets only, security groups (no NAT Gateway)
-3. **compute.yml** - ECS Fargate with Application Load Balancer (no API Gateway)
-4. **auth.yml** - Cognito User Pool and Identity Pool (optional)
-5. **monitoring.yml** - CloudWatch dashboards and alarms (optional)
+3. **compute.yml** - ECS Fargate backend with Application Load Balancer (no API Gateway)
+4. **compute-fullstack.yml** - ECS Fargate for both frontend and backend with path-based routing (alternative to Vercel)
+5. **auth.yml** - Cognito User Pool and Identity Pool (optional)
+6. **monitoring.yml** - CloudWatch dashboards and alarms (optional)
 
 **Benefits:**
 - 65-70% cost reduction (~$60-85/month savings)
@@ -186,7 +219,9 @@ Deploy the infrastructure in this order due to dependencies:
 
 1. **storage.yml** - S3 bucket, DynamoDB table, IAM roles
 2. **base.yml** - VPC with public subnets, security groups
-3. **compute.yml** - ECS Fargate with Application Load Balancer
+3. **compute.yml** OR **compute-fullstack.yml** - Choose one:
+   - **compute.yml**: Backend only (frontend on Vercel) - Recommended
+   - **compute-fullstack.yml**: Both frontend and backend on ECS with path-based routing
 4. **auth.yml** - Cognito User Pool (optional)
 5. **monitoring.yml** - CloudWatch dashboards (optional)
 
@@ -249,9 +284,17 @@ aws cloudformation deploy `
 **compute.yml:**
 - ECS Fargate cluster
 - Application Load Balancer (public)
-- ECS service with public IP
+- ECS service with public IP (backend only)
 - Auto-scaling configuration (CPU, memory, and request-based)
 - CloudWatch Logs integration
+
+**compute-fullstack.yml:**
+- ECS Fargate cluster
+- Application Load Balancer with path-based routing
+- Two ECS services: frontend (/) and backend (/api/*)
+- Auto-scaling for both services
+- Frontend uses relative URLs for API calls (no NEXT_PUBLIC_API_URL needed)
+- Alternative to deploying frontend on Vercel
 
 **Detailed review:** See [INFRASTRUCTURE_REVIEW.md](./INFRASTRUCTURE_REVIEW.md) for comprehensive template analysis including:
 - Resource-by-resource breakdown of each template
@@ -265,19 +308,28 @@ aws cloudformation deploy `
 - Storage: `BucketName`, `BucketArn`, `TableName`, `TableArn`, `ECSTaskRoleArn`, `ECSTaskExecutionRoleArn`
 - Base: `VPCId`, `PublicSubnet1Id`, `PublicSubnet2Id`, `ECSSecurityGroupId`, `ALBSecurityGroupId`
 - Compute: `LoadBalancerURL`, `ECSClusterName`, `ECSServiceName`, `TargetGroupArn`
+- Compute-Fullstack: `LoadBalancerURL`, `FrontendURL`, `BackendURL`, `ECSClusterName`, `BackendServiceName`, `FrontendServiceName`
 
 ## Cost Optimization
 
 The simplified architecture provides significant cost savings:
 
-**Simplified Architecture (~$25-35/month):**
+**Full Stack Architecture (~$33-35/month) - Recommended:**
 - Application Load Balancer: ~$16/month
-- ECS Fargate (0.25 vCPU, 512MB): ~$8/month
+- ECS Fargate Backend (0.25 vCPU, 512MB): ~$8/month
+- ECS Fargate Frontend (0.25 vCPU, 512MB): ~$8/month
 - S3 + DynamoDB: ~$1-5/month (pay-per-use)
 - No NAT Gateway, no API Gateway, no VPC Link
+- Complete control over both frontend and backend
+
+**Backend Only Architecture (~$24-26/month):**
+- Application Load Balancer: ~$16/month
+- ECS Fargate Backend (0.25 vCPU, 512MB): ~$8/month
+- S3 + DynamoDB: ~$1-5/month (pay-per-use)
+- Frontend deployed separately (e.g., Vercel free tier)
 
 **Additional Savings:**
-- Scale ECS to 0 tasks when not in use (saves ~$8/month)
+- Scale ECS to 0 tasks when not in use (saves ~$8/month per service)
 - Use S3 lifecycle policies (automatic)
 - DynamoDB on-demand billing (pay only for what you use)
 
@@ -287,6 +339,86 @@ The simplified architecture provides significant cost savings:
 - API Gateway: ~$3.50/million requests
 - VPC Link: ~$36/month
 - Network Load Balancer: ~$16/month
+
+## Deployment Options
+
+### Option 1: Full Stack on ECS (Backend + Frontend) - Recommended
+
+**Use `compute-fullstack.yml` template**
+
+Deploy both frontend and backend containers to ECS with path-based routing:
+- Frontend serves from `/` (root path)
+- Backend API serves from `/api/*`
+- Single ALB handles routing
+- No external frontend hosting needed
+- Cost: ~$33-35/month
+
+**Use when:**
+- You need full control over frontend hosting
+- You want everything in your AWS account
+- You have compliance requirements for frontend hosting
+- You prefer container-based deployment for both tiers
+
+**Deploy:**
+```powershell
+cd tcg-marketplace/infra
+
+# Option 1: Using parameter file (recommended)
+aws cloudformation deploy `
+  --template-file compute-fullstack.yml `
+  --stack-name tcg-marketplace-dev-compute `
+  --parameter-overrides file://parameters/dev-fullstack.json `
+  --capabilities CAPABILITY_NAMED_IAM `
+  --region ap-southeast-1
+
+# Option 2: Using inline parameters
+./deploy.ps1 -Environment dev -Template compute-fullstack -BackendImageUri "<backend-image-uri>" -FrontendImageUri "<frontend-image-uri>"
+```
+
+**What you get:**
+- Frontend URL: `http://your-alb-dns/`
+- Backend API URL: `http://your-alb-dns/api/*`
+- Automatic API URL configuration (frontend knows backend location)
+- Both services auto-scale independently
+
+**See [FRONTEND_ECS_DEPLOYMENT.md](./FRONTEND_ECS_DEPLOYMENT.md) for complete guide.**
+
+**Troubleshooting:** If you encounter Docker build issues with the frontend, see [../frontend/DEPLOYMENT_FIX.md](../frontend/DEPLOYMENT_FIX.md) for solutions to common problems including React 19 compatibility and build configuration issues.
+
+### Option 2: Backend on ECS + Frontend on Vercel
+
+**Use `compute.yml` template**
+
+Alternative approach for frontend deployment:
+- Backend runs on ECS Fargate
+- Frontend deployed to Vercel (free tier, global CDN, automatic HTTPS)
+- Lowest cost (~$24-26/month)
+- Best performance (Vercel's global edge network)
+
+**Deploy:**
+```powershell
+cd tcg-marketplace/infra
+
+# Option 1: Using parameter file (recommended)
+aws cloudformation deploy `
+  --template-file compute.yml `
+  --stack-name tcg-marketplace-dev-compute `
+  --parameter-overrides file://parameters/dev.json ImageUri="<backend-image-uri>" `
+  --region ap-southeast-1
+
+# Option 2: Using inline parameters
+./deploy.ps1 -Environment dev -Template compute -ImageUri "<backend-image-uri>"
+```
+
+**Then deploy frontend:**
+- **Option A**: Deploy to Vercel - See [../frontend/VERCEL_DEPLOYMENT.md](../frontend/VERCEL_DEPLOYMENT.md) (5 minutes, free tier available)
+- **Option B**: Deploy to ECS Fargate - See [FRONTEND_ECS_DEPLOYMENT.md](./FRONTEND_ECS_DEPLOYMENT.md) (20-30 minutes, ~$8/month additional cost)
+
+**Trade-offs vs Full Stack:**
+- Lower cost (one ECS service instead of two)
+- Requires external hosting service (Vercel)
+- Global CDN included with Vercel
+- Automatic HTTPS with Vercel
 
 ### Cost Management Scripts
 
@@ -311,7 +443,7 @@ If using the archived full architecture with NAT Gateway, cost management script
 - Auto-scaling triggers: CPU > 70%, Memory > 80%, or 1000 requests/target/minute
 - Public subnets (simplified architecture)
 - Minimal monitoring retention
-- **Cost**: ~$25-35/month (base), scales up to ~$50/month at max capacity
+- **Cost**: ~$24-26/month (backend only) or ~$33-35/month (full stack), scales up to ~$50-70/month at max capacity
 
 ### Production (prod)
 - 1-10 ECS tasks (auto-scaling enabled), 0.5 vCPU, 1GB RAM
@@ -351,10 +483,12 @@ User group membership is included in JWT tokens and can be used for role-based a
 The deployed Application Load Balancer exposes these endpoints:
 
 **Simplified Architecture (No Authentication):**
-- `GET /health` - Health check
-- `POST /media/presign` - Generate S3 presigned URLs
-- `GET /listings` - Retrieve trading card listings
-- `POST /listings` - Create new listings
+- `GET /api/health` - Health check
+- `POST /api/media/presign` - Generate S3 presigned URLs
+- `GET /api/listings` - Retrieve trading card listings
+- `POST /api/listings` - Create new listings
+
+**Note**: All backend endpoints are prefixed with `/api` for path-based routing compatibility.
 
 **With Cognito (Optional):**
 - Add authentication to protect endpoints
@@ -432,7 +566,7 @@ Key steps:
 4. Verify health checks pass
 5. Test endpoints
 
-**Important**: Ensure Dockerfile includes `RUN apk add --no-cache curl` for health checks to work properly.
+**Important**: The Dockerfile includes curl for the Docker HEALTHCHECK instruction (used for local testing). In ECS, the ALB performs health checks via HTTP GET to `/api/health`.
 
 **Documentation:** 
 - [MANUAL_DEPLOYMENT_GUIDE.md](./MANUAL_DEPLOYMENT_GUIDE.md) - Complete manual command reference (START HERE)
@@ -444,9 +578,9 @@ Key steps:
 
 After infrastructure deployment:
 
-1. **Test your endpoints** using the provided curl commands
-2. **Test locally** using the [backend/test/LOCAL_TESTING.md](../backend/test/LOCAL_TESTING.md) guide
-3. **Configure frontend** with ALB URL and Cognito settings (if using auth)
+1. **Test backend endpoints** using the provided curl commands
+2. **Deploy frontend to ECS Fargate** - See [FRONTEND_ECS_DEPLOYMENT.md](./FRONTEND_ECS_DEPLOYMENT.md) for complete guide
+3. **Test locally** using the [backend/test/LOCAL_TESTING.md](../backend/test/LOCAL_TESTING.md) guide
 4. **Set up monitoring** (optional: deploy `monitoring.yml`)
 5. **Set up CI/CD pipeline** for automated deployments (Phase 2)
 

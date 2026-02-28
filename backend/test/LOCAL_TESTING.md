@@ -51,9 +51,11 @@ AWS_REGION=ap-southeast-1
 BUCKET_NAME=tcg-marketplace-dev-storage-123456789012
 TABLE_NAME=tcg-marketplace-dev-data
 
-# CORS
+# CORS (optional - defaults to allow all in dev)
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 ```
+
+**CORS Configuration**: The backend defaults to allowing all origins in development. For local testing with specific origins, set `CORS_ORIGINS` to a comma-separated list. When deployed behind an ALB with path-based routing (full-stack deployment), same-origin requests work automatically without CORS configuration.
 
 **Note:** The backend loads `.env.local` first, then falls back to `.env`. This allows you to keep local configuration separate from committed defaults.
 
@@ -269,7 +271,7 @@ aws dynamodb describe-table --table-name tcg-marketplace-dev-data
 ```
 
 ### Issue: CORS errors in browser
-**Solution:** Ensure `CORS_ORIGINS` in `.env.local` includes frontend URL.
+**Solution:** Backend defaults to allow all origins in development. For specific origins, ensure `CORS_ORIGINS` in `.env.local` includes frontend URL. When deployed behind an ALB with path-based routing, same-origin requests work automatically.
 
 ## Cleanup Test Data
 

@@ -62,8 +62,10 @@ aws cloudformation describe-stacks --stack-name tcg-marketplace-dev-compute --re
 
 ```powershell
 # Replace with your actual ALB URL
-curl http://YOUR-ALB-DNS-NAME/health
+curl http://YOUR-ALB-DNS-NAME/api/health
 ```
+
+**Note**: All backend endpoints are prefixed with `/api` for path-based routing compatibility.
 
 ## Environment Variables
 
@@ -75,13 +77,35 @@ Your backend will automatically receive these from ECS:
 - `BUCKET_NAME`: tcg-marketplace-dev-storage-274603886128
 - `TABLE_NAME`: tcg-marketplace-dev-data
 
+**Optional Environment Variables:**
+- `CORS_ORIGINS`: Comma-separated list of allowed origins (defaults to allow all in dev)
+
 IAM roles are already configured - no AWS credentials needed in code!
+
+### CORS Configuration
+
+The backend CORS configuration defaults to allowing all origins in development:
+
+```typescript
+// backend/src/main.ts
+app.enableCors({
+  origin: process.env.CORS_ORIGINS?.split(',') || true, // Allow all origins in dev
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+});
+```
+
+**For production deployments:**
+- Set `CORS_ORIGINS` environment variable in ECS task definition to restrict allowed origins
+- When using full-stack deployment (frontend + backend behind same ALB), same-origin requests work automatically
+- Example: `CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com`
 
 ## Troubleshooting
 
 ### Health Check Failing
 
-Make sure your backend has a `/health` endpoint that returns 200 OK:
+Make sure your backend has a `/health` endpoint that returns 200 OK. With the global `/api` prefix, the full path will be `/api/health`:
 
 ```typescript
 @Get('health')
@@ -89,6 +113,8 @@ health() {
   return { status: 'ok' };
 }
 ```
+
+**Note**: The global prefix `/api` is automatically applied to all routes.
 
 ### Can't Connect to S3/DynamoDB
 

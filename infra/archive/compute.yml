@@ -1,0 +1,297 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'TCG Marketplace - Simplified ECS Compute with Public IP'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Environment name
+  
+  ProjectName:
+    Type: String
+    Default: tcg-marketplace
+    Description: Project name for resource naming
+  
+  ImageUri:
+    Type: String
+    Default: 'nginx:latest'
+    Description: Docker image URI for the backend application
+
+Conditions:
+  IsProduction: !Equals [!Ref Environment, 'prod']
+
+Resources:
+  # Application Load Balancer
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-alb'
+      Type: application
+      Scheme: internet-facing
+      IpAddressType: ipv4
+      Subnets:
+        - !ImportValue 
+            Fn::Sub: '${ProjectName}-${Environment}-public-subnet-1-id'
+        - !ImportValue 
+            Fn::Sub: '${ProjectName}-${Environment}-public-subnet-2-id'
+      SecurityGroups:
+        - !ImportValue 
+            Fn::Sub: '${ProjectName}-${Environment}-alb-sg-id'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${Environment}-alb'
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Target Group
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-tg'
+      Port: 3000
+      Protocol: HTTP
+      TargetType: ip
+      VpcId: !ImportValue 
+        Fn::Sub: '${ProjectName}-${Environment}-vpc-id'
+      HealthCheckEnabled: true
+      HealthCheckPath: /api/health
+      HealthCheckProtocol: HTTP
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: '200'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ALB Listener (HTTP)
+  ALBListenerHTTP:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  # ECS Cluster
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub '${ProjectName}-${Environment}-cluster'
+      CapacityProviders:
+        - FARGATE
+        - FARGATE_SPOT
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Weight: 1
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${Environment}-cluster'
+        - Key: Environment
+          Value: !Ref Environment
+
+  # CloudWatch Log Group
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/${ProjectName}-${Environment}'
+      RetentionInDays: 7
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ECS Task Definition
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub '${ProjectName}-${Environment}-backend'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: '256'      # 0.25 vCPU
+      Memory: '512'   # 512 MB
+      ExecutionRoleArn: !ImportValue 
+        Fn::Sub: '${ProjectName}-${Environment}-ecs-execution-role-arn'
+      TaskRoleArn: !ImportValue 
+        Fn::Sub: '${ProjectName}-${Environment}-ecs-task-role-arn'
+      ContainerDefinitions:
+        - Name: backend
+          Image: !Ref ImageUri
+          Essential: true
+          PortMappings:
+            - ContainerPort: 3000
+              Protocol: tcp
+          Environment:
+            - Name: NODE_ENV
+              Value: !Ref Environment
+            - Name: PORT
+              Value: '3000'
+            - Name: AWS_REGION
+              Value: !Ref 'AWS::Region'
+            - Name: BUCKET_NAME
+              Value: !ImportValue 
+                Fn::Sub: '${ProjectName}-${Environment}-bucket-name'
+            - Name: TABLE_NAME
+              Value: !ImportValue 
+                Fn::Sub: '${ProjectName}-${Environment}-table-name'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref ECSLogGroup
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: backend
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ECS Service
+  ECSService:
+    Type: AWS::ECS::Service
+    DependsOn: ALBListenerHTTP
+    Properties:
+      ServiceName: !Sub '${ProjectName}-${Environment}-backend'
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref TaskDefinition
+      LaunchType: FARGATE
+      DesiredCount: 1
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          SecurityGroups:
+            - !ImportValue 
+                Fn::Sub: '${ProjectName}-${Environment}-ecs-sg-id'
+          Subnets:
+            - !ImportValue 
+                Fn::Sub: '${ProjectName}-${Environment}-public-subnet-1-id'
+            - !ImportValue 
+                Fn::Sub: '${ProjectName}-${Environment}-public-subnet-2-id'
+          AssignPublicIp: ENABLED
+      LoadBalancers:
+        - TargetGroupArn: !Ref TargetGroup
+          ContainerName: backend
+          ContainerPort: 3000
+      HealthCheckGracePeriodSeconds: 120
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Auto Scaling Target
+  ServiceScalingTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: !If [IsProduction, 10, 3]  # Max 10 for prod, 3 for dev
+      MinCapacity: 1                           # Min 1 for all environments
+      ResourceId: !Sub 'service/${ECSCluster}/${ECSService.Name}'
+      RoleARN: !GetAtt AutoScalingRole.Arn
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+
+  # Auto Scaling Policy - CPU Based
+  ServiceScalingPolicyCPU:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub '${ProjectName}-${Environment}-cpu-scaling'
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ServiceScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        TargetValue: 50.0      # Industry standard
+        ScaleInCooldown: 300   # 5 minutes
+        ScaleOutCooldown: 60   # 1 minute
+
+  # Auto Scaling Policy - Memory Based
+  ServiceScalingPolicyMemory:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub '${ProjectName}-${Environment}-memory-scaling'
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ServiceScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageMemoryUtilization
+        TargetValue: 70.0      # Slightly higher for memory
+        ScaleInCooldown: 300   # 5 minutes
+        ScaleOutCooldown: 60   # 1 minute
+
+  # Auto Scaling Policy - Request Count Based
+  ServiceScalingPolicyRequests:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub '${ProjectName}-${Environment}-request-scaling'
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ServiceScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ALBRequestCountPerTarget
+          ResourceLabel: !Sub 
+            - '${LoadBalancerFullName}/${TargetGroupFullName}'
+            - LoadBalancerFullName: !GetAtt ApplicationLoadBalancer.LoadBalancerFullName
+              TargetGroupFullName: !GetAtt TargetGroup.TargetGroupFullName
+        TargetValue: 1000.0    # 1000 requests per target per minute
+        ScaleInCooldown: 300   # 5 minutes
+        ScaleOutCooldown: 60   # 1 minute
+
+  # IAM Role for Application Auto Scaling
+  AutoScalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-autoscaling-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: application-autoscaling.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+
+Outputs:
+  LoadBalancerDNS:
+    Description: Application Load Balancer DNS Name
+    Value: !GetAtt ApplicationLoadBalancer.DNSName
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-alb-dns'
+
+  LoadBalancerURL:
+    Description: Application Load Balancer URL
+    Value: !Sub 'http://${ApplicationLoadBalancer.DNSName}'
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-alb-url'
+
+  ECSClusterName:
+    Description: ECS Cluster Name
+    Value: !Ref ECSCluster
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-ecs-cluster-name'
+
+  ECSServiceName:
+    Description: ECS Service Name
+    Value: !GetAtt ECSService.Name
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-ecs-service-name'
+
+  TargetGroupArn:
+    Description: Target Group ARN
+    Value: !Ref TargetGroup
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-target-group-arn'

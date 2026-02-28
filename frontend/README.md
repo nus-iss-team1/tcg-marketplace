@@ -75,6 +75,29 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+You have two deployment options for the TCG Marketplace frontend:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Option A: Vercel (Recommended)**
+- Easiest deployment method using the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme)
+- Free tier available, global CDN, automatic HTTPS
+- See **[VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)** for complete guide (5 minutes)
+
+**Option B: AWS ECS Fargate**
+- Full control over hosting infrastructure
+- Deployed alongside backend on AWS
+- Uses Next.js `output: 'standalone'` mode for optimized Docker deployments (smaller images, faster startup)
+- See **[../infra/FRONTEND_ECS_DEPLOYMENT.md](../infra/FRONTEND_ECS_DEPLOYMENT.md)** for complete guide (20-30 minutes)
+- See **[DEPLOYMENT_FIX.md](./DEPLOYMENT_FIX.md)** for troubleshooting build issues
+
+The guide covers:
+- Dashboard deployment (easiest, 5 minutes)
+- CLI deployment (for developers)
+- Environment variable configuration
+- Automatic deployments from GitHub
+- Multi-branch deployments (production, preview, PR deployments)
+- Branch-specific environment variables
+- Branch protection and testing workflows
+- Custom domain setup
+- Troubleshooting and monitoring
+
+Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

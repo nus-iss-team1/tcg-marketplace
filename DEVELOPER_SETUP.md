@@ -68,10 +68,12 @@ AWS_REGION=ap-southeast-1
 BUCKET_NAME=tcg-marketplace-dev-storage-XXXXXX
 TABLE_NAME=tcg-marketplace-dev-data
 
-# CORS
+# CORS (optional - defaults to allow all in dev)
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 "@ | Out-File -FilePath .env.local -Encoding UTF8
 ```
+
+**CORS Configuration**: The backend defaults to allowing all origins in development. For production deployments with separate frontend domains, configure `CORS_ORIGINS` in the ECS task definition environment variables.
 
 **Replace `XXXXXX` with your actual bucket name from Step 2!**
 
@@ -82,15 +84,14 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 ```powershell
 cd ../frontend
 
-# Create .env.local file
+# Create .env.local file (optional - only needed for custom configuration)
 @"
-# API Configuration
-NEXT_PUBLIC_API_URL=http://localhost:3000
-
 # Environment
 NODE_ENV=development
 "@ | Out-File -FilePath .env.local -Encoding UTF8
 ```
+
+**Note:** The frontend uses relative URLs (`/api`) for API calls. For local development with separate servers, you'll need to configure a proxy or update the API client to use `http://localhost:3000` directly.
 
 ### 5. Start Development Servers
 
@@ -201,9 +202,12 @@ git push
 **Error:** `Failed to fetch listings`
 
 **Solution:** 
-1. Verify backend is running on port 3000: `curl http://localhost:3000/health`
-2. Check `frontend/.env.local` has `NEXT_PUBLIC_API_URL=http://localhost:3000`
-3. Check backend CORS allows frontend origin
+1. Verify backend is running on port 3000: `curl http://localhost:3000/api/health`
+2. The frontend uses relative URLs (`/api`) which work when deployed behind the same ALB
+3. For local development, you may need to configure a proxy or update API calls to use `http://localhost:3000`
+4. Backend CORS defaults to allow all origins in dev (configure `CORS_ORIGINS` for specific origins)
+
+**Note**: All backend endpoints are prefixed with `/api`.
 
 ### Tests fail with AWS errors
 
@@ -270,6 +274,22 @@ For deploying to AWS, see:
 - **[infra/README.md](./infra/README.md)** - Infrastructure overview
 - **[infra/ARCHITECTURE_CHANGES.md](./infra/ARCHITECTURE_CHANGES.md)** - Architecture details
 
+For deploying the frontend, you have two options:
+
+**Option A: Vercel (Recommended)**
+- **[frontend/VERCEL_DEPLOYMENT.md](./frontend/VERCEL_DEPLOYMENT.md)** - Complete Vercel deployment guide (5 minutes)
+  - Dashboard and CLI deployment options
+  - Multi-branch deployments (production, preview, and PR deployments)
+  - Free tier available with global CDN
+
+**Option B: AWS ECS Fargate**
+- **[infra/FRONTEND_ECS_DEPLOYMENT.md](./infra/FRONTEND_ECS_DEPLOYMENT.md)** - Complete ECS deployment guide (20-30 minutes)
+  - Full control over hosting infrastructure
+  - Deployed alongside backend on AWS
+  - Additional cost (~$8/month)
+  - Environment-specific configurations
+  - Branch protection and testing workflows
+
 **Architecture:**
 - ECS Fargate with Application Load Balancer
 - Public subnets (no NAT Gateway)
@@ -313,8 +333,10 @@ cd frontend/test && .\integration-e2e.ps1     # Frontend integration tests
 2. ✅ Run all tests successfully
 3. ✅ Make a small change and test it
 4. ✅ Read the architecture documentation
-5. ✅ Join the team Slack channel
-6. ✅ Pick up your first ticket
+5. ⏭️ Deploy backend to AWS: [infra/MANUAL_DEPLOYMENT_GUIDE.md](./infra/MANUAL_DEPLOYMENT_GUIDE.md)
+6. ⏭️ Deploy frontend: [frontend/VERCEL_DEPLOYMENT.md](./frontend/VERCEL_DEPLOYMENT.md) (recommended) or [infra/FRONTEND_ECS_DEPLOYMENT.md](./infra/FRONTEND_ECS_DEPLOYMENT.md) (alternative)
+7. ✅ Join the team Slack channel
+8. ✅ Pick up your first ticket
 
 Welcome to the team! 🎉
 
