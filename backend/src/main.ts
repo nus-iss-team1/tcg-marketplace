@@ -12,6 +12,7 @@ async function bootstrap() {
   const loggingService = app.get(LoggingService);
   const logger = loggingService.getLogger();
 
+  app.setGlobalPrefix("api");
   app.useLogger(logger);
   overrideConsole(logger);
 

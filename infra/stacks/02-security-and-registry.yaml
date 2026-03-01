@@ -46,11 +46,11 @@ Resources:
     Properties:
       RoleName: !Sub "${GitHubRepo}-monorepo-role"
       AssumeRolePolicyDocument:
-        Version: "2012-10-17"
+        Version: "2012-10-17 "
         Statement:
           - Effect: Allow
             Principal:
-              Federated: !Ref GithubOidc
+              Federated: !Ref GithubOidcs
             Action: sts:AssumeRoleWithWebIdentity
             Condition:
               StringLike:

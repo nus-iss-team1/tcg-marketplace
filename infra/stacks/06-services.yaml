@@ -113,7 +113,7 @@ Resources:
         - Name: app
           Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectNamespace}/tcgm-app:${AppImageTag}"
           PortMappings:
-            - ContainerPort: 3000
+            - ContainerPort: 3001
           LogConfiguration:
             LogDriver: awslogs
             Options:
