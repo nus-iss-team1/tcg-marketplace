@@ -12,6 +12,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Cognito config – inlined into the JS bundle at build time
+ARG NEXT_PUBLIC_COGNITO_USER_POOL_ID
+ARG NEXT_PUBLIC_COGNITO_CLIENT_ID
+
 # Disable telemetry during build for privacy/speed
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
