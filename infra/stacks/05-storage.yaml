@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: S3 Storage for card images and user uploads
+
+Parameters:
+  ProjectNamespace:
+    Type: String
+    Default: tcg-marketplace
+
+Resources:
+  # ──────────────────────────────────────────────
+  # Asset Storage Bucket
+  # ──────────────────────────────────────────────
+  AssetsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectNamespace}-assets"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+Outputs:
+  AssetsBucketName:
+    Description: "The name of the S3 assets bucket"
+    Value: !Ref AssetsBucket
+    Export:
+      Name: !Sub "${ProjectNamespace}-AssetsBucketName"
+
+  AssetsBucketArn:
+    Description: "The ARN of the S3 assets bucket"
+    Value: !GetAtt AssetsBucket.Arn
+    Export:
+      Name: !Sub "${ProjectNamespace}-AssetsBucketArn"

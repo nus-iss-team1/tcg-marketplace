@@ -50,6 +50,26 @@ Resources:
               Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
       Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource:
+                  - !Sub
+                    - "${BucketArn}/*"
+                    - BucketArn: !ImportValue
+                        Fn::Sub: "${ProjectNamespace}-AssetsBucketArn"
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource:
+                  - !ImportValue
+                      Fn::Sub: "${ProjectNamespace}-AssetsBucketArn"
         - PolicyName: DynamoDBAccess
           PolicyDocument:
             Version: "2012-10-17"
@@ -121,6 +141,21 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: app
           Environment:
+            - Name: TZ
+              Value: Asia/Singapore
+            - Name: LOG_LEVEL
+              Value: info
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: AWS_S3_BUCKET
+              Value: !ImportValue
+                Fn::Sub: "${ProjectNamespace}-AssetsBucketName"
+            - Name: COGNITO_USER_POOL_ID
+              Value: !ImportValue
+                Fn::Sub: "${ProjectNamespace}-dev-UserPoolId"
+            - Name: COGNITO_APP_CLIENT_ID
+              Value: !ImportValue
+                Fn::Sub: "${ProjectNamespace}-dev-UserPoolClientId"
             - Name: GAME_CARD_LOOKUP_TABLE
               Value: !ImportValue
                 Fn::Sub: "${ProjectNamespace}-GameCardLookupTableName"
@@ -175,7 +210,7 @@ Resources:
                 Fn::Sub: "${ProjectNamespace}-ECSSecurityGroupId"
       LoadBalancers:
         - ContainerName: app
-          ContainerPort: 3000
+          ContainerPort: 3001
           TargetGroupArn: !ImportValue
             Fn::Sub: "${ProjectNamespace}-AppTargetGroupArn"
 
