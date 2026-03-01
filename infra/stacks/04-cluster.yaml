@@ -62,7 +62,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       Name: !Sub "${ProjectNamespace}-app-tg"
-      Port: 3000
+      Port: 3001
       Protocol: HTTP
       VpcId: !ImportValue
         Fn::Sub: "${ProjectNamespace}-VpcId"
@@ -92,7 +92,7 @@ Resources:
       LoadBalancerArn: !Ref ALB
       Port: 80
       Protocol: HTTP
-      DefaultAction:
+      DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref WebTargetGroup
 
