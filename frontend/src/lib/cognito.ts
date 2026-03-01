@@ -6,12 +6,17 @@ import {
   CognitoUserSession,
 } from "amazon-cognito-identity-js";
 
-const poolData = {
-  UserPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID!,
-  ClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID!,
-};
+let userPool: CognitoUserPool | null = null;
 
-const userPool = new CognitoUserPool(poolData);
+function getUserPool(): CognitoUserPool {
+  if (!userPool) {
+    userPool = new CognitoUserPool({
+      UserPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID!,
+      ClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID!,
+    });
+  }
+  return userPool;
+}
 
 export function signUp(
   username: string,
@@ -24,7 +29,7 @@ export function signUp(
   }
 
   return new Promise((resolve, reject) => {
-    userPool.signUp(username, password, attributes, [], (err, result) => {
+    getUserPool().signUp(username, password, attributes, [], (err, result) => {
       if (err || !result) {
         reject(err);
         return;
@@ -40,7 +45,7 @@ export function signIn(
 ): Promise<CognitoUserSession> {
   const cognitoUser = new CognitoUser({
     Username: username,
-    Pool: userPool,
+    Pool: getUserPool(),
   });
 
   const authDetails = new AuthenticationDetails({
@@ -57,14 +62,14 @@ export function signIn(
 }
 
 export function signOut(): void {
-  const currentUser = userPool.getCurrentUser();
+  const currentUser = getUserPool().getCurrentUser();
   if (currentUser) {
     currentUser.signOut();
   }
 }
 
 export function getCurrentSession(): Promise<CognitoUserSession | null> {
-  const currentUser = userPool.getCurrentUser();
+  const currentUser = getUserPool().getCurrentUser();
   if (!currentUser) return Promise.resolve(null);
 
   return new Promise((resolve, reject) => {
