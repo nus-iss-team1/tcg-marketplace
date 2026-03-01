@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HomeIcon, ShoppingCartIcon, PackageIcon, SettingsIcon, ShieldIcon } from "lucide-react";
+import { HomeIcon, ShieldIcon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
   Sidebar,
