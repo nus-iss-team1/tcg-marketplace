@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "listing-service",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -18,8 +18,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "docker:build": "docker build -t backend .",
-    "docker:run": "docker run -p 3001:3001 --name backend-container backend"
+    "docker:build": "docker build -t listing-service .",
+    "docker:run": "docker run -p 3001:3001 --name listing-service-container listing-service"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.990.0",
