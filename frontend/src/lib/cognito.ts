@@ -86,5 +86,5 @@ export function getCurrentSession(): Promise<CognitoUserSession | null> {
 }
 
 export function getCurrentUser() {
-  return userPool.getCurrentUser();
+  return getUserPool().getCurrentUser();
 }
