@@ -143,6 +143,8 @@ Resources:
           Environment:
             - Name: TZ
               Value: Asia/Singapore
+            - Name: LOG_DIR
+              Value: /tmp/logs
             - Name: LOG_LEVEL
               Value: info
             - Name: AWS_REGION
