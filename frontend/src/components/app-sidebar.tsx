@@ -19,9 +19,6 @@ import {
 
 const navItems = [
   { title: "Home", href: "/", icon: HomeIcon },
-  { title: "Marketplace", href: "/marketplace", icon: ShoppingCartIcon },
-  { title: "Collection", href: "/collection", icon: PackageIcon },
-  { title: "Settings", href: "/settings", icon: SettingsIcon },
 ];
 
 const adminItems = [
