@@ -106,10 +106,10 @@ Resources:
                         Fn::Sub: "${ProjectNamespace}-TCGMarketplaceTableArn"
 
   # Log Groups
-  AppLogGroup:
+  ListingServiceLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/ecs/${ProjectNamespace}/app"
+      LogGroupName: !Sub "/ecs/${ProjectNamespace}/listing-service"
       RetentionInDays: 14
 
   WebLogGroup:
@@ -119,10 +119,10 @@ Resources:
       RetentionInDays: 14
 
   # Task Definitions
-  AppTaskDefinition:
+  ListingServiceTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub "${ProjectNamespace}-app"
+      Family: !Sub "${ProjectNamespace}-listing-service"
       Cpu: "256"
       Memory: "512"
       NetworkMode: awsvpc
@@ -131,15 +131,15 @@ Resources:
       TaskRoleArn: !GetAtt ECSTaskRole.Arn
       ContainerDefinitions:
         - Name: app
-          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectNamespace}/tcgm-app:${AppImageTag}"
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectNamespace}/tcgm-listing:${AppImageTag}"
           PortMappings:
             - ContainerPort: 3001
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Ref AppLogGroup
+              awslogs-group: !Ref ListingServiceLogGroup
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: app
+              awslogs-stream-prefix: listing-service
           Environment:
             - Name: TZ
               Value: Asia/Singapore
@@ -191,13 +191,13 @@ Resources:
               awslogs-stream-prefix: web
 
   # Services
-  AppService:
+  ListingService:
     Type: AWS::ECS::Service
     Properties:
-      ServiceName: !Sub "${ProjectNamespace}-app-service"
+      ServiceName: !Sub "${ProjectNamespace}-listing-service"
       Cluster: !ImportValue
         Fn::Sub: "${ProjectNamespace}-ClusterArn"
-      TaskDefinition: !Ref AppTaskDefinition
+      TaskDefinition: !Ref ListingServiceTaskDefinition
       DesiredCount: 1
       LaunchType: FARGATE
       NetworkConfiguration:
@@ -242,10 +242,10 @@ Resources:
             Fn::Sub: "${ProjectNamespace}-WebTargetGroupArn"
 
 Outputs:
-  AppServiceName:
-    Value: !GetAtt AppService.Name
+  ListingServiceName:
+    Value: !GetAtt ListingService.Name
     Export:
-      Name: !Sub "${ProjectNamespace}-AppServiceName"
+      Name: !Sub "${ProjectNamespace}-ListingServiceName"
 
   WebServiceName:
     Value: !GetAtt WebService.Name
