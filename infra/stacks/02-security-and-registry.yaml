@@ -22,11 +22,11 @@ Resources:
       ClientIdList: [sts.amazonaws.com]
       ThumbprintList: [6938fd4d98bab03faadb97b34396831e3780aea1]
 
-  # 2. Repository for the App Image
-  AppRepository:
+  # 2. Repository for the Listing Service Image
+  ListingServiceRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub "${ProjectNamespace}/tcgm-app"
+      RepositoryName: !Sub "${ProjectNamespace}/tcgm-listing"
       LifecyclePolicy:
         LifecyclePolicyText: |
           {"rules":[{"rulePriority":1,"description":"Keep last 10","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}}]}
@@ -91,7 +91,7 @@ Resources:
 Outputs:
   RoleArn:
     Value: !GetAtt GitHubActionsRole.Arn
-  AppRepoUri:
-    Value: !GetAtt AppRepository.RepositoryUri
+  ListingServiceRepoUri:
+    Value: !GetAtt ListingServiceRepository.RepositoryUri
   WebRepoUri:
     Value: !GetAtt WebRepository.RepositoryUri
