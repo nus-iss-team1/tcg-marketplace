@@ -7,9 +7,6 @@ Parameters:
     Default: tcg-marketplace
 
 Resources:
-  # ──────────────────────────────────────────────
-  # Game Card Lookup Table
-  # ──────────────────────────────────────────────
   GameCardLookup:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -20,8 +17,6 @@ Resources:
       AttributeDefinitions:
         - AttributeName: cardId
           AttributeType: S
-        - AttributeName: gameName
-          AttributeType: S
         - AttributeName: cardName
           AttributeType: S
 
@@ -29,6 +24,8 @@ Resources:
       KeySchema:
         - AttributeName: cardId
           KeyType: HASH
+        - AttributeName: cardName
+          KeyType: RANGE
 
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
@@ -41,18 +38,6 @@ Resources:
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
 
-      # gsi
-      GlobalSecondaryIndexes:
-        # filter by game name and card name
-        - IndexName: CardNameIndex
-          KeySchema:
-            - AttributeName: gameName
-              KeyType: HASH
-            - AttributeName: cardName
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
-
   # ──────────────────────────────────────────────
   # Messaging Platform Table
   # ──────────────────────────────────────────────
@@ -64,28 +49,20 @@ Resources:
 
       # primary table attributes
       AttributeDefinitions:
-        - AttributeName: entityId
+        - AttributeName: roomId
           AttributeType: S
-        - AttributeName: entitySortKey
+        - AttributeName: messageId
           AttributeType: S
         - AttributeName: userId
           AttributeType: S
-        - AttributeName: lastMsgTimestamp
-          AttributeType: N
-        - AttributeName: roomId
-          AttributeType: S
-        - AttributeName: senderId
-          AttributeType: S
-        - AttributeName: receiverId
-          AttributeType: S
-        - AttributeName: msgTimestamp
+        - AttributeName: lastMessageAt
           AttributeType: N
 
       # primary key of the table
       KeySchema:
-        - AttributeName: entityId
+        - AttributeName: roomId
           KeyType: HASH
-        - AttributeName: entitySortKey
+        - AttributeName: messageId
           KeyType: RANGE
 
       PointInTimeRecoverySpecification:
@@ -101,57 +78,15 @@ Resources:
 
       # gsi
       GlobalSecondaryIndexes:
-        # fetch private rooms for a user, order by lastMsgTimestamp
-        - IndexName: PrivateRoomByUserIndex
+        # fetch private rooms for a user, order by lastMessageAt
+        - IndexName: UserRoomsIndex
           KeySchema:
             - AttributeName: userId
               KeyType: HASH
-            - AttributeName: lastMsgTimestamp
+            - AttributeName: lastMessageAt
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
-
-        # fetch messages in a private room, order by msgTimestamp
-        - IndexName: MessageByRoomIndex
-          KeySchema:
-            - AttributeName: roomId
-              KeyType: HASH
-            - AttributeName: msgTimestamp
-              KeyType: RANGE
-          Projection:
-            ProjectionType: INCLUDE
-            NonKeyAttributes:
-              - text
-              - isDeleted
-              - readAt
-
-        # fetch messages sent by user
-        - IndexName: MessageBySenderIndex
-          KeySchema:
-            - AttributeName: senderId
-              KeyType: HASH
-            - AttributeName: msgTimestamp
-              KeyType: RANGE
-          Projection:
-            ProjectionType: INCLUDE
-            NonKeyAttributes:
-              - text
-              - isDeleted
-              - readAt
-
-        # fetch messages received by user
-        - IndexName: MessageByReceiverIndex
-          KeySchema:
-            - AttributeName: receiverId
-              KeyType: HASH
-            - AttributeName: msgTimestamp
-              KeyType: RANGE
-          Projection:
-            ProjectionType: INCLUDE
-            NonKeyAttributes:
-              - text
-              - isDeleted
-              - readAt
 
   # ──────────────────────────────────────────────
   # TCG Marketplace Table
@@ -172,13 +107,13 @@ Resources:
           AttributeType: N
         - AttributeName: gameName
           AttributeType: S
-        - AttributeName: filterSortKey
-          AttributeType: S
 
       # primary key of the table
       KeySchema:
         - AttributeName: listingId
           KeyType: HASH
+        - AttributeName: updatedAt
+          KeyType: RANGE
 
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
@@ -209,16 +144,6 @@ Resources:
             - AttributeName: gameName
               KeyType: HASH
             - AttributeName: updatedAt
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
-
-        # dropdown filter by game
-        - IndexName: GameFilterIndex
-          KeySchema:
-            - AttributeName: gameName
-              KeyType: HASH
-            - AttributeName: filterSortKey
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
