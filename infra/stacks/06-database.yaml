@@ -168,17 +168,11 @@ Resources:
           AttributeType: S
         - AttributeName: sellerId
           AttributeType: S
-        - AttributeName: createdAt
-          AttributeType: S
+        - AttributeName: updatedAt
+          AttributeType: N
         - AttributeName: gameName
           AttributeType: S
-        - AttributeName: cardName
-          AttributeType: S
-        - AttributeName: price
-          AttributeType: N
-        - AttributeName: cardCondition
-          AttributeType: S
-        - AttributeName: psaGrade
+        - AttributeName: filterSortKey
           AttributeType: S
 
       # primary key of the table
@@ -199,62 +193,32 @@ Resources:
 
       # gsi
       GlobalSecondaryIndexes:
-        # seller dashboard
-        - IndexName: SellerCreatedAtIndex
+        # seller dashboard sorted by updatedAt
+        - IndexName: SellerDashboardIndex
           KeySchema:
             - AttributeName: sellerId
               KeyType: HASH
-            - AttributeName: createdAt
+            - AttributeName: updatedAt
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
 
-        # all listings by game - newest listing first
-        - IndexName: GameCreatedAtIndex
+        # game listing sorted by updatedAt
+        - IndexName: GameListingIndex
           KeySchema:
             - AttributeName: gameName
               KeyType: HASH
-            - AttributeName: createdAt
+            - AttributeName: updatedAt
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
 
-        # dropdown filter by card name
-        - IndexName: CardNameIndex
+        # dropdown filter by game
+        - IndexName: GameFilterIndex
           KeySchema:
             - AttributeName: gameName
               KeyType: HASH
-            - AttributeName: cardName
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
-
-        # sort/filter by card price
-        - IndexName: GamePriceIndex
-          KeySchema:
-            - AttributeName: gameName
-              KeyType: HASH
-            - AttributeName: price
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
-
-        # filter by card condition
-        - IndexName: CardConditionIndex
-          KeySchema:
-            - AttributeName: cardCondition
-              KeyType: HASH
-            - AttributeName: createdAt
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
-
-        # filter by psa grade
-        - IndexName: PsaGradeIndex
-          KeySchema:
-            - AttributeName: psaGrade
-              KeyType: HASH
-            - AttributeName: createdAt
+            - AttributeName: filterSortKey
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
