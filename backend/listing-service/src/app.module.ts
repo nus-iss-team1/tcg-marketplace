@@ -5,6 +5,8 @@ import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
 import { LoggingModule } from "./logger/logging.module";
+import { MarketplaceModule } from "./marketplace/marketplace.module";
+import { DynamoDbModule } from "./dynamodb/dynamodb.module";
 
 @Module({
   imports: [
@@ -27,7 +29,9 @@ import { LoggingModule } from "./logger/logging.module";
       }
     }),
     AuthModule,
-    LoggingModule
+    LoggingModule,
+    DynamoDbModule,
+    MarketplaceModule
   ],
   controllers: [AppController],
   providers: [AppService]
