@@ -1,4 +1,5 @@
 import { NestFactory } from "@nestjs/core";
+import { ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
 import { LoggingService } from "./logger/logging.service";
 import { overrideConsole } from "./logger/console.override";
@@ -15,6 +16,13 @@ async function bootstrap() {
   app.setGlobalPrefix("api");
   app.useLogger(logger);
   overrideConsole(logger);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true
+    })
+  );
 
   await app.listen(port);
   console.log(`Application started on port ${port}`);
