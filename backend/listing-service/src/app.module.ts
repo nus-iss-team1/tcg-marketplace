@@ -18,8 +18,8 @@ import { DynamoDbModule } from "./dynamodb/dynamodb.module";
         LOG_DIR: Joi.string().optional(),
         LOG_LEVEL: Joi.string().required(),
         AWS_REGION: Joi.string().required(),
-        AWS_ACCESS_KEY: Joi.string().optional(),
-        AWS_SECRET_KEY: Joi.string().optional(),
+        AWS_ACCESS_KEY_ID: Joi.string().optional(),
+        AWS_SECRET_ACCESS_KEY: Joi.string().optional(),
         AWS_S3_BUCKET: Joi.string().required(),
         COGNITO_USER_POOL_ID: Joi.string().required(),
         COGNITO_APP_CLIENT_ID: Joi.string().required()
