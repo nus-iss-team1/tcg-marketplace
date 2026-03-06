@@ -2,7 +2,6 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import Joi from "joi";
 import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
 import { LoggingModule } from "./logger/logging.module";
 import { MarketplaceModule } from "./marketplace/marketplace.module";
@@ -34,6 +33,6 @@ import { DynamoDbModule } from "./dynamodb/dynamodb.module";
     MarketplaceModule
   ],
   controllers: [AppController],
-  providers: [AppService]
+  providers: []
 })
 export class AppModule {}
