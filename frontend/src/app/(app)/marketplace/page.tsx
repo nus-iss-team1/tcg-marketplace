@@ -73,7 +73,7 @@ export default function MarketplacePage() {
         {listings.map((listing, i) => (
           <Card
             key={listing.listingId}
-            className="gap-0 py-0 overflow-hidden transition-colors hover:border-primary/50 cursor-pointer animate-[fade-up_0.4s_ease-out_both]"
+            className="gap-0 py-0 overflow-hidden transition-transform duration-300 [transition-timing-function:cubic-bezier(0.25,0.1,0.25,1)] hover:scale-105 cursor-pointer animate-[fade-up_0.4s_ease-out_both]"
             style={{ animationDelay: `${0.05 * i}s` }}
           >
             <CardHeader className="px-4 py-2.5 sm:px-3 sm:py-2.5 flex items-center">
