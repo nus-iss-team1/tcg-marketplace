@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { UserIcon, SaveIcon } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -29,7 +30,6 @@ export default function ProfilePage() {
   const [address, setAddress] = useState("");
   const [loadingAttrs, setLoadingAttrs] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [profileMsg, setProfileMsg] = useState("");
   const [profileError, setProfileError] = useState("");
 
   useEffect(() => {
@@ -46,7 +46,6 @@ export default function ProfilePage() {
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setProfileMsg("");
     setProfileError("");
     setSaving(true);
 
@@ -57,7 +56,7 @@ export default function ProfilePage() {
       if (lastName) attrs["family_name"] = lastName;
       attrs["address"] = address;
       await updateUserAttributes(attrs);
-      setProfileMsg("Profile updated successfully.");
+      toast.success("Profile updated successfully.");
     } catch (err) {
       setProfileError(
         err instanceof Error ? err.message : "Failed to update profile"
@@ -94,11 +93,6 @@ export default function ProfilePage() {
           <CardDescription>Update your personal information</CardDescription>
         </CardHeader>
         <CardContent>
-          {profileMsg && (
-            <div className="mb-4 rounded-lg bg-green-500/10 p-3 text-sm text-green-500">
-              {profileMsg}
-            </div>
-          )}
           {profileError && (
             <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
               {profileError}
@@ -106,6 +100,11 @@ export default function ProfilePage() {
           )}
 
           <form onSubmit={handleSaveProfile} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <Label className="text-muted-foreground">Email</Label>
+              <p className="text-sm font-medium">{email}</p>
+            </div>
+
             <div className="flex flex-col gap-1">
               <Label className="text-muted-foreground">Username</Label>
               <p className="text-sm font-medium">{user?.username}</p>
@@ -130,16 +129,6 @@ export default function ProfilePage() {
                   onChange={(e) => setLastName(e.target.value)}
                 />
               </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="profile-email">Email</Label>
-              <Input
-                id="profile-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
             </div>
 
             <div className="flex flex-col gap-2">
