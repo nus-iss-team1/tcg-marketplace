@@ -79,7 +79,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-1 items-center justify-center">
-      <Card className="w-full max-w-2xl">
+      <Card className="w-full max-w-2xl animate-[fade-up_0.4s_ease-out_both]">
         <CardHeader>
           <div className="flex items-center gap-2">
             <UserIcon className="h-5 w-5 text-muted-foreground" />
