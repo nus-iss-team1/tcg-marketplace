@@ -24,6 +24,7 @@ export function AppHeader() {
   const router = useRouter();
   const [query, setQuery] = useState("");
 
+  const homeHref = user ? "/marketplace" : "/";
   const initials = user?.username
     ? user.username.substring(0, 2).toUpperCase()
     : "?";
@@ -38,13 +39,13 @@ export function AppHeader() {
   return (
     <header className="flex h-12 sm:h-14 shrink-0 items-center gap-4 sm:gap-6 lg:gap-8 border-b px-4 sm:px-6 lg:px-8">
       <Link
-        href="/"
+        href={homeHref}
         className="hidden md:flex items-center gap-1.5 text-lg font-semibold shrink-0"
       >
         <LayersIcon className="h-5 w-5 text-primary" />
         TCG Marketplace
       </Link>
-      <Link href="/" className="flex md:hidden items-center gap-1.5 text-base font-semibold shrink-0">
+      <Link href={homeHref} className="flex md:hidden items-center gap-1.5 text-base font-semibold shrink-0">
         <LayersIcon className="h-5 w-5 text-primary sm:hidden" />
         TCG
       </Link>
