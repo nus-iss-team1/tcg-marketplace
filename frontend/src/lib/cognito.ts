@@ -88,3 +88,79 @@ export function getCurrentSession(): Promise<CognitoUserSession | null> {
 export function getCurrentUser() {
   return getUserPool().getCurrentUser();
 }
+
+export function getUserAttributes(): Promise<Record<string, string>> {
+  const currentUser = getUserPool().getCurrentUser();
+  if (!currentUser) return Promise.reject(new Error("No user"));
+
+  return new Promise((resolve, reject) => {
+    currentUser.getSession((err: Error | null) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      currentUser.getUserAttributes((attrErr, attributes) => {
+        if (attrErr || !attributes) {
+          reject(attrErr);
+          return;
+        }
+        const attrs: Record<string, string> = {};
+        attributes.forEach((attr) => {
+          attrs[attr.getName()] = attr.getValue();
+        });
+        resolve(attrs);
+      });
+    });
+  });
+}
+
+export function updateUserAttributes(
+  attributes: Record<string, string>
+): Promise<void> {
+  const currentUser = getUserPool().getCurrentUser();
+  if (!currentUser) return Promise.reject(new Error("No user"));
+
+  const attributeList = Object.entries(attributes).map(
+    ([key, value]) => new CognitoUserAttribute({ Name: key, Value: value })
+  );
+
+  return new Promise((resolve, reject) => {
+    currentUser.getSession((err: Error | null) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      currentUser.updateAttributes(attributeList, (updateErr) => {
+        if (updateErr) {
+          reject(updateErr);
+          return;
+        }
+        resolve();
+      });
+    });
+  });
+}
+
+export function changePassword(
+  oldPassword: string,
+  newPassword: string
+): Promise<void> {
+  const currentUser = getUserPool().getCurrentUser();
+  if (!currentUser) return Promise.reject(new Error("No user"));
+
+  return new Promise((resolve, reject) => {
+    currentUser.getSession((err: Error | null) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      currentUser.changePassword(oldPassword, newPassword, (changeErr) => {
+        if (changeErr) {
+          reject(changeErr);
+          return;
+        }
+        resolve();
+      });
+    });
+  });
+}
