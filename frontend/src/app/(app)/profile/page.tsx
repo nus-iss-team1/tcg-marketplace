@@ -24,8 +24,9 @@ export default function ProfilePage() {
   const { user } = useAuth();
 
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [address, setAddress] = useState("");
   const [loadingAttrs, setLoadingAttrs] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState("");
@@ -35,8 +36,9 @@ export default function ProfilePage() {
     getUserAttributes()
       .then((attrs) => {
         setEmail(attrs["email"] ?? "");
-        setName(attrs["name"] ?? "");
-        setPhone(attrs["phone_number"] ?? "");
+        setFirstName(attrs["given_name"] ?? "");
+        setLastName(attrs["family_name"] ?? "");
+        setAddress(attrs["address"] ?? "");
       })
       .catch(() => {})
       .finally(() => setLoadingAttrs(false));
@@ -51,8 +53,9 @@ export default function ProfilePage() {
     try {
       const attrs: Record<string, string> = {};
       if (email) attrs["email"] = email;
-      if (name) attrs["name"] = name;
-      if (phone) attrs["phone_number"] = phone;
+      if (firstName) attrs["given_name"] = firstName;
+      if (lastName) attrs["family_name"] = lastName;
+      attrs["address"] = address;
       await updateUserAttributes(attrs);
       setProfileMsg("Profile updated successfully.");
     } catch (err) {
@@ -108,15 +111,25 @@ export default function ProfilePage() {
               <p className="text-sm font-medium">{user?.username}</p>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="profile-name">Display Name</Label>
-              <Input
-                id="profile-name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your display name"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="profile-first-name">First Name</Label>
+                <Input
+                  id="profile-first-name"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="profile-last-name">Last Name</Label>
+                <Input
+                  id="profile-last-name"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -126,18 +139,16 @@ export default function ProfilePage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="profile-phone">Phone Number</Label>
+              <Label htmlFor="profile-address">Address (optional)</Label>
               <Input
-                id="profile-phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+1234567890"
+                id="profile-address"
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
               />
             </div>
 

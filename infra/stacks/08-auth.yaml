@@ -29,6 +29,16 @@ Resources:
       UserPoolName: !Sub "${ProjectNamespace}-${Environment}-user-pool"
       UsernameConfiguration:
         CaseSensitive: false
+      AutoVerifiedAttributes:
+        - email
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_CODE
+        EmailMessage: "Your verification code is {####}"
+        EmailSubject: "TCG Marketplace - Verify your email"
       MfaConfiguration: "OFF"
       Policies:
         PasswordPolicy:
@@ -40,9 +50,17 @@ Resources:
       Schema:
         - Name: email
           AttributeDataType: String
-          Required: false
+          Required: true
           Mutable: true
-        - Name: name
+        - Name: given_name
+          AttributeDataType: String
+          Required: true
+          Mutable: true
+        - Name: family_name
+          AttributeDataType: String
+          Required: true
+          Mutable: true
+        - Name: address
           AttributeDataType: String
           Required: false
           Mutable: true

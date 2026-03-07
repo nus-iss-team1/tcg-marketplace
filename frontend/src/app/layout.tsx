@@ -21,6 +21,9 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "TCG Marketplace",
   description: "TCG Marketplace",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
