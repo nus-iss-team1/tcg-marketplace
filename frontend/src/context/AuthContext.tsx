@@ -18,6 +18,8 @@ import {
 
 interface AuthUser {
   username: string;
+  givenName: string;
+  familyName: string;
   groups: string[];
   isAdmin: boolean;
 }
@@ -39,6 +41,8 @@ function parseSession(session: CognitoUserSession): AuthUser {
 
   return {
     username: payload["cognito:username"] ?? payload.sub,
+    givenName: payload["given_name"] ?? "",
+    familyName: payload["family_name"] ?? "",
     groups,
     isAdmin: groups.includes("admin"),
   };
