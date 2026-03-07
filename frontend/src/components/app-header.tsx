@@ -99,7 +99,7 @@ export function AppHeader() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/settings">
+                <Link href="/profile">
                   <UserIcon className="mr-2 h-4 w-4" />
                   Profile
                 </Link>
@@ -116,10 +116,10 @@ export function AppHeader() {
       ) : (
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/login">Sign In</Link>
+            <Link href="/login?tab=signin">Sign In</Link>
           </Button>
           <Button size="sm" asChild className="hidden sm:inline-flex">
-            <Link href="/signup">Sign Up</Link>
+            <Link href="/login?tab=signup">Sign Up</Link>
           </Button>
           <ThemeToggle />
         </div>
