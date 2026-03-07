@@ -13,6 +13,7 @@ import {
   signUp as cognitoSignUp,
   signOut as cognitoSignOut,
   getCurrentSession,
+  type SignUpAttributes,
 } from "@/lib/cognito";
 
 interface AuthUser {
@@ -25,7 +26,7 @@ interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   signIn: (username: string, password: string) => Promise<void>;
-  signUp: (username: string, password: string, email?: string) => Promise<void>;
+  signUp: (username: string, password: string, attrs: SignUpAttributes) => Promise<void>;
   signOut: () => void;
 }
 
@@ -61,8 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(parseSession(session));
   };
 
-  const signUp = async (username: string, password: string, email?: string) => {
-    await cognitoSignUp(username, password, email);
+  const signUp = async (username: string, password: string, attrs: SignUpAttributes) => {
+    await cognitoSignUp(username, password, attrs);
   };
 
   const signOut = () => {

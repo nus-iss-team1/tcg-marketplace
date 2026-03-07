@@ -18,14 +18,25 @@ function getUserPool(): CognitoUserPool {
   return userPool;
 }
 
+export interface SignUpAttributes {
+  email: string;
+  givenName: string;
+  familyName: string;
+  address?: string;
+}
+
 export function signUp(
   username: string,
   password: string,
-  email?: string
+  attrs: SignUpAttributes
 ): Promise<CognitoUser> {
-  const attributes: CognitoUserAttribute[] = [];
-  if (email) {
-    attributes.push(new CognitoUserAttribute({ Name: "email", Value: email }));
+  const attributes: CognitoUserAttribute[] = [
+    new CognitoUserAttribute({ Name: "email", Value: attrs.email }),
+    new CognitoUserAttribute({ Name: "given_name", Value: attrs.givenName }),
+    new CognitoUserAttribute({ Name: "family_name", Value: attrs.familyName }),
+  ];
+  if (attrs.address) {
+    attributes.push(new CognitoUserAttribute({ Name: "address", Value: attrs.address }));
   }
 
   return new Promise((resolve, reject) => {
@@ -35,6 +46,43 @@ export function signUp(
         return;
       }
       resolve(result.user);
+    });
+  });
+}
+
+export function confirmSignUp(
+  username: string,
+  code: string
+): Promise<void> {
+  const cognitoUser = new CognitoUser({
+    Username: username,
+    Pool: getUserPool(),
+  });
+
+  return new Promise((resolve, reject) => {
+    cognitoUser.confirmRegistration(code, true, (err) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+export function resendConfirmationCode(username: string): Promise<void> {
+  const cognitoUser = new CognitoUser({
+    Username: username,
+    Pool: getUserPool(),
+  });
+
+  return new Promise((resolve, reject) => {
+    cognitoUser.resendConfirmationCode((err) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve();
     });
   });
 }
