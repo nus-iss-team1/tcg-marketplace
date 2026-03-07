@@ -15,12 +15,12 @@ export default function Home() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-semibold">
+    <div className="space-y-4 sm:space-y-5 md:space-y-6">
+      <h1 className="text-2xl sm:text-3xl font-semibold">
         {user ? `Welcome back` : "Welcome to TCG Marketplace"}
       </h1>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">
