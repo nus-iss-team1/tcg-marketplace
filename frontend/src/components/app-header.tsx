@@ -82,18 +82,30 @@ export function AppHeader() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium">{user.username}</p>
-                  <div className="flex gap-1">
-                    {user.groups.map((group) => (
-                      <Badge
-                        key={group}
-                        variant="secondary"
-                        className="text-[10px] px-1.5 py-0"
-                      >
-                        {group}
-                      </Badge>
-                    ))}
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback>
+                      <UserIcon className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col gap-1">
+                    {(user.givenName || user.familyName) && (
+                      <p className="text-sm font-medium">
+                        {[user.givenName, user.familyName].filter(Boolean).join(" ")}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">{user.username}</p>
+                    <div className="flex gap-1">
+                      {user.groups.map((group) => (
+                        <Badge
+                          key={group}
+                          variant="secondary"
+                          className="text-[10px] px-1.5 py-0"
+                        >
+                          {group}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </DropdownMenuLabel>
