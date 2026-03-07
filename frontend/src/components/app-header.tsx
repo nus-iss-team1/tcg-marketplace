@@ -118,7 +118,7 @@ export function AppHeader() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={signOut}>
+              <DropdownMenuItem onClick={() => { signOut(); router.push("/"); }}>
                 <LogOutIcon className="mr-2 h-4 w-4" />
                 Sign Out
               </DropdownMenuItem>

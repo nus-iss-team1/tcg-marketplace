@@ -64,7 +64,7 @@ function AuthForm() {
 
     try {
       await signIn(loginUsername, loginPassword);
-      router.push("/");
+      router.push("/marketplace");
     } catch (err) {
       setLoginError(err instanceof Error ? err.message : "Failed to sign in");
     } finally {
@@ -151,7 +151,7 @@ function AuthForm() {
       <div className="flex min-h-screen flex-col bg-background">
         <AppHeader />
         <div className="flex flex-1 items-center justify-center px-4">
-          <div className="w-full max-w-lg lg:max-w-xl">
+          <div className="w-full max-w-lg lg:max-w-xl animate-[fade-up_0.4s_ease-out_both]">
             <Card>
               <CardHeader>
                 <CardTitle className="text-2xl">Verify your email</CardTitle>
@@ -214,7 +214,7 @@ function AuthForm() {
     <div className="flex min-h-screen flex-col bg-background">
       <AppHeader />
       <div className="flex flex-1 items-center justify-center px-4">
-      <div className="w-full max-w-lg lg:max-w-xl">
+      <div className="w-full max-w-lg lg:max-w-xl animate-[fade-up_0.4s_ease-out_both]">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
