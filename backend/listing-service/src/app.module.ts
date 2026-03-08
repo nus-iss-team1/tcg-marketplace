@@ -6,6 +6,7 @@ import { AuthModule } from "./auth/auth.module";
 import { LoggingModule } from "./logger/logging.module";
 import { MarketplaceModule } from "./marketplace/marketplace.module";
 import { DynamoDbModule } from "./dynamodb/dynamodb.module";
+import { ReferenceModule } from "./reference/reference.module";
 
 @Module({
   imports: [
@@ -30,7 +31,8 @@ import { DynamoDbModule } from "./dynamodb/dynamodb.module";
     AuthModule,
     LoggingModule,
     DynamoDbModule,
-    MarketplaceModule
+    MarketplaceModule,
+    ReferenceModule
   ],
   controllers: [AppController],
   providers: []

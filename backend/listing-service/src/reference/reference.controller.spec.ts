@@ -3,19 +3,19 @@ import { APP_GUARD, Reflector } from "@nestjs/core";
 import { CognitoVerifierService } from "../auth/cognito-verifier.service";
 import { CognitoAuthGuard } from "../auth/cognito-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
-import { MarketplaceController } from "./marketplace.controller";
-import { MarketplaceService } from "./marketplace.service";
+import { ReferenceController } from "./reference.controller";
+import { ReferenceService } from "./reference.service";
 
-describe("MarketplaceController", () => {
-  let listingController: MarketplaceController;
+describe("ReferenceController", () => {
+  let referenceController: ReferenceController;
   let cognitoVerifierService: CognitoVerifierService;
-  let listingService: MarketplaceService;
+  let referenceService: ReferenceService;
 
   beforeEach(async () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [MarketplaceController],
+      controllers: [ReferenceController],
       providers: [
         Reflector,
         {
@@ -33,26 +33,23 @@ describe("MarketplaceController", () => {
           useClass: RolesGuard
         },
         {
-          provide: MarketplaceService,
+          provide: ReferenceService,
           useValue: {
-            create: jest.fn(),
-            listing: jest.fn(),
-            sellerListing: jest.fn(),
-            update: jest.fn(),
-            remove: jest.fn()
+            retrieveGameName: jest.fn(),
+            retrieveCardDetail: jest.fn()
           }
         }
       ]
     }).compile();
 
-    listingController = module.get<MarketplaceController>(MarketplaceController);
+    referenceController = module.get<ReferenceController>(ReferenceController);
     cognitoVerifierService = module.get(CognitoVerifierService);
-    listingService = module.get(MarketplaceService);
+    referenceService = module.get(ReferenceService);
   });
 
   it("should be defined", () => {
-    expect(listingController).toBeDefined();
-    expect(listingService).toBeDefined();
+    expect(referenceController).toBeDefined();
+    expect(referenceService).toBeDefined();
   });
 
   // it("should allow access if authenticated", async () => {
@@ -65,7 +62,7 @@ describe("MarketplaceController", () => {
   //     token_use: "access"
   //   });
 
-  //   const result = await listingController.listing("Pokemon");
+  //   const result = await referenceController.gameName();
   //   expect(result).toBeDefined();
   // });
 
@@ -75,9 +72,8 @@ describe("MarketplaceController", () => {
   //   );
 
   //   try {
-  //     await listingController.listing("Pokemon");
+  //     await referenceController.gameName();
   //   } catch (e: any) {
-  //     console.log(e);
   //     expect(e.response.statusCode).toBe(401);
   //   }
   // });
