@@ -11,11 +11,9 @@ import {
 } from "@nestjs/common";
 import { CognitoAuthGuard } from "../auth/cognito-auth.guard";
 import { Public } from "../auth/public.decorator";
+import { CurrentUser } from "../auth/current-user.decorator";
 import { MarketplaceService } from "./marketplace.service";
-import { CreateListingDto } from "./dto/create-listing.dto";
-import { QueryListingDto } from "./dto/query-listing.dto";
-import { QueryListingCursor } from "./types/marketplace.type";
-import { UpdateListingDto } from "./dto/update-listing.dto";
+import { CreateListingDto, QueryListingDto, UpdateListingDto } from "./dto/marketplace.dto";
 
 @UseGuards(CognitoAuthGuard)
 @Controller("marketplace")
@@ -24,60 +22,36 @@ export class MarketplaceController {
 
   @Public()
   @Post()
-  async create(@Body() listing: CreateListingDto) {
-    return await this.marketplaceService.create(listing);
+  async create(@CurrentUser("email") username: string, @Body() listing: CreateListingDto) {
+    return await this.marketplaceService.createListing(username, listing);
   }
 
   @Public()
   @Get(":gameName")
   async listing(@Param("gameName") gameName: string, @Query() query?: QueryListingDto) {
-    const limit = query?.limit ?? 50;
-    const cursor: QueryListingCursor | undefined = query?.cursor
-      ? (JSON.parse(Buffer.from(query.cursor, "base64").toString()) as QueryListingCursor)
-      : undefined;
-
-    const result = await this.marketplaceService.listing(gameName, limit, cursor);
-    return {
-      data: result.items,
-      pagination: {
-        nextCursor: result.nextCursor
-          ? Buffer.from(JSON.stringify(result.nextCursor)).toString("base64")
-          : null,
-        limit: limit
-      }
-    };
+    return await this.marketplaceService.listing(gameName, query);
   }
 
   @Public()
   @Get("profile/:sellerId")
   async sellerListing(@Param("sellerId") sellerId: string, @Query() query?: QueryListingDto) {
-    const limit = query?.limit ?? 50;
-    const cursor: QueryListingCursor | undefined = query?.cursor
-      ? (JSON.parse(Buffer.from(query.cursor, "base64").toString()) as QueryListingCursor)
-      : undefined;
-
-    const result = await this.marketplaceService.sellerListing(sellerId, limit, cursor);
-    return {
-      data: result.items,
-      pagination: {
-        nextCursor: result.nextCursor
-          ? Buffer.from(JSON.stringify(result.nextCursor)).toString("base64")
-          : null,
-        limit: limit
-      }
-    };
+    return await this.marketplaceService.sellerListing(sellerId, query);
   }
 
   // @Roles("User")
   @Public()
   @Patch(":listingId")
-  async update(@Param("listingId") listingId: string, @Body() listing: UpdateListingDto) {
-    return await this.marketplaceService.update(listingId, listing);
+  async update(
+    @CurrentUser("email") username: string,
+    @Param("listingId") listingId: string,
+    @Body() listing: UpdateListingDto
+  ) {
+    return await this.marketplaceService.updateListing(username, listingId, listing);
   }
 
   @Public()
   @Delete(":listingId")
-  async remove(@Param("listingId") listingId: string) {
-    return await this.marketplaceService.remove(listingId);
+  async delete(@CurrentUser("email") username: string, @Param("listingId") listingId: string) {
+    return await this.marketplaceService.deleteListing(username, listingId);
   }
 }
