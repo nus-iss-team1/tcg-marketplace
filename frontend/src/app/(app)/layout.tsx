@@ -3,8 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -13,7 +11,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/login");
+      router.replace("/");
     }
   }, [user, loading, router]);
 
@@ -28,12 +26,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!user) return null;
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <AppHeader />
-        <div className="flex-1 p-6">{children}</div>
-      </SidebarInset>
-    </SidebarProvider>
+    <div className="flex min-h-screen flex-col">
+      <AppHeader />
+      <main className="flex flex-1 flex-col items-center p-4 sm:p-5 md:p-6 lg:p-8">{children}</main>
+    </div>
   );
 }

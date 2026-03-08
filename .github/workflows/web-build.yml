@@ -8,6 +8,10 @@ on:
     paths:
       - "frontend/**"
 
+concurrency:
+  group: web-build-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   id-token: write # Required for OIDC
   contents: read # Required for checkout

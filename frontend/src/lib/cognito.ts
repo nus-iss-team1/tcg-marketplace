@@ -18,14 +18,25 @@ function getUserPool(): CognitoUserPool {
   return userPool;
 }
 
+export interface SignUpAttributes {
+  email: string;
+  givenName: string;
+  familyName: string;
+  address?: string;
+}
+
 export function signUp(
   username: string,
   password: string,
-  email?: string
+  attrs: SignUpAttributes
 ): Promise<CognitoUser> {
-  const attributes: CognitoUserAttribute[] = [];
-  if (email) {
-    attributes.push(new CognitoUserAttribute({ Name: "email", Value: email }));
+  const attributes: CognitoUserAttribute[] = [
+    new CognitoUserAttribute({ Name: "email", Value: attrs.email }),
+    new CognitoUserAttribute({ Name: "given_name", Value: attrs.givenName }),
+    new CognitoUserAttribute({ Name: "family_name", Value: attrs.familyName }),
+  ];
+  if (attrs.address) {
+    attributes.push(new CognitoUserAttribute({ Name: "address", Value: attrs.address }));
   }
 
   return new Promise((resolve, reject) => {
@@ -35,6 +46,43 @@ export function signUp(
         return;
       }
       resolve(result.user);
+    });
+  });
+}
+
+export function confirmSignUp(
+  username: string,
+  code: string
+): Promise<void> {
+  const cognitoUser = new CognitoUser({
+    Username: username,
+    Pool: getUserPool(),
+  });
+
+  return new Promise((resolve, reject) => {
+    cognitoUser.confirmRegistration(code, true, (err) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+export function resendConfirmationCode(username: string): Promise<void> {
+  const cognitoUser = new CognitoUser({
+    Username: username,
+    Pool: getUserPool(),
+  });
+
+  return new Promise((resolve, reject) => {
+    cognitoUser.resendConfirmationCode((err) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve();
     });
   });
 }
@@ -87,4 +135,80 @@ export function getCurrentSession(): Promise<CognitoUserSession | null> {
 
 export function getCurrentUser() {
   return getUserPool().getCurrentUser();
+}
+
+export function getUserAttributes(): Promise<Record<string, string>> {
+  const currentUser = getUserPool().getCurrentUser();
+  if (!currentUser) return Promise.reject(new Error("No user"));
+
+  return new Promise((resolve, reject) => {
+    currentUser.getSession((err: Error | null) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      currentUser.getUserAttributes((attrErr, attributes) => {
+        if (attrErr || !attributes) {
+          reject(attrErr);
+          return;
+        }
+        const attrs: Record<string, string> = {};
+        attributes.forEach((attr) => {
+          attrs[attr.getName()] = attr.getValue();
+        });
+        resolve(attrs);
+      });
+    });
+  });
+}
+
+export function updateUserAttributes(
+  attributes: Record<string, string>
+): Promise<void> {
+  const currentUser = getUserPool().getCurrentUser();
+  if (!currentUser) return Promise.reject(new Error("No user"));
+
+  const attributeList = Object.entries(attributes).map(
+    ([key, value]) => new CognitoUserAttribute({ Name: key, Value: value })
+  );
+
+  return new Promise((resolve, reject) => {
+    currentUser.getSession((err: Error | null) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      currentUser.updateAttributes(attributeList, (updateErr) => {
+        if (updateErr) {
+          reject(updateErr);
+          return;
+        }
+        resolve();
+      });
+    });
+  });
+}
+
+export function changePassword(
+  oldPassword: string,
+  newPassword: string
+): Promise<void> {
+  const currentUser = getUserPool().getCurrentUser();
+  if (!currentUser) return Promise.reject(new Error("No user"));
+
+  return new Promise((resolve, reject) => {
+    currentUser.getSession((err: Error | null) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      currentUser.changePassword(oldPassword, newPassword, (changeErr) => {
+        if (changeErr) {
+          reject(changeErr);
+          return;
+        }
+        resolve();
+      });
+    });
+  });
 }

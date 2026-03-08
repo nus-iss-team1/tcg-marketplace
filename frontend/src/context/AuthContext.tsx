@@ -13,10 +13,13 @@ import {
   signUp as cognitoSignUp,
   signOut as cognitoSignOut,
   getCurrentSession,
+  type SignUpAttributes,
 } from "@/lib/cognito";
 
 interface AuthUser {
   username: string;
+  givenName: string;
+  familyName: string;
   groups: string[];
   isAdmin: boolean;
 }
@@ -25,7 +28,7 @@ interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   signIn: (username: string, password: string) => Promise<void>;
-  signUp: (username: string, password: string, email?: string) => Promise<void>;
+  signUp: (username: string, password: string, attrs: SignUpAttributes) => Promise<void>;
   signOut: () => void;
 }
 
@@ -38,6 +41,8 @@ function parseSession(session: CognitoUserSession): AuthUser {
 
   return {
     username: payload["cognito:username"] ?? payload.sub,
+    givenName: payload["given_name"] ?? "",
+    familyName: payload["family_name"] ?? "",
     groups,
     isAdmin: groups.includes("admin"),
   };
@@ -61,8 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(parseSession(session));
   };
 
-  const signUp = async (username: string, password: string, email?: string) => {
-    await cognitoSignUp(username, password, email);
+  const signUp = async (username: string, password: string, attrs: SignUpAttributes) => {
+    await cognitoSignUp(username, password, attrs);
   };
 
   const signOut = () => {
