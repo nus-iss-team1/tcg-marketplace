@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: DynamoDB Tables (on-demand billing)
 
 Parameters:
@@ -15,16 +15,16 @@ Resources:
 
       # primary table attributes
       AttributeDefinitions:
-        - AttributeName: cardId
+        - AttributeName: gameId
           AttributeType: S
-        - AttributeName: cardName
+        - AttributeName: meta
           AttributeType: S
 
       # primary key of the table
       KeySchema:
-        - AttributeName: cardId
+        - AttributeName: gameId
           KeyType: HASH
-        - AttributeName: cardName
+        - AttributeName: meta
           KeyType: RANGE
 
       PointInTimeRecoverySpecification:
@@ -49,20 +49,18 @@ Resources:
 
       # primary table attributes
       AttributeDefinitions:
-        - AttributeName: roomId
-          AttributeType: S
-        - AttributeName: messageId
-          AttributeType: S
         - AttributeName: userId
           AttributeType: S
-        - AttributeName: lastMessageAt
-          AttributeType: N
+        - AttributeName: roomId
+          AttributeType: S
+        - AttributeName: meta
+          AttributeType: S
 
       # primary key of the table
       KeySchema:
-        - AttributeName: roomId
+        - AttributeName: userId
           KeyType: HASH
-        - AttributeName: messageId
+        - AttributeName: meta
           KeyType: RANGE
 
       PointInTimeRecoverySpecification:
@@ -78,12 +76,12 @@ Resources:
 
       # gsi
       GlobalSecondaryIndexes:
-        # fetch private rooms for a user, order by lastMessageAt
-        - IndexName: UserRoomsIndex
+        # messages sorted by createdAt
+        - IndexName: MessageIndex
           KeySchema:
-            - AttributeName: userId
+            - AttributeName: roomId
               KeyType: HASH
-            - AttributeName: lastMessageAt
+            - AttributeName: meta
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
@@ -99,20 +97,22 @@ Resources:
 
       # primary table attributes
       AttributeDefinitions:
-        - AttributeName: listingId
+        - AttributeName: gameName
           AttributeType: S
         - AttributeName: sellerId
           AttributeType: S
-        - AttributeName: updatedAt
-          AttributeType: N
-        - AttributeName: gameName
+        - AttributeName: listingUpdatedAt
+          AttributeType: S
+        - AttributeName: listingCardName
+          AttributeType: S
+        - AttributeName: listingPrice
           AttributeType: S
 
       # primary key of the table
       KeySchema:
-        - AttributeName: listingId
+        - AttributeName: gameName
           KeyType: HASH
-        - AttributeName: updatedAt
+        - AttributeName: listingUpdatedAt
           KeyType: RANGE
 
       PointInTimeRecoverySpecification:
@@ -128,22 +128,32 @@ Resources:
 
       # gsi
       GlobalSecondaryIndexes:
-        # seller dashboard sorted by updatedAt
-        - IndexName: SellerDashboardIndex
+        # seller listing sorted by updatedAt
+        - IndexName: SellerListingIndex
           KeySchema:
             - AttributeName: sellerId
               KeyType: HASH
-            - AttributeName: updatedAt
+            - AttributeName: listingUpdatedAt
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
 
-        # game listing sorted by updatedAt
-        - IndexName: GameListingIndex
+        # listing sorted by cardName
+        - IndexName: CardListingIndex
           KeySchema:
             - AttributeName: gameName
               KeyType: HASH
-            - AttributeName: updatedAt
+            - AttributeName: listingCardName
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+        # listing sorted by price
+        - IndexName: PriceListingIndex
+          KeySchema:
+            - AttributeName: gameName
+              KeyType: HASH
+            - AttributeName: listingPrice
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
