@@ -49,18 +49,20 @@ Resources:
 
       # primary table attributes
       AttributeDefinitions:
-        - AttributeName: userId
+        - AttributeName: entityId
           AttributeType: S
-        - AttributeName: roomId
+        - AttributeName: entityType
           AttributeType: S
-        - AttributeName: meta
-          AttributeType: S
+        - AttributeName: lastMessageAt
+          AttributeType: N
+        - AttributeName: createdAt
+          AttributeType: N
 
       # primary key of the table
       KeySchema:
-        - AttributeName: userId
+        - AttributeName: entityId
           KeyType: HASH
-        - AttributeName: meta
+        - AttributeName: entityType
           KeyType: RANGE
 
       PointInTimeRecoverySpecification:
@@ -76,12 +78,22 @@ Resources:
 
       # gsi
       GlobalSecondaryIndexes:
+        # room sorted by lastMessageAt
+        - IndexName: RoomIndex
+          KeySchema:
+            - AttributeName: entityId
+              KeyType: HASH
+            - AttributeName: lastMessageAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
         # messages sorted by createdAt
         - IndexName: MessageIndex
           KeySchema:
-            - AttributeName: roomId
+            - AttributeName: entityId
               KeyType: HASH
-            - AttributeName: meta
+            - AttributeName: createdAt
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
@@ -101,6 +113,8 @@ Resources:
           AttributeType: S
         - AttributeName: sellerId
           AttributeType: S
+        - AttributeName: listingId
+          AttributeType: S
         - AttributeName: listingUpdatedAt
           AttributeType: S
         - AttributeName: listingCardName
@@ -112,7 +126,7 @@ Resources:
       KeySchema:
         - AttributeName: gameName
           KeyType: HASH
-        - AttributeName: listingUpdatedAt
+        - AttributeName: listingId
           KeyType: RANGE
 
       PointInTimeRecoverySpecification:
@@ -132,6 +146,16 @@ Resources:
         - IndexName: SellerListingIndex
           KeySchema:
             - AttributeName: sellerId
+              KeyType: HASH
+            - AttributeName: listingUpdatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+        # listing sorted by updatedAt
+        - IndexName: UpdatedListingIndex
+          KeySchema:
+            - AttributeName: gameName
               KeyType: HASH
             - AttributeName: listingUpdatedAt
               KeyType: RANGE
