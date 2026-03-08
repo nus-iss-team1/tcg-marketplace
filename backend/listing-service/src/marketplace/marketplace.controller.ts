@@ -1,11 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from "@nestjs/common";
-import { MarketplaceService } from "./marketplace.service";
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UseGuards
+} from "@nestjs/common";
+import { CognitoAuthGuard } from "../auth/cognito-auth.guard";
 import { Public } from "../auth/public.decorator";
+import { MarketplaceService } from "./marketplace.service";
 import { CreateListingDto } from "./dto/create-listing.dto";
 import { QueryListingDto } from "./dto/query-listing.dto";
 import { QueryListingCursor } from "./types/marketplace.type";
 import { UpdateListingDto } from "./dto/update-listing.dto";
 
+@UseGuards(CognitoAuthGuard)
 @Controller("marketplace")
 export class MarketplaceController {
   constructor(private readonly marketplaceService: MarketplaceService) {}
@@ -18,9 +30,9 @@ export class MarketplaceController {
 
   @Public()
   @Get(":gameName")
-  async listing(@Param("gameName") gameName: string, @Query() query: QueryListingDto) {
-    const limit = query.limit ?? 50;
-    const cursor: QueryListingCursor | undefined = query.cursor
+  async listing(@Param("gameName") gameName: string, @Query() query?: QueryListingDto) {
+    const limit = query?.limit ?? 50;
+    const cursor: QueryListingCursor | undefined = query?.cursor
       ? (JSON.parse(Buffer.from(query.cursor, "base64").toString()) as QueryListingCursor)
       : undefined;
 
@@ -38,9 +50,9 @@ export class MarketplaceController {
 
   @Public()
   @Get("profile/:sellerId")
-  async sellerListing(@Param("sellerId") sellerId: string, @Query() query: QueryListingDto) {
-    const limit = query.limit ?? 50;
-    const cursor: QueryListingCursor | undefined = query.cursor
+  async sellerListing(@Param("sellerId") sellerId: string, @Query() query?: QueryListingDto) {
+    const limit = query?.limit ?? 50;
+    const cursor: QueryListingCursor | undefined = query?.cursor
       ? (JSON.parse(Buffer.from(query.cursor, "base64").toString()) as QueryListingCursor)
       : undefined;
 
