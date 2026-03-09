@@ -18,6 +18,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useAuth } from "@/context/AuthContext";
+import { EmptyState } from "@/components/empty-state";
 import { fetchListings } from "@/lib/listings";
 
 export default function MarketplacePage() {
@@ -36,7 +37,14 @@ export default function MarketplacePage() {
         </h1>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 sm:gap-6 md:gap-8">
+      {listings.length === 0 ? (
+        <EmptyState
+          title="No listings available"
+          description="There are no listings in this category yet. Check back later!"
+        />
+      ) : (
+        <>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 sm:gap-6 md:gap-8">
         {listings.map((listing, i) => (
           <Card
             key={listing.listingId}
@@ -82,7 +90,9 @@ export default function MarketplacePage() {
         ))}
       </div>
 
-      <Pagination className="mt-8">
+      <div className="h-14 sm:hidden" />
+
+      <Pagination className="mt-8 sticky bottom-2 sm:static bg-background/40 backdrop-blur-md py-3 sm:py-0 sm:bg-transparent sm:backdrop-blur-none rounded-full sm:rounded-none mx-2 sm:mx-0">
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
@@ -144,6 +154,8 @@ export default function MarketplacePage() {
           </PaginationItem>
         </PaginationContent>
       </Pagination>
+        </>
+      )}
     </div>
   );
 }
