@@ -26,9 +26,9 @@ export default function LandingPage() {
 
   const handleCreateListing = () => {
     if (user) {
-      router.push("/dashboard");
+      router.push("/listing/create");
     } else {
-      router.push("/login");
+      router.push("/login?tab=signin&redirect=/listing/create");
     }
   };
 
