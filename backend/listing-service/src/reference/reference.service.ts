@@ -10,9 +10,6 @@ export class ReferenceService {
   }
 
   async retrieveCardDetail(gameName: string, cardName?: string) {
-    return await this.referenceRepo.retrieveCardDetail(
-      gameName.toLowerCase(),
-      cardName?.toLowerCase()
-    );
+    return await this.referenceRepo.retrieveCardDetail(gameName, cardName?.toLowerCase());
   }
 }
