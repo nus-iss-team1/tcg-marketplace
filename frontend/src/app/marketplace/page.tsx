@@ -29,13 +29,13 @@ export default function MarketplacePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const { listings, totalPages } = useMemo(() => fetchListings(currentPage), [currentPage]);
 
-  // TODO: Replace useMemo with useEffect + API call, setting loading = true/false
+  // TODO: Replace useMemo with useEffect + API call
 
   return (
     <div className="w-full max-w-352 mx-auto px-4 sm:px-0">
       <div className="mb-4 animate-[fade-up_0.4s_ease-out_both]">
         <p className="text-sm text-muted-foreground mb-1">
-          Welcome back, {user?.givenName || user?.username}
+          {user ? `Welcome back, ${user.givenName || user.username}` : "Browse listings"}
         </p>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
           {gameType}
