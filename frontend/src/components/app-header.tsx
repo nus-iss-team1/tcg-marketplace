@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LayersIcon, LogOutIcon, SearchIcon, UserIcon } from "lucide-react";
+import { LayersIcon, ListIcon, LogOutIcon, SearchIcon, UserIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -50,20 +50,25 @@ export function AppHeader() {
         TCG
       </Link>
 
-      {/* Search bar */}
-      <form
-        onSubmit={handleSearch}
-        className="relative flex-1 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mx-auto"
-      >
-        <SearchIcon className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-        <Input
-          type="search"
-          placeholder="Search listings or sellers..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="pl-9 h-8 sm:h-9 text-sm bg-muted"
-        />
-      </form>
+      {/* Spacer when no search bar */}
+      {!user && <div className="flex-1" />}
+
+      {/* Search bar — only shown when authenticated */}
+      {user && (
+        <form
+          onSubmit={handleSearch}
+          className="relative flex-1 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mx-auto"
+        >
+          <SearchIcon className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <Input
+            type="search"
+            placeholder="Search listings or sellers..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="pl-9 h-8 sm:h-9 text-sm bg-muted"
+          />
+        </form>
+      )}
 
       {user ? (
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -115,6 +120,12 @@ export function AppHeader() {
                 <Link href="/profile">
                   <UserIcon className="mr-2 h-4 w-4" />
                   Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/listing">
+                  <ListIcon className="mr-2 h-4 w-4" />
+                  My Listings
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
