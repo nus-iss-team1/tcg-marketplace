@@ -2,7 +2,7 @@ import { Controller, Get, Query, UseGuards } from "@nestjs/common";
 import { CognitoAuthGuard } from "../auth/cognito-auth.guard";
 import { Public } from "../auth/public.decorator";
 import { ReferenceService } from "./reference.service";
-import { QueryCardDetail } from "./types/reference.type";
+import { QueryCardDto } from "./dto/reference.dto";
 
 @UseGuards(CognitoAuthGuard)
 @Controller("reference")
@@ -17,7 +17,7 @@ export class ReferenceController {
 
   @Public()
   @Get("/card")
-  async cardDetail(@Query() query: QueryCardDetail) {
+  async cardDetail(@Query() query: QueryCardDto) {
     return await this.referenceService.retrieveCardDetail(query.gameName, query.cardName);
   }
 }
