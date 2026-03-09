@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Card,
@@ -20,16 +20,26 @@ import {
 } from "@/components/ui/pagination";
 import { useAuth } from "@/context/AuthContext";
 import { EmptyState } from "@/components/empty-state";
-import { fetchListings } from "@/lib/listings";
+import { fetchMarketplaceListings } from "@/lib/listings";
 
 export default function MarketplacePage() {
+  return (
+    <Suspense>
+      <MarketplaceContent />
+    </Suspense>
+  );
+}
+
+function MarketplaceContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const gameType = searchParams.get("game") || "Pokemon TCG";
+  const query = searchParams.get("q") || undefined;
   const [currentPage, setCurrentPage] = useState(1);
-  const { listings, totalPages } = useMemo(() => fetchListings(currentPage), [currentPage]);
-
-  // TODO: Replace useMemo with useEffect + API call
+  const { listings, totalPages } = useMemo(
+    () => fetchMarketplaceListings({ game: gameType, query, page: currentPage }),
+    [gameType, query, currentPage]
+  );
 
   return (
     <div className="w-full max-w-352 mx-auto px-4 sm:px-0">

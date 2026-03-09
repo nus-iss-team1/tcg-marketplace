@@ -17,6 +17,18 @@ export interface FetchListingsResponse {
 const ITEMS_PER_PAGE = 15;
 const TOTAL_ITEMS = 60;
 
+export interface MarketplaceParams {
+  game?: string;
+  query?: string;
+  page?: number;
+}
+
+export function fetchMarketplaceListings(params: MarketplaceParams): FetchListingsResponse {
+  // TODO: Replace with actual API call
+  // e.g. request({ baseUrl: API_URL, path: "/marketplace", method: "GET", params })
+  return fetchListings(params.page ?? 1);
+}
+
 export function fetchListings(page: number): FetchListingsResponse {
   const totalPages = Math.ceil(TOTAL_ITEMS / ITEMS_PER_PAGE);
   const count = page === totalPages
