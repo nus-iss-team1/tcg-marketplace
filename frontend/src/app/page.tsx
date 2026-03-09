@@ -26,9 +26,9 @@ export default function LandingPage() {
 
   const handleCreateListing = () => {
     if (user) {
-      router.push("/dashboard");
+      router.push("/listing/create");
     } else {
-      router.push("/login");
+      router.push("/login?tab=signin&redirect=/listing/create");
     }
   };
 
@@ -72,7 +72,7 @@ export default function LandingPage() {
 
             <CardContent className="flex flex-row gap-3 px-0 animate-[fade-up_0.5s_ease-out_0.3s_both]">
               <Button size="lg" asChild>
-                <Link href="/login?tab=signin">
+                <Link href="/marketplace">
                   <SearchIcon className="mr-2 h-4 w-4" />
                   Start Exploring
                 </Link>

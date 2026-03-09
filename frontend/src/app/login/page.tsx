@@ -8,6 +8,7 @@ import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LogInIcon, MailCheckIcon, UserPlusIcon } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -23,6 +24,7 @@ function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
+  const redirectTo = searchParams.get("redirect") || "/marketplace";
   const initialTab = tabParam === "signup" ? "signup" : "signin";
 
   const [loginUsername, setLoginUsername] = useState("");
@@ -64,7 +66,7 @@ function AuthForm() {
 
     try {
       await signIn(loginUsername, loginPassword);
-      router.push("/marketplace");
+      router.push(redirectTo);
     } catch (err) {
       setLoginError(err instanceof Error ? err.message : "Failed to sign in");
     } finally {
@@ -187,6 +189,7 @@ function AuthForm() {
                   </div>
 
                   <Button type="submit" disabled={verifyLoading} className="w-full">
+                    <MailCheckIcon className="h-4 w-4 mr-2" />
                     {verifyLoading ? "Verifying..." : "Verify Email"}
                   </Button>
                 </form>
@@ -268,6 +271,7 @@ function AuthForm() {
                 </div>
 
                 <Button type="submit" disabled={loginLoading} className="mt-2 w-full">
+                  <LogInIcon className="h-4 w-4 mr-2" />
                   {loginLoading ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
@@ -386,6 +390,7 @@ function AuthForm() {
                 </div>
 
                 <Button type="submit" disabled={signupLoading || (!!signupConfirmPassword && signupPassword !== signupConfirmPassword)} className="mt-2 w-full">
+                  <UserPlusIcon className="h-4 w-4 mr-2" />
                   {signupLoading ? "Creating account..." : "Sign Up"}
                 </Button>
               </form>

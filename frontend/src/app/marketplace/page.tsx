@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -18,62 +19,51 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useAuth } from "@/context/AuthContext";
-
-const ITEMS_PER_PAGE = 15;
-const TOTAL_ITEMS = 60;
-const TOTAL_PAGES = Math.ceil(TOTAL_ITEMS / ITEMS_PER_PAGE);
-
-interface Listing {
-  listingId: string;
-  sellerId: string;
-  sellerName: string;
-  gameName: string;
-  cardId: string;
-  cardName: string;
-  price: string;
-  updatedAt: number;
-}
-
-const generateListings = (page: number): Listing[] => {
-  const count = page === TOTAL_PAGES
-    ? TOTAL_ITEMS - (TOTAL_PAGES - 1) * ITEMS_PER_PAGE
-    : ITEMS_PER_PAGE;
-  return Array.from({ length: count }, (_, i) => {
-    const idx = (page - 1) * ITEMS_PER_PAGE + i;
-    return {
-      listingId: `listing-${String(idx + 1).padStart(4, "0")}`,
-      sellerId: `seller${(idx % 10) + 1}`,
-      sellerName: `Seller ${(idx % 10) + 1}`,
-      gameName: "Pokemon",
-      cardId: `card-${String(idx + 1).padStart(4, "0")}`,
-      cardName: `Pikachu V #${String(idx + 1).padStart(3, "0")}`,
-      price: (Math.random() * 100 + 1).toFixed(2),
-      updatedAt: Date.now() - idx * 60000,
-    };
-  });
-};
+import { EmptyState } from "@/components/empty-state";
+import { fetchMarketplaceListings } from "@/lib/listings";
 
 export default function MarketplacePage() {
+  return (
+    <Suspense>
+      <MarketplaceContent />
+    </Suspense>
+  );
+}
+
+function MarketplaceContent() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const gameType = searchParams.get("game") || "Pokemon TCG";
+  const query = searchParams.get("q") || undefined;
   const [currentPage, setCurrentPage] = useState(1);
-  const listings = generateListings(currentPage);
+  const { listings, totalPages } = useMemo(
+    () => fetchMarketplaceListings({ game: gameType, query, page: currentPage }),
+    [gameType, query, currentPage]
+  );
 
   return (
     <div className="w-full max-w-352 mx-auto px-4 sm:px-0">
       <div className="mb-4 animate-[fade-up_0.4s_ease-out_both]">
         <p className="text-sm text-muted-foreground mb-1">
-          Welcome back, {user?.givenName || user?.username}
+          {user ? `Welcome back, ${user.givenName || user.username}` : "Browse listings"}
         </p>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-          Pokemon
+          {gameType}
         </h1>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 sm:gap-6 md:gap-8">
+      {listings.length === 0 ? (
+        <EmptyState
+          title="No listings available"
+          description="There are no listings in this category yet. Check back later!"
+        />
+      ) : (
+        <>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 sm:gap-6 md:gap-8">
         {listings.map((listing, i) => (
           <Card
             key={listing.listingId}
-            className="gap-0 py-0 overflow-hidden transition-transform duration-300 [transition-timing-function:cubic-bezier(0.25,0.1,0.25,1)] hover:scale-105 cursor-pointer animate-[fade-up_0.4s_ease-out_both]"
+            className="gap-0 py-0 overflow-hidden transition-transform duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] hover:scale-105 cursor-pointer animate-[fade-up_0.4s_ease-out_both]"
             style={{ animationDelay: `${0.05 * i}s` }}
           >
             <CardHeader className="px-4 py-2.5 sm:px-3 sm:py-2.5 flex items-center">
@@ -115,7 +105,9 @@ export default function MarketplacePage() {
         ))}
       </div>
 
-      <Pagination className="mt-8">
+      <div className="h-14 sm:hidden" />
+
+      <Pagination className="mt-8 sticky bottom-2 sm:static bg-background/40 backdrop-blur-md py-3 sm:py-0 sm:bg-transparent sm:backdrop-blur-none rounded-full sm:rounded-none mx-2 sm:mx-0">
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
@@ -127,10 +119,10 @@ export default function MarketplacePage() {
               className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
             />
           </PaginationItem>
-          {Array.from({ length: TOTAL_PAGES }, (_, i) => i + 1).map((page) => {
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
             if (
               page === 1 ||
-              page === TOTAL_PAGES ||
+              page === totalPages ||
               Math.abs(page - currentPage) <= 1
             ) {
               return (
@@ -156,7 +148,7 @@ export default function MarketplacePage() {
                 </PaginationItem>
               );
             }
-            if (page === TOTAL_PAGES - 1 && currentPage < TOTAL_PAGES - 2) {
+            if (page === totalPages - 1 && currentPage < totalPages - 2) {
               return (
                 <PaginationItem key="end-ellipsis">
                   <PaginationEllipsis />
@@ -170,13 +162,15 @@ export default function MarketplacePage() {
               href="#"
               onClick={(e) => {
                 e.preventDefault();
-                if (currentPage < TOTAL_PAGES) setCurrentPage(currentPage + 1);
+                if (currentPage < totalPages) setCurrentPage(currentPage + 1);
               }}
-              className={currentPage === TOTAL_PAGES ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
             />
           </PaginationItem>
         </PaginationContent>
       </Pagination>
+        </>
+      )}
     </div>
   );
 }
