@@ -1,5 +1,10 @@
 import { HttpException, HttpStatus } from "@nestjs/common";
 
+export function padPrice(price: number): string {
+  const scaled = Math.floor(price * 10 ** 2);
+  return scaled.toString().padStart(1, "0");
+}
+
 export function handleDynamoError(error: unknown): never {
   if (error instanceof Error) {
     switch (error.name) {

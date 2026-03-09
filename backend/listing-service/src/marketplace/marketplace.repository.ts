@@ -8,26 +8,22 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import { ForbiddenException, Inject, Injectable } from "@nestjs/common";
 import { DYNAMODB_CLIENT } from "../dynamodb/dynamodb.constants";
-import { ListingEntity } from "./entities/listing.entity";
+import { buildProjection } from "../dynamodb/dynamodb.util";
+import { Listing, TCGMarketplaceSchema } from "./types/marketplace.schema";
 import { QueryListing } from "./types/marketplace.type";
-import { getDtoKeys } from "./utils/marketplace.util";
-import { CreateListingDto, UpdateListingDto } from "./dto/marketplace.dto";
+import { UpdateListingDto } from "./dto/marketplace.dto";
 import { handleDynamoError } from "../common/utils/common.utils";
 
 @Injectable()
 export class MarketplaceRepository {
   private readonly tableName = "TCGMarketplace";
-  private attributeExp: string;
-  private attributeName: Record<string, string>;
+  private projection: ReturnType<typeof buildProjection>;
 
   constructor(
     @Inject(DYNAMODB_CLIENT)
     private readonly docClient: DynamoDBDocumentClient
   ) {
-    // extract only specific attributes from the table to be displayed
-    const keys = getDtoKeys(CreateListingDto);
-    this.attributeExp = keys.map((k) => `#${k}`).join(", ");
-    this.attributeName = Object.fromEntries(keys.map((k) => [`#${k}`, k]));
+    this.projection = buildProjection(TCGMarketplaceSchema);
   }
 
   private async validateIsSellerListing(sellerId: string, listingId: string) {
@@ -52,7 +48,7 @@ export class MarketplaceRepository {
     }
   }
 
-  async createListing(listing: ListingEntity) {
+  async createListing(listing: Listing) {
     try {
       await this.docClient.send(
         new PutCommand({
@@ -69,8 +65,7 @@ export class MarketplaceRepository {
             gameName: listing.gameName,
             listingId: listing.listingId
           },
-          ProjectionExpression: this.attributeExp,
-          ExpressionAttributeNames: this.attributeName
+          ...this.projection
         })
       );
       return result.Item;
@@ -83,14 +78,13 @@ export class MarketplaceRepository {
     const param: QueryCommandInput = {
       TableName: this.tableName,
       IndexName: query.index,
-      ProjectionExpression: this.attributeExp,
-      ExpressionAttributeNames: this.attributeName,
       KeyConditionExpression: "gameName = :gameName",
       FilterExpression: "listingStatus = :listingStatus",
       ExpressionAttributeValues: {
         ":gameName": gameName,
         ":listingStatus": "ACTIVE"
       },
+      ...this.projection,
       Limit: query.limit,
       ScanIndexForward: query.order
     };
@@ -115,14 +109,13 @@ export class MarketplaceRepository {
     const param: QueryCommandInput = {
       TableName: this.tableName,
       IndexName: "SellerListingIndex",
-      ProjectionExpression: this.attributeExp,
-      ExpressionAttributeNames: this.attributeName,
       KeyConditionExpression: "sellerId = :sellerId",
       FilterExpression: "listingStatus <> :listingStatus",
       ExpressionAttributeValues: {
         ":sellerId": sellerId,
         ":listingStatus": "DELETED"
       },
+      ...this.projection,
       Limit: query.limit,
       ScanIndexForward: query.order
     };
@@ -145,7 +138,7 @@ export class MarketplaceRepository {
 
   async updateListing(sellerId: string, listingId: string, listing: UpdateListingDto) {
     // check if sellerId is owner of the record
-    const record = (await this.validateIsSellerListing(sellerId, listingId)) as ListingEntity[];
+    const record = (await this.validateIsSellerListing(sellerId, listingId)) as Listing[];
 
     if (record.length !== 0) {
       try {
@@ -169,8 +162,7 @@ export class MarketplaceRepository {
               gameName: gameName,
               listingId: listingId
             },
-            ProjectionExpression: this.attributeExp,
-            ExpressionAttributeNames: this.attributeName
+            ...this.projection
           })
         );
 
@@ -185,7 +177,7 @@ export class MarketplaceRepository {
 
   async deleteListing(sellerId: string, listingId: string) {
     // check if sellerId is owner of the record
-    const record = (await this.validateIsSellerListing(sellerId, listingId)) as ListingEntity[];
+    const record = (await this.validateIsSellerListing(sellerId, listingId)) as Listing[];
 
     if (record.length !== 0) {
       try {

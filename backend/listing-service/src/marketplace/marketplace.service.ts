@@ -9,8 +9,8 @@ import {
   QueryListingCursor,
   SortListing
 } from "./types/marketplace.type";
-import { ListingEntity } from "./entities/listing.entity";
-import { padPrice } from "./utils/marketplace.util";
+import { Listing } from "./types/marketplace.schema";
+import { padPrice } from "../common/utils/common.utils";
 import { CreateListingDto, QueryListingDto, UpdateListingDto } from "./dto/marketplace.dto";
 
 @Injectable()
@@ -64,7 +64,7 @@ export class MarketplaceService {
 
     // combine together
     const paddedPrice = padPrice(listing.price);
-    const newListing: ListingEntity = {
+    const newListing: Listing = {
       ...listing,
       listingUpdatedAt: `${listing.updatedAt}#${listing.listingId}`.toLowerCase(),
       listingCardName: `${listing.cardName}#${listing.listingId}`.toLowerCase(),
