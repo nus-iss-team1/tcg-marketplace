@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/pagination";
 import { useAuth } from "@/context/AuthContext";
 import { EmptyState } from "@/components/empty-state";
-import { ListingGridSkeleton } from "@/components/listing-grid-skeleton";
 import { PlusIcon } from "lucide-react";
 import type { Listing } from "@/lib/listings";
 
@@ -57,7 +56,6 @@ import type { Listing } from "@/lib/listings";
 export default function MyListingsPage() {
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(false);
   // TODO: Replace with actual API call
   // const { listings, totalPages } = useMemo(
   //   () => fetchMyListings(currentPage, user?.username ?? ""),
@@ -89,9 +87,7 @@ export default function MyListingsPage() {
         </Button>
       </div>
 
-      {loading ? (
-        <ListingGridSkeleton />
-      ) : listings.length === 0 ? (
+      {listings.length === 0 ? (
         <EmptyState
           title="No listings yet"
           description="You haven't created any listings yet. Start selling your cards!"
