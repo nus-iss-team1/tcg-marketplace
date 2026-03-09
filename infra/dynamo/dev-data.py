@@ -27,8 +27,8 @@ for game_name, base_url in games.items():
   unique_set = set()
 
   data_list.append({
-    "gameId": f"GAME#{game_name}".lower(),
-    "meta": "META",
+    "gameId": "gamedata",
+    "meta": f"GAME#{game_name}".lower(),
     "gameName": game_name
   })
 
@@ -57,7 +57,7 @@ for game_name, base_url in games.items():
     unique_set.add((game_name, card_name, card_id, set_name, rarity))
 
     data_list.append({
-      "gameId": f"GAME#{game_name}".lower(),
+      "gameId": "carddata",
       "meta": f"CARD#{card_name}#{rarity}".lower(),
       "gameName": game_name,
       "cardName": card_name,
