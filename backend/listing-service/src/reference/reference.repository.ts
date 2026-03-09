@@ -3,6 +3,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { DYNAMODB_CLIENT } from "../dynamodb/dynamodb.constants";
 import { buildProjection } from "../dynamodb/dynamodb.util";
 import { CardLookup, GameLookup } from "./types/reference.schema";
+import { handleDynamoError } from "../common/utils/common.utils";
 
 @Injectable()
 export class ReferenceRepository {
@@ -29,9 +30,13 @@ export class ReferenceRepository {
       ScanIndexForward: true
     };
 
-    const result = await this.docClient.send(new QueryCommand(param));
+    try {
+      const result = await this.docClient.send(new QueryCommand(param));
 
-    return result.Items ?? [];
+      return result.Items ?? [];
+    } catch (err) {
+      handleDynamoError(err);
+    }
   }
 
   async retrieveCardDetail(gameName: string, cardName?: string) {
@@ -55,8 +60,12 @@ export class ReferenceRepository {
       ScanIndexForward: true
     };
 
-    const result = await this.docClient.send(new QueryCommand(param));
+    try {
+      const result = await this.docClient.send(new QueryCommand(param));
 
-    return result.Items ?? [];
+      return result.Items ?? [];
+    } catch (err) {
+      handleDynamoError(err);
+    }
   }
 }
