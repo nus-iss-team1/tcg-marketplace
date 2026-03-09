@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -25,33 +25,33 @@ import { EmptyState } from "@/components/empty-state";
 import { PlusIcon } from "lucide-react";
 import type { Listing } from "@/lib/listings";
 
-const ITEMS_PER_PAGE: number = 15;
-const TOTAL_ITEMS: number = 23;
+// const ITEMS_PER_PAGE: number = 15;
+// const TOTAL_ITEMS: number = 23;
 
-function fetchMyListings(page: number, username: string) : {listings: Listing[], totalPages: number} {
-  const totalPages = Math.ceil(TOTAL_ITEMS / ITEMS_PER_PAGE);
-  const count =
-    page === totalPages
-      ? TOTAL_ITEMS - (totalPages - 1) * ITEMS_PER_PAGE
-      : ITEMS_PER_PAGE;
+// function _fetchMyListings(page: number, username: string) : {listings: Listing[], totalPages: number} {
+//   const totalPages = Math.ceil(TOTAL_ITEMS / ITEMS_PER_PAGE);
+//   const count =
+//     page === totalPages
+//       ? TOTAL_ITEMS - (totalPages - 1) * ITEMS_PER_PAGE
+//       : ITEMS_PER_PAGE;
 
-  // TODO: Replace with actual API call to GET /api/marketplace/profile/:sellerId
-  const listings: Listing[] = Array.from({ length: count }, (_, i) => {
-    const idx = (page - 1) * ITEMS_PER_PAGE + i;
-    return {
-      listingId: `listing-${String(idx + 1).padStart(4, "0")}`,
-      sellerId: username,
-      sellerName: username,
-      gameName: "Pokemon TCG",
-      cardId: `card-${String(idx + 1).padStart(4, "0")}`,
-      cardName: `Pikachu V #${String(idx + 1).padStart(3, "0")}`,
-      price: (Math.random() * 100 + 1).toFixed(2),
-      updatedAt: Date.now() - idx * 60000,
-    };
-  });
+//   // TODO: Replace with actual API call to GET /api/marketplace/profile/:sellerId
+//   const listings: Listing[] = Array.from({ length: count }, (_, i) => {
+//     const idx = (page - 1) * ITEMS_PER_PAGE + i;
+//     return {
+//       listingId: `listing-${String(idx + 1).padStart(4, "0")}`,
+//       sellerId: username,
+//       sellerName: username,
+//       gameName: "Pokemon TCG",
+//       cardId: `card-${String(idx + 1).padStart(4, "0")}`,
+//       cardName: `Pikachu V #${String(idx + 1).padStart(3, "0")}`,
+//       price: (Math.random() * 100 + 1).toFixed(2),
+//       updatedAt: Date.now() - idx * 60000,
+//     };
+//   });
 
-  return { listings, totalPages };
-}
+//   return { listings, totalPages };
+// }
 
 export default function MyListingsPage() {
   const { user } = useAuth();
