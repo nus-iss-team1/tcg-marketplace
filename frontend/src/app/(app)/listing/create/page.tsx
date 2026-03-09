@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -20,7 +21,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ImageIcon, PlusIcon, XIcon } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { ImageIcon, PlusIcon, UploadIcon, XIcon, Trash2Icon } from "lucide-react";
 
 const GAMES = [
   "Pokemon TCG",
@@ -42,12 +50,55 @@ export default function CreateListingPage() {
   const [rarity, setRarity] = useState("");
   const [price, setPrice] = useState("");
   const [pickup, setPickup] = useState("");
+  const [frontImage, setFrontImage] = useState<File | null>(null);
+  const [backImage, setBackImage] = useState<File | null>(null);
+  const [frontPreview, setFrontPreview] = useState<string | null>(null);
+  const [backPreview, setBackPreview] = useState<string | null>(null);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [uploadTarget, setUploadTarget] = useState<"front" | "back">("front");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const initials = user?.username
     ? user.username.substring(0, 2).toUpperCase()
     : "?";
 
   const canSubmit = gameName && cardName && price && Number(price) > 0;
+
+  const handleOpenUpload = (target: "front" | "back") => {
+    setUploadTarget(target);
+    setUploadDialogOpen(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const previewUrl = URL.createObjectURL(file);
+
+    if (uploadTarget === "front") {
+      if (frontPreview) URL.revokeObjectURL(frontPreview);
+      setFrontImage(file);
+      setFrontPreview(previewUrl);
+    } else {
+      if (backPreview) URL.revokeObjectURL(backPreview);
+      setBackImage(file);
+      setBackPreview(previewUrl);
+    }
+    setUploadDialogOpen(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleRemoveImage = (target: "front" | "back") => {
+    if (target === "front") {
+      if (frontPreview) URL.revokeObjectURL(frontPreview);
+      setFrontImage(null);
+      setFrontPreview(null);
+    } else {
+      if (backPreview) URL.revokeObjectURL(backPreview);
+      setBackImage(null);
+      setBackPreview(null);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,8 +111,10 @@ export default function CreateListingPage() {
       rarity: rarity || undefined,
       price: Number(Number(price).toFixed(2)),
       pickup: pickup || undefined,
+      frontImage,
+      backImage,
     });
-    router.push("/marketplace");
+    router.push("/listing");
   };
 
   return (
@@ -99,8 +152,18 @@ export default function CreateListingPage() {
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="aspect-4/3 w-full bg-muted flex items-center justify-center">
-                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                <div className="aspect-4/3 w-full bg-muted flex items-center justify-center overflow-hidden">
+                  {frontPreview ? (
+                    <Image
+                      src={frontPreview}
+                      alt="Card front"
+                      width={192}
+                      height={144}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                  )}
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col justify-center items-start px-4 py-2.5 sm:px-3 sm:py-2.5 gap-0.5">
@@ -119,6 +182,102 @@ export default function CreateListingPage() {
 
           {/* Form fields */}
           <div className="flex-1 min-w-0 space-y-5 animate-[fade-up_0.4s_ease-out_0.1s_both]">
+            {/* Card Images */}
+            <div className="space-y-2">
+              <Label>Card Images</Label>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Front */}
+                <div className="space-y-1.5">
+                  <p className="text-xs text-muted-foreground">Front</p>
+                  {frontPreview ? (
+                    <div className="relative group">
+                      <div className="aspect-4/3 rounded-md overflow-hidden border bg-muted">
+                        <Image
+                          src={frontPreview}
+                          alt="Card front"
+                          width={300}
+                          height={225}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleOpenUpload("front")}
+                        >
+                          <UploadIcon className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleRemoveImage("front")}
+                        >
+                          <Trash2Icon className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenUpload("front")}
+                      className="aspect-4/3 w-full rounded-md border-2 border-dashed border-muted-foreground/25 bg-muted/50 flex flex-col items-center justify-center gap-1.5 hover:border-muted-foreground/50 hover:bg-muted transition-colors cursor-pointer"
+                    >
+                      <UploadIcon className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Upload</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Back */}
+                <div className="space-y-1.5">
+                  <p className="text-xs text-muted-foreground">Back</p>
+                  {backPreview ? (
+                    <div className="relative group">
+                      <div className="aspect-4/3 rounded-md overflow-hidden border bg-muted">
+                        <Image
+                          src={backPreview}
+                          alt="Card back"
+                          width={300}
+                          height={225}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleOpenUpload("back")}
+                        >
+                          <UploadIcon className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleRemoveImage("back")}
+                        >
+                          <Trash2Icon className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenUpload("back")}
+                      className="aspect-4/3 w-full rounded-md border-2 border-dashed border-muted-foreground/25 bg-muted/50 flex flex-col items-center justify-center gap-1.5 hover:border-muted-foreground/50 hover:bg-muted transition-colors cursor-pointer"
+                    >
+                      <UploadIcon className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Upload</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Game & Card Name */}
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="space-y-2 sm:w-48 sm:shrink-0">
@@ -232,6 +391,39 @@ export default function CreateListingPage() {
           </div>
         </div>
       </form>
+
+      {/* Upload Dialog */}
+      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Upload {uploadTarget === "front" ? "Front" : "Back"} Image
+            </DialogTitle>
+            <DialogDescription>
+              Select an image of the {uploadTarget === "front" ? "front" : "back"} of your card. Supported formats: JPG, PNG, WebP.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center justify-center gap-3 p-8 rounded-md border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 hover:bg-muted/50 transition-colors cursor-pointer"
+            >
+              <UploadIcon className="h-8 w-8 text-muted-foreground" />
+              <div className="text-center">
+                <p className="text-sm font-medium">Click to select a file</p>
+                <p className="text-xs text-muted-foreground mt-1">JPG, PNG or WebP up to 5MB</p>
+              </div>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
