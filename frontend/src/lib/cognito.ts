@@ -133,6 +133,30 @@ export function getCurrentSession(): Promise<CognitoUserSession | null> {
   });
 }
 
+export function refreshSession(): Promise<CognitoUserSession> {
+  const currentUser = getUserPool().getCurrentUser();
+  if (!currentUser) return Promise.reject(new Error("No user"));
+
+  return new Promise((resolve, reject) => {
+    currentUser.getSession(
+      (err: Error | null, session: CognitoUserSession | null) => {
+        if (err || !session) {
+          reject(err);
+          return;
+        }
+        const refreshToken = session.getRefreshToken();
+        currentUser.refreshSession(refreshToken, (refreshErr, newSession) => {
+          if (refreshErr) {
+            reject(refreshErr);
+            return;
+          }
+          resolve(newSession);
+        });
+      }
+    );
+  });
+}
+
 export function getCurrentUser() {
   return getUserPool().getCurrentUser();
 }

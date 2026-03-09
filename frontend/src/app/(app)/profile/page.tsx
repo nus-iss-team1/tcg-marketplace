@@ -22,7 +22,7 @@ import { UserIcon, SaveIcon } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -56,6 +56,7 @@ export default function ProfilePage() {
       if (lastName) attrs["family_name"] = lastName;
       attrs["address"] = address;
       await updateUserAttributes(attrs);
+      await refreshUser();
       toast.success("Profile updated successfully.");
     } catch (err) {
       setProfileError(
