@@ -1,16 +1,55 @@
 import { Injectable } from "@nestjs/common";
 import { DateTime } from "luxon";
-import { MarketplaceRepository } from "./marketplace.repository";
-import { CreateListingDto } from "./dto/create-listing.dto";
-import { QueryListingCursor } from "./types/marketplace.type";
-import { UpdateListingDto } from "./dto/update-listing.dto";
 import { ulid } from "ulid";
+import { MarketplaceRepository } from "./marketplace.repository";
+import {
+  ListingStatus,
+  OrderListing,
+  QueryListing,
+  QueryListingCursor,
+  SortListing
+} from "./types/marketplace.type";
+import { ListingEntity } from "./entities/listing.entity";
+import { padPrice } from "./utils/marketplace.util";
+import { CreateListingDto, QueryListingDto, UpdateListingDto } from "./dto/marketplace.dto";
 
 @Injectable()
 export class MarketplaceService {
   constructor(private readonly marketplaceRepo: MarketplaceRepository) {}
 
-  async create(listing: CreateListingDto) {
+  private configureQuery(query?: QueryListingDto) {
+    const limit = query?.limit ?? 50;
+    const cursor: QueryListingCursor | undefined = query?.cursor
+      ? (JSON.parse(Buffer.from(query.cursor, "base64").toString()) as QueryListingCursor)
+      : undefined;
+
+    const sortMap: Record<SortListing, SortListing> = {
+      [SortListing.cardName]: SortListing.cardName,
+      [SortListing.price]: SortListing.price,
+      [SortListing.updatedAt]: SortListing.updatedAt
+    };
+    const orderMap: Record<OrderListing, boolean> = {
+      [OrderListing.ASC]: true,
+      [OrderListing.DESC]: false
+    };
+    const indexMap: Record<SortListing, string> = {
+      [SortListing.cardName]: "UpdatedListingIndex",
+      [SortListing.price]: "CardListingIndex",
+      [SortListing.updatedAt]: "PriceListingIndex"
+    };
+
+    const newQuery: QueryListing = {
+      limit: limit,
+      cursor: cursor,
+      sort: query?.sort ? sortMap[query.sort] : SortListing.updatedAt,
+      order: query?.order ? orderMap[query.order] : true,
+      index: query?.sort ? indexMap[query.sort] : "UpdatedListingIndex"
+    };
+
+    return newQuery;
+  }
+
+  async createListing(sellerId: string, listing: CreateListingDto) {
     // generate listingId
     listing.listingId = ulid();
 
@@ -20,27 +59,59 @@ export class MarketplaceService {
     listing.updatedAt = currentTs;
 
     // other mandatory fields
-    listing.listingStatus = "ACTIVE";
+    listing.sellerId = sellerId;
+    listing.listingStatus = ListingStatus.ACTIVE;
 
-    return await this.marketplaceRepo.createListing(listing);
+    // combine together
+    const paddedPrice = padPrice(listing.price);
+    const newListing: ListingEntity = {
+      ...listing,
+      listingUpdatedAt: `${listing.updatedAt}#${listing.listingId}`.toLowerCase(),
+      listingCardName: `${listing.cardName}#${listing.listingId}`.toLowerCase(),
+      listingPrice: `${paddedPrice}#${listing.listingId}`.toLowerCase()
+    };
+
+    return await this.marketplaceRepo.createListing(newListing);
   }
 
-  async listing(gameName: string, limit: number, cursor: QueryListingCursor | undefined) {
-    return await this.marketplaceRepo.retrieveListing(gameName, limit, cursor);
+  async listing(gameName: string, query?: QueryListingDto) {
+    const newQuery = this.configureQuery(query);
+    const result = await this.marketplaceRepo.retrieveListing(gameName, newQuery);
+
+    return {
+      data: result.items,
+      pagination: {
+        nextCursor: result.nextCursor
+          ? Buffer.from(JSON.stringify(result.nextCursor)).toString("base64")
+          : null,
+        limit: newQuery.limit
+      }
+    };
   }
 
-  async sellerListing(sellerId: string, limit: number, cursor: QueryListingCursor | undefined) {
-    return await this.marketplaceRepo.retrieveSellerListing(sellerId, limit, cursor);
+  async sellerListing(sellerId: string, query?: QueryListingDto) {
+    const newQuery = this.configureQuery(query);
+    const result = await this.marketplaceRepo.retrieveSellerListing(sellerId, newQuery);
+
+    return {
+      data: result.items,
+      pagination: {
+        nextCursor: result.nextCursor
+          ? Buffer.from(JSON.stringify(result.nextCursor)).toString("base64")
+          : null,
+        limit: newQuery.limit
+      }
+    };
   }
 
-  async update(listingId: string, listing: UpdateListingDto) {
+  async updateListing(sellerId: string, listingId: string, listing: UpdateListingDto) {
     // include timestamp
     listing.updatedAt = DateTime.now().toMillis();
 
-    return await this.marketplaceRepo.updateListing(listingId, listing);
+    return await this.marketplaceRepo.updateListing(sellerId, listingId, listing);
   }
 
-  async remove(listingId: string) {
-    return await this.marketplaceRepo.deleteListing(listingId);
+  async deleteListing(sellerId: string, listingId: string) {
+    return await this.marketplaceRepo.deleteListing(sellerId, listingId);
   }
 }
