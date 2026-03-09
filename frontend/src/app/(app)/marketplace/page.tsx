@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -19,12 +20,18 @@ import {
 } from "@/components/ui/pagination";
 import { useAuth } from "@/context/AuthContext";
 import { EmptyState } from "@/components/empty-state";
+import { ListingGridSkeleton } from "@/components/listing-grid-skeleton";
 import { fetchListings } from "@/lib/listings";
 
 export default function MarketplacePage() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const gameType = searchParams.get("game") || "Pokemon TCG";
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
   const { listings, totalPages } = useMemo(() => fetchListings(currentPage), [currentPage]);
+
+  // TODO: Replace useMemo with useEffect + API call, setting loading = true/false
 
   return (
     <div className="w-full max-w-352 mx-auto px-4 sm:px-0">
@@ -33,11 +40,13 @@ export default function MarketplacePage() {
           Welcome back, {user?.givenName || user?.username}
         </p>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-          Pokemon
+          {gameType}
         </h1>
       </div>
 
-      {listings.length === 0 ? (
+      {loading ? (
+        <ListingGridSkeleton />
+      ) : listings.length === 0 ? (
         <EmptyState
           title="No listings available"
           description="There are no listings in this category yet. Check back later!"
