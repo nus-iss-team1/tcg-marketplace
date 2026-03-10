@@ -180,40 +180,35 @@ export default function SettingsPage() {
 
   if (loadingAttrs) {
     return (
-      <PageContainer title="Settings">
-        <div className="flex flex-col md:flex-row items-start gap-6 md:gap-8 w-full">
-          {/* Sidebar skeleton */}
-          <div className="w-full md:w-56 shrink-0">
-            <div className="flex md:flex-col gap-1">
-              <Skeleton className="h-9 w-full rounded-md" />
-              <Skeleton className="h-9 w-full rounded-md" />
-              <Skeleton className="h-9 w-full rounded-md" />
-            </div>
-          </div>
-          {/* Content skeleton */}
-          <div className="flex-1 min-w-0 flex flex-col gap-6 max-w-2xl mx-auto w-full">
-            <Skeleton className="h-72 w-full rounded-lg" />
-            <Skeleton className="h-56 w-full rounded-lg" />
-            <Skeleton className="h-48 w-full rounded-lg" />
-          </div>
+      <PageContainer title="Settings" backHref="/marketplace">
+        {/* Nav skeleton */}
+        <div className="flex gap-2 mb-6">
+          <Skeleton className="h-9 w-24 rounded-md" />
+          <Skeleton className="h-9 w-36 rounded-md" />
+          <Skeleton className="h-9 w-28 rounded-md" />
+        </div>
+        {/* Content skeleton */}
+        <div className="flex flex-col gap-6">
+          <Skeleton className="h-72 w-full rounded-lg" />
+          <Skeleton className="h-56 w-full rounded-lg" />
+          <Skeleton className="h-48 w-full rounded-lg" />
         </div>
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer title="Settings">
-      <div className="flex flex-col md:flex-row items-start gap-6 md:gap-8 w-full">
-      {/* Sidebar nav */}
-      <nav className="w-full md:w-56 shrink-0 md:sticky md:top-20 md:self-start">
-        <ul className="flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible">
+    <PageContainer title="Settings" backHref="/marketplace">
+      {/* Section nav */}
+      <nav className="mb-6">
+        <ul className="flex gap-1 overflow-x-auto">
           {SECTIONS.map(({ id, label, icon: Icon }) => (
             <li key={id}>
               <button
                 type="button"
                 onClick={() => scrollTo(id)}
                 className={cn(
-                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap w-full cursor-pointer",
+                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap cursor-pointer",
                   activeSection === id
                     ? "bg-muted text-foreground"
                     : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
@@ -228,7 +223,7 @@ export default function SettingsPage() {
       </nav>
 
       {/* Content sections */}
-      <div className="flex-1 min-w-0 flex flex-col gap-6 max-w-2xl mx-auto w-full">
+      <div className="flex flex-col gap-6">
         {/* Profile */}
         <section id="profile" className="animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0s" }}>
             <Card>
@@ -400,7 +395,6 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </section>
-      </div>
       </div>
     </PageContainer>
   );

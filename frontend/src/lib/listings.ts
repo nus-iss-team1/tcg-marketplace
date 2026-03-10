@@ -67,6 +67,7 @@ function generateMockListings(gameName: string, count: number, sellerId?: string
       rarity: card.rarity,
       price: (Math.random() * 200 + 1).toFixed(2),
       listingStatus: "ACTIVE",
+      createdAt: Date.now() - i * 7200000,
       updatedAt: Date.now() - i * 3600000,
     };
   });
@@ -96,10 +97,16 @@ export interface Listing {
   rarity?: string;
   price: string;
   paymentMethod?: PaymentMethod;
-  pickup?: string;
+  pickUp?: string;
   listingStatus?: "ACTIVE" | "SOLD" | "DELETED";
-  images?: string[];
+  attachment?: ListingAttachment;
+  createdAt: number;
   updatedAt: number;
+}
+
+export interface ListingAttachment {
+  front?: string;
+  back?: string;
 }
 
 export interface PaymentMethod {
@@ -128,7 +135,7 @@ export interface CreateListingBody {
   rarity?: string;
   price: number;
   paymentMethod?: PaymentMethod;
-  pickup?: string;
+  pickUp?: string;
   listingStatus?: "ACTIVE" | "SOLD" | "DELETED";
 }
 

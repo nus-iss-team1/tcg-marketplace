@@ -28,7 +28,7 @@ const GAME_SHORTCUTS = [
   { label: "Star Wars", value: "Star Wars Unlimited" },
 ];
 
-export function AppHeader() {
+export function AppHeader({ hideSearch }: { hideSearch?: boolean } = {}) {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -103,15 +103,17 @@ export function AppHeader() {
         {user ? (
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Search icon button — hidden on mobile where inline search is shown */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden md:inline-flex h-8 w-8"
-              onClick={() => setSearchOpen(true)}
-            >
-              <SearchIcon className="h-4 w-4" />
-              <span className="sr-only">Search</span>
-            </Button>
+            {!hideSearch && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden md:inline-flex h-8 w-8"
+                onClick={() => setSearchOpen(true)}
+              >
+                <SearchIcon className="h-4 w-4" />
+                <span className="sr-only">Search</span>
+              </Button>
+            )}
 
             {user.isAdmin && (
               <Badge variant="default" className="hidden md:inline-flex text-xs">
@@ -180,20 +182,19 @@ export function AppHeader() {
           </div>
         ) : (
           <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden md:inline-flex h-8 w-8"
-              onClick={() => setSearchOpen(true)}
-            >
-              <SearchIcon className="h-4 w-4" />
-              <span className="sr-only">Search</span>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/login?tab=signin">Sign In</Link>
-            </Button>
-            <Button size="sm" asChild className="hidden sm:inline-flex">
-              <Link href="/login?tab=signup">Sign Up</Link>
+            {!hideSearch && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden md:inline-flex h-8 w-8"
+                onClick={() => setSearchOpen(true)}
+              >
+                <SearchIcon className="h-4 w-4" />
+                <span className="sr-only">Search</span>
+              </Button>
+            )}
+            <Button size="sm" asChild>
+              <Link href="/login">Login</Link>
             </Button>
             <ThemeToggle />
           </div>

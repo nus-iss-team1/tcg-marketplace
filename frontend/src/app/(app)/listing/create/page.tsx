@@ -48,7 +48,7 @@ export default function CreateListingPage() {
   const [cardId, setCardId] = useState("");
   const [rarity, setRarity] = useState("");
   const [price, setPrice] = useState("");
-  const [pickup, setPickup] = useState("");
+  const [pickUp, setPickUp] = useState("");
   const [frontImage, setFrontImage] = useState<File | null>(null);
   const [backImage, setBackImage] = useState<File | null>(null);
   const [frontPreview, setFrontPreview] = useState<string | null>(null);
@@ -105,7 +105,7 @@ export default function CreateListingPage() {
       cardId: cardId || undefined,
       rarity: rarity || undefined,
       price: Number(Number(price).toFixed(2)),
-      pickup: pickup || undefined,
+      pickUp: pickUp || undefined,
       frontImage,
       backImage,
     });
@@ -284,8 +284,8 @@ export default function CreateListingPage() {
             <Input
               id="pickup"
               placeholder="e.g. Jurong East MRT"
-              value={pickup}
-              onChange={(e) => setPickup(e.target.value)}
+              value={pickUp}
+              onChange={(e) => setPickUp(e.target.value)}
               maxLength={100}
               className="h-9"
             />

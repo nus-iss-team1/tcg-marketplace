@@ -151,7 +151,7 @@ function AuthForm() {
   if (showVerify) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
-        <AppHeader />
+        <AppHeader hideSearch />
         <div className="flex flex-1 items-center justify-center px-4">
           <div className="w-full max-w-lg lg:max-w-xl animate-[fade-up_0.4s_ease-out_both]">
             <Card>
@@ -215,7 +215,7 @@ function AuthForm() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <AppHeader />
+      <AppHeader hideSearch />
       <div className="flex flex-1 items-center justify-center px-4">
       <div className="w-full max-w-lg lg:max-w-xl animate-[fade-up_0.4s_ease-out_both]">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -275,6 +275,16 @@ function AuthForm() {
                   {loginLoading ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
+              <p className="text-sm text-muted-foreground text-center mt-4">
+                Don&apos;t have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("signup")}
+                  className="text-primary hover:underline cursor-pointer font-medium"
+                >
+                  Sign up
+                </button>
+              </p>
             </TabsContent>
 
             <TabsContent value="signup">

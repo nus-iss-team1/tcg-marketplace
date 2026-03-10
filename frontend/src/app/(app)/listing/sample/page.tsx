@@ -125,7 +125,7 @@ function ReadListingView({ listing }: { listing: Listing }) {
       </div>
 
       {/* Card images banner */}
-      <ImageBanner images={listing.images} />
+      <ImageBanner attachment={listing.attachment} />
 
       {/* Card name and game type */}
       <div className="mt-4 mb-2">
@@ -176,11 +176,11 @@ function ReadListingView({ listing }: { listing: Listing }) {
             <span className="font-medium">{listing.rarity}</span>
           </div>
         )}
-        {listing.pickup && (
+        {listing.pickUp && (
           <div className="flex items-center gap-2 text-sm">
             <MapPinIcon className="h-4 w-4 text-muted-foreground shrink-0" />
             <span className="text-muted-foreground">Pickup:</span>
-            <span className="font-medium">{listing.pickup}</span>
+            <span className="font-medium">{listing.pickUp}</span>
           </div>
         )}
         {listing.paymentMethod && (
@@ -236,13 +236,13 @@ function EditListingView({ listing }: { listing: Listing }) {
   const [cardId, setCardId] = useState(listing.cardId || "");
   const [rarity, setRarity] = useState(listing.rarity || "");
   const [price, setPrice] = useState(listing.price);
-  const [pickup, setPickup] = useState(listing.pickup || "");
+  const [pickUp, setPickUp] = useState(listing.pickUp || "");
 
   const [frontPreview, setFrontPreview] = useState<string | null>(
-    listing.images?.[0] || null
+    listing.attachment?.front || null
   );
   const [backPreview, setBackPreview] = useState<string | null>(
-    listing.images?.[1] || null
+    listing.attachment?.back || null
   );
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploadTarget, setUploadTarget] = useState<"front" | "back">("front");
@@ -445,8 +445,8 @@ function EditListingView({ listing }: { listing: Listing }) {
             <Input
               id="pickup"
               placeholder="e.g. Jurong East MRT"
-              value={pickup}
-              onChange={(e) => setPickup(e.target.value)}
+              value={pickUp}
+              onChange={(e) => setPickUp(e.target.value)}
               maxLength={100}
               className="h-9"
             />
@@ -508,10 +508,10 @@ function EditListingView({ listing }: { listing: Listing }) {
   );
 }
 
-function ImageBanner({ images }: { images?: string[] }) {
-  const hasImages = images && images.length > 0;
+function ImageBanner({ attachment }: { attachment?: { front?: string; back?: string } }) {
+  const images = [attachment?.front, attachment?.back].filter(Boolean) as string[];
 
-  if (!hasImages) {
+  if (images.length === 0) {
     return (
       <div className="flex justify-center gap-3 overflow-x-auto pb-2">
         <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-lg bg-muted flex items-center justify-center border">
