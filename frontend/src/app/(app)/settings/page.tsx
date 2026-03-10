@@ -184,21 +184,22 @@ export default function SettingsPage() {
 
   if (loadingAttrs) {
     return (
-      <PageContainer title="Settings" backHref="/marketplace">
+      <PageContainer title="Settings" >
         <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full">
-          {/* Nav skeleton */}
-          <div className="w-full md:w-48 shrink-0">
-            <div className="flex md:flex-col gap-1">
-              <Skeleton className="h-9 w-24 md:w-full rounded-md" />
-              <Skeleton className="h-9 w-36 md:w-full rounded-md" />
-              <Skeleton className="h-9 w-28 md:w-full rounded-md" />
-            </div>
-          </div>
           {/* Content skeleton */}
           <div className="flex-1 min-w-0 flex flex-col gap-6">
             <Skeleton className="h-72 w-full rounded-lg" />
             <Skeleton className="h-56 w-full rounded-lg" />
             <Skeleton className="h-48 w-full rounded-lg" />
+          </div>
+          {/* TOC skeleton */}
+          <div className="hidden md:block w-44 shrink-0">
+            <Skeleton className="h-3 w-20 mb-3" />
+            <div className="flex flex-col gap-2 pl-3">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-28" />
+              <Skeleton className="h-3 w-20" />
+            </div>
           </div>
         </div>
       </PageContainer>
@@ -206,33 +207,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <PageContainer title="Settings" description="Manage your account" backHref="/marketplace">
+    <PageContainer title="Settings" description="Manage your account" >
       <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full">
-        {/* Section nav — horizontal on mobile, vertical sidebar on md+ */}
-        <nav className="w-full md:w-48 shrink-0 md:sticky md:top-20 md:self-start">
-          <ul className="flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible">
-            {SECTIONS.map(({ id, label, icon: Icon }) => (
-              <li key={id}>
-                <button
-                  type="button"
-                  onClick={() => scrollTo(id)}
-                  className={cn(
-                    "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap w-full cursor-pointer",
-                    activeSection === id
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                  )}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  {label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
         {/* Content sections */}
-        <div className="flex-1 min-w-0 flex flex-col gap-6">
+        <div className="flex-1 min-w-0 flex flex-col gap-6 order-2 md:order-1">
         {/* Profile */}
         <section id="profile" className="animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0s" }}>
             <Card>
@@ -405,6 +383,29 @@ export default function SettingsPage() {
           </Card>
         </section>
       </div>
+
+        {/* Table of contents nav — hidden on mobile, right side on md+ */}
+        <nav className="hidden md:block w-44 shrink-0 sticky top-20 self-start order-2">
+          <p className="text-xs font-medium text-muted-foreground mb-3">On this page</p>
+          <ul className="flex flex-col border-l border-border">
+            {SECTIONS.map(({ id, label }) => (
+              <li key={id}>
+                <button
+                  type="button"
+                  onClick={() => scrollTo(id)}
+                  className={cn(
+                    "block w-full text-left text-[13px] py-1.5 pl-3 -ml-px border-l-2 transition-colors cursor-pointer",
+                    activeSection === id
+                      ? "border-primary text-foreground font-medium"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50"
+                  )}
+                >
+                  {label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
     </PageContainer>
   );
