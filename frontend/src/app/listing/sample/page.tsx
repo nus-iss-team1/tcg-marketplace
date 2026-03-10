@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 import { fetchMarketplaceListings, type Listing } from "@/lib/listings";
 import { toast } from "sonner";
-import { PageContainer } from "@/components/page-header";
+import { PageContainer, PageHeader } from "@/components/page-header";
 import { AppHeader } from "@/components/app-header";
 import { useAuth } from "@/context/AuthContext";
 
@@ -138,10 +138,9 @@ function ReadListingView({ listing, isAuthenticated }: { listing: Listing; isAut
     <div className="flex flex-1 flex-col w-full max-w-352 mx-auto px-4 sm:px-0 animate-[fade-up_0.4s_ease-out_both]">
       {/* Back & Edit buttons */}
       <div className="flex items-center justify-between mb-4">
-        <Button variant="outline" size="icon" className="h-8 w-8 sm:w-auto sm:px-3" asChild>
+        <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" asChild>
           <Link href="/marketplace">
             <ChevronLeftIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Back</span>
           </Link>
         </Button>
         {isAuthenticated && (
@@ -321,7 +320,8 @@ function EditListingView({ listing }: { listing: Listing }) {
   };
 
   return (
-    <PageContainer title="Edit Listing" description="Update your listing details" backHref="/listing/sample">
+    <PageContainer>
+      <PageHeader title="Edit Listing" description="Update your listing details" backHref="/listing/sample" />
       <form onSubmit={handleSubmit} className="animate-[fade-up_0.4s_ease-out_both]">
         {/* Image upload banner */}
         <div className="flex justify-center gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">

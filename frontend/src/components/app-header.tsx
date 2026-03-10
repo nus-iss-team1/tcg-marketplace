@@ -52,7 +52,7 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
           TCG Marketplace
         </Link>
         <Link href={homeHref} className="flex md:hidden items-center gap-1.5 text-base font-semibold shrink-0">
-          <LayersIcon className="h-5 w-5 text-primary sm:hidden" />
+          <LayersIcon className="h-5 w-5 text-primary" />
           TCG
         </Link>
 
@@ -177,7 +177,7 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
               </div>
             </SheetHeader>
 
-            <Separator className="my-3" />
+            <Separator className="my-1.5" />
 
             <nav className="flex flex-col px-2">
               <Link
@@ -198,7 +198,7 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
               </Link>
             </nav>
 
-            <Separator className="my-3" />
+            <Separator className="my-1.5" />
 
             <nav className="flex flex-col px-2">
               <button

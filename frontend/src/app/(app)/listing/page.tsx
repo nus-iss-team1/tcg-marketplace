@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/pagination";
 import { useAuth } from "@/context/AuthContext";
 import { EmptyState } from "@/components/empty-state";
-import { PageContainer } from "@/components/page-header";
+import { PageContainer, PageHeader } from "@/components/page-header";
 import { PlusIcon } from "lucide-react";
 import { fetchSellerListings, type Listing } from "@/lib/listings";
 
@@ -47,18 +47,19 @@ export default function MyListingsPage() {
     : "?";
 
   return (
-    <PageContainer
-      title="My Listings"
-      description="Manage your cards"
-      action={
-        <Button asChild size="icon" className="h-8 w-8 sm:w-auto sm:px-3">
-          <Link href="/listing/create">
-            <PlusIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">New Listing</span>
-          </Link>
-        </Button>
-      }
-    >
+    <PageContainer>
+      <PageHeader
+        title="My Listings"
+        description="Manage your cards"
+        action={
+          <Button asChild size="icon" className="h-8 w-8 sm:w-auto sm:px-3">
+            <Link href="/listing/create">
+              <PlusIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">New Listing</span>
+            </Link>
+          </Button>
+        }
+      />
       {listings.length === 0 ? (
         <EmptyState
           title="No listings yet"

@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { PageContainer } from "@/components/page-header";
+import { PageContainer, PageHeader } from "@/components/page-header";
 
 /* ── Theme helpers ── */
 
@@ -184,7 +184,8 @@ export default function SettingsPage() {
 
   if (loadingAttrs) {
     return (
-      <PageContainer title="Settings" >
+      <PageContainer>
+        <PageHeader title="Settings" />
         <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full">
           {/* Content skeleton */}
           <div className="flex-1 min-w-0 flex flex-col gap-6">
@@ -207,7 +208,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <PageContainer title="Settings" description="Manage your account" >
+    <PageContainer>
+      <PageHeader title="Settings" description="Manage your account" />
       <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full">
         {/* Content sections */}
         <div className="flex-1 min-w-0 flex flex-col gap-6 order-2 md:order-1">

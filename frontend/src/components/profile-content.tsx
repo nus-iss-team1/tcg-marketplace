@@ -35,9 +35,10 @@ export interface ProfileData {
 interface ProfileContentProps {
   profile: ProfileData;
   isOwnProfile?: boolean;
+  action?: React.ReactNode;
 }
 
-export function ProfileContent({ profile, isOwnProfile }: ProfileContentProps) {
+export function ProfileContent({ profile, isOwnProfile, action }: ProfileContentProps) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loadingListings, setLoadingListings] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,39 +57,24 @@ export function ProfileContent({ profile, isOwnProfile }: ProfileContentProps) {
   }, [profile.username]);
 
   return (
-    <div className="flex flex-col gap-6 w-full">
-      {/* Profile header */}
-      <div className="flex items-start gap-4 animate-[fade-up_0.4s_ease-out_both]">
-        <Avatar className="h-16 w-16 sm:h-20 sm:w-20 shrink-0">
-          <AvatarFallback className="text-lg sm:text-xl font-semibold">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex flex-col gap-1 min-w-0">
-          <h2 className="text-xl sm:text-2xl font-bold truncate">
-            {profile.displayName}
-          </h2>
-          <p className="text-sm text-muted-foreground truncate">
-            @{profile.username}
-          </p>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-            {isOwnProfile && (
-              <Badge variant="secondary" className="text-xs">You</Badge>
-            )}
-            {profile.address && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <MapPinIcon className="h-3 w-3" />
-                {profile.address}
-              </span>
-            )}
-            {profile.joinedAt && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <CalendarIcon className="h-3 w-3" />
-                Joined {new Date(profile.joinedAt).toLocaleDateString()}
-              </span>
-            )}
-          </div>
+    <div className="flex flex-col gap-3 w-full">
+      {/* Profile meta */}
+      <div className="flex items-center justify-between animate-[fade-up_0.4s_ease-out_both]">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          {profile.address && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <MapPinIcon className="h-3 w-3" />
+              {profile.address}
+            </span>
+          )}
+          {profile.joinedAt && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <CalendarIcon className="h-3 w-3" />
+              Joined {new Date(profile.joinedAt).toLocaleDateString()}
+            </span>
+          )}
         </div>
+        {action}
       </div>
 
       <Separator />
@@ -237,14 +223,7 @@ export function ProfileContent({ profile, isOwnProfile }: ProfileContentProps) {
 export function ProfileSkeleton() {
   return (
     <div className="flex flex-col gap-6 w-full">
-      <div className="flex items-start gap-4">
-        <Skeleton className="h-16 w-16 sm:h-20 sm:w-20 rounded-full shrink-0" />
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-7 w-40" />
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-3 w-48 mt-1" />
-        </div>
-      </div>
+      <Skeleton className="h-3 w-48" />
       <Skeleton className="h-px w-full" />
       <Skeleton className="h-4 w-24" />
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 sm:gap-6 md:gap-8">
