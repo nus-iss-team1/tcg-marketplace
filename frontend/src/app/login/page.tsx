@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { confirmSignUp, resendConfirmationCode } from "@/lib/cognito";
@@ -26,6 +26,10 @@ function AuthForm() {
   const tabParam = searchParams.get("tab");
   const redirectTo = searchParams.get("redirect") || "/marketplace";
   const initialTab = tabParam === "signup" ? "signup" : "signin";
+
+  useEffect(() => {
+    document.title = "Login - TCG Marketplace";
+  }, []);
 
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");

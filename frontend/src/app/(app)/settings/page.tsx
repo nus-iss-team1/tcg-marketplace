@@ -58,6 +58,10 @@ const SECTIONS = [
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth();
 
+  useEffect(() => {
+    document.title = "Settings - TCG Marketplace";
+  }, []);
+
   /* ── Active section tracking ── */
   const [activeSection, setActiveSection] = useState("profile");
 

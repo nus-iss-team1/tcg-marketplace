@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -24,6 +25,10 @@ export default function LandingPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
+  useEffect(() => {
+    document.title = "TCG Marketplace";
+  }, []);
+
   const handleCreateListing = () => {
     if (user) {
       router.push("/listing/create");
@@ -47,7 +52,7 @@ export default function LandingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <AppHeader />
+      <AppHeader hideSearch />
 
       {/* Hero section */}
       <main className="flex flex-1 items-center px-4 sm:px-8 md:px-12 lg:px-8 py-12 sm:py-16 md:py-20">
