@@ -155,7 +155,7 @@ function AuthForm() {
   if (showVerify) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
-        <AppHeader hideSearch />
+        <AppHeader />
         <div className="flex flex-1 items-center justify-center px-4">
           <div className="w-full max-w-lg lg:max-w-xl animate-[fade-up_0.4s_ease-out_both]">
             <Card>
@@ -219,7 +219,7 @@ function AuthForm() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <AppHeader hideSearch />
+      <AppHeader />
       <div className="flex flex-1 items-center justify-center px-4">
       <div className="w-full max-w-lg lg:max-w-xl animate-[fade-up_0.4s_ease-out_both]">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
