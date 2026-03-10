@@ -181,49 +181,54 @@ export default function SettingsPage() {
   if (loadingAttrs) {
     return (
       <PageContainer title="Settings" backHref="/marketplace">
-        {/* Nav skeleton */}
-        <div className="flex gap-2 mb-6">
-          <Skeleton className="h-9 w-24 rounded-md" />
-          <Skeleton className="h-9 w-36 rounded-md" />
-          <Skeleton className="h-9 w-28 rounded-md" />
-        </div>
-        {/* Content skeleton */}
-        <div className="flex flex-col gap-6">
-          <Skeleton className="h-72 w-full rounded-lg" />
-          <Skeleton className="h-56 w-full rounded-lg" />
-          <Skeleton className="h-48 w-full rounded-lg" />
+        <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full">
+          {/* Nav skeleton */}
+          <div className="w-full md:w-48 shrink-0">
+            <div className="flex md:flex-col gap-1">
+              <Skeleton className="h-9 w-24 md:w-full rounded-md" />
+              <Skeleton className="h-9 w-36 md:w-full rounded-md" />
+              <Skeleton className="h-9 w-28 md:w-full rounded-md" />
+            </div>
+          </div>
+          {/* Content skeleton */}
+          <div className="flex-1 min-w-0 flex flex-col gap-6">
+            <Skeleton className="h-72 w-full rounded-lg" />
+            <Skeleton className="h-56 w-full rounded-lg" />
+            <Skeleton className="h-48 w-full rounded-lg" />
+          </div>
         </div>
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer title="Settings" backHref="/marketplace">
-      {/* Section nav */}
-      <nav className="mb-6">
-        <ul className="flex gap-1 overflow-x-auto">
-          {SECTIONS.map(({ id, label, icon: Icon }) => (
-            <li key={id}>
-              <button
-                type="button"
-                onClick={() => scrollTo(id)}
-                className={cn(
-                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap cursor-pointer",
-                  activeSection === id
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
+    <PageContainer title="Settings" description="Manage your account" backHref="/marketplace">
+      <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full">
+        {/* Section nav — horizontal on mobile, vertical sidebar on md+ */}
+        <nav className="w-full md:w-48 shrink-0 md:sticky md:top-20 md:self-start">
+          <ul className="flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible">
+            {SECTIONS.map(({ id, label, icon: Icon }) => (
+              <li key={id}>
+                <button
+                  type="button"
+                  onClick={() => scrollTo(id)}
+                  className={cn(
+                    "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap w-full cursor-pointer",
+                    activeSection === id
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-      {/* Content sections */}
-      <div className="flex flex-col gap-6">
+        {/* Content sections */}
+        <div className="flex-1 min-w-0 flex flex-col gap-6">
         {/* Profile */}
         <section id="profile" className="animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0s" }}>
             <Card>
@@ -395,6 +400,7 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </section>
+      </div>
       </div>
     </PageContainer>
   );

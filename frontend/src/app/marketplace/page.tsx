@@ -61,15 +61,15 @@ function MarketplaceContent() {
       description={user ? `Welcome back, ${user.givenName || user.username}` : "Browse listings"}
     >
       {/* Mobile search bar */}
-      <form onSubmit={handleSearch} className="mb-4 md:hidden">
-        <div className="relative">
+      <form onSubmit={handleSearch} className="mb-4 md:hidden sticky top-6 z-10 pb-2">
+        <div className="relative outline-none">
           <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <Input
             type="search"
             placeholder="Search listings..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="pl-10 h-9 text-sm bg-muted"
+            className="pl-10 h-9 text-sm bg-muted border0-0 shadow-none focus-visible:ring-0 dark:bg-muted"
           />
         </div>
       </form>
@@ -89,8 +89,8 @@ function MarketplaceContent() {
             style={{ animationDelay: `${0.05 * i}s` }}
           >
             <CardHeader className="px-4 py-2.5 sm:px-3 sm:py-2.5 flex items-center">
-              <div className="flex items-center gap-1.5">
-                <Avatar className="h-5 w-5">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Avatar className="h-5 w-5 shrink-0">
                   <AvatarFallback className="text-[10px]">
                     {listing.sellerId.substring(0, 2).toUpperCase()}
                   </AvatarFallback>

@@ -7,23 +7,23 @@ const MOCK_SELLERS = [
   { id: "seller1", name: "CardMaster" },
   { id: "seller2", name: "PokeFanatic" },
   { id: "seller3", name: "DuelKing" },
-  { id: "seller4", name: "TCGTrader" },
-  { id: "seller5", name: "RareFinds" },
+  { id: "super_long_username_overflow_test", name: "TheUltimateCardCollectorAndTrader" },
+  { id: "x", name: "A" },
 ];
 
 const MOCK_CARDS: Record<string, { cardName: string; setName: string; rarity: string; cardId: string }[]> = {
   "Pokemon TCG": [
-    { cardName: "Charizard VMAX", setName: "Darkness Ablaze", rarity: "Ultra Rare", cardId: "020/189" },
+    { cardName: "Charizard VMAX Rainbow Rare Full Art Alternate", setName: "Sword & Shield Darkness Ablaze Booster", rarity: "Illustration Rare Secret", cardId: "020/189" },
     { cardName: "Pikachu V", setName: "Vivid Voltage", rarity: "Rare", cardId: "043/185" },
     { cardName: "Mewtwo GX", setName: "Shining Legends", rarity: "Secret Rare", cardId: "076/073" },
-    { cardName: "Umbreon VMAX", setName: "Evolving Skies", rarity: "Alt Art", cardId: "215/203" },
+    { cardName: "Umbreon VMAX Alternate Art Special Illustration", setName: "Evolving Skies", rarity: "Special Art Rare", cardId: "215/203" },
     { cardName: "Lugia V", setName: "Silver Tempest", rarity: "Ultra Rare", cardId: "138/195" },
     { cardName: "Rayquaza VMAX", setName: "Evolving Skies", rarity: "Alt Art", cardId: "218/203" },
     { cardName: "Gengar VMAX", setName: "Fusion Strike", rarity: "Ultra Rare", cardId: "271/264" },
     { cardName: "Mew VMAX", setName: "Fusion Strike", rarity: "Secret Rare", cardId: "269/264" },
   ],
   "Yu-Gi-Oh!": [
-    { cardName: "Blue-Eyes White Dragon", setName: "Legend of Blue Eyes", rarity: "Ultra Rare", cardId: "LOB-001" },
+    { cardName: "Blue-Eyes White Dragon", setName: "Legend of Blue Eyes White Dragon 25th Anniversary Edition", rarity: "Ultra Rare Ghost Quarter Century Secret", cardId: "LOB-EN001" },
     { cardName: "Dark Magician", setName: "Starter Deck Yugi", rarity: "Ultra Rare", cardId: "SDY-006" },
     { cardName: "Exodia the Forbidden One", setName: "Legend of Blue Eyes", rarity: "Ultra Rare", cardId: "LOB-124" },
     { cardName: "Red-Eyes Black Dragon", setName: "Legend of Blue Eyes", rarity: "Ultra Rare", cardId: "LOB-070" },
@@ -31,7 +31,7 @@ const MOCK_CARDS: Record<string, { cardName: string; setName: string; rarity: st
   ],
   "Magic: The Gathering": [
     { cardName: "Black Lotus", setName: "Alpha", rarity: "Rare", cardId: "ALB-232" },
-    { cardName: "Jace, the Mind Sculptor", setName: "Worldwake", rarity: "Mythic Rare", cardId: "WWK-031" },
+    { cardName: "Jace, the Mind Sculptor (Borderless Alternate Art)", setName: "Worldwake Masters Remastered", rarity: "Mythic Rare", cardId: "WWK-031" },
     { cardName: "Liliana of the Veil", setName: "Innistrad", rarity: "Mythic Rare", cardId: "ISD-105" },
     { cardName: "Ragavan, Nimble Pilferer", setName: "Modern Horizons 2", rarity: "Mythic Rare", cardId: "MH2-138" },
   ],
