@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { PageContainer } from "@/components/page-header";
 
 /* ── Theme helpers ── */
 
@@ -179,31 +180,32 @@ export default function SettingsPage() {
 
   if (loadingAttrs) {
     return (
-      <div className="flex flex-1 flex-col md:flex-row items-start gap-6 md:gap-8 w-full max-w-5xl mx-auto my-auto">
-        {/* Sidebar skeleton */}
-        <div className="w-full md:w-56 shrink-0">
-          <Skeleton className="h-6 w-24 mb-3 mx-2" />
-          <div className="flex md:flex-col gap-1">
-            <Skeleton className="h-9 w-full rounded-md" />
-            <Skeleton className="h-9 w-full rounded-md" />
-            <Skeleton className="h-9 w-full rounded-md" />
+      <PageContainer title="Settings">
+        <div className="flex flex-col md:flex-row items-start gap-6 md:gap-8 w-full">
+          {/* Sidebar skeleton */}
+          <div className="w-full md:w-56 shrink-0">
+            <div className="flex md:flex-col gap-1">
+              <Skeleton className="h-9 w-full rounded-md" />
+              <Skeleton className="h-9 w-full rounded-md" />
+              <Skeleton className="h-9 w-full rounded-md" />
+            </div>
+          </div>
+          {/* Content skeleton */}
+          <div className="flex-1 min-w-0 flex flex-col gap-6 max-w-2xl mx-auto w-full">
+            <Skeleton className="h-72 w-full rounded-lg" />
+            <Skeleton className="h-56 w-full rounded-lg" />
+            <Skeleton className="h-48 w-full rounded-lg" />
           </div>
         </div>
-        {/* Content skeleton */}
-        <div className="flex-1 min-w-0 flex flex-col gap-6 max-w-2xl mx-auto w-full">
-          <Skeleton className="h-72 w-full rounded-lg" />
-          <Skeleton className="h-56 w-full rounded-lg" />
-          <Skeleton className="h-48 w-full rounded-lg" />
-        </div>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col md:flex-row items-start gap-6 md:gap-8 w-full max-w-5xl mx-auto my-auto">
+    <PageContainer title="Settings">
+      <div className="flex flex-col md:flex-row items-start gap-6 md:gap-8 w-full">
       {/* Sidebar nav */}
       <nav className="w-full md:w-56 shrink-0 md:sticky md:top-20 md:self-start">
-        <h2 className="text-lg font-semibold mb-3 px-2">Settings</h2>
         <ul className="flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible">
           {SECTIONS.map(({ id, label, icon: Icon }) => (
             <li key={id}>
@@ -399,6 +401,7 @@ export default function SettingsPage() {
           </Card>
         </section>
       </div>
-    </div>
+      </div>
+    </PageContainer>
   );
 }
