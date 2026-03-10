@@ -19,7 +19,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { useAuth } from "@/context/AuthContext";
 import { EmptyState } from "@/components/empty-state";
 import { PageContainer } from "@/components/page-header";
 import { Input } from "@/components/ui/input";
@@ -35,7 +34,6 @@ export default function MarketplacePage() {
 }
 
 function MarketplaceContent() {
-  const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const gameType = searchParams.get("game") || "Pokemon TCG";
