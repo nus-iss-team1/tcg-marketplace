@@ -45,7 +45,7 @@ function MarketplaceContent() {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    document.title = `${gameType} - TCG Marketplace`;
+    document.title = `Marketplace - TCG Marketplace`;
   }, [gameType]);
 
   useEffect(() => {
@@ -61,8 +61,8 @@ function MarketplaceContent() {
 
   return (
     <PageContainer
-      title={gameType}
-      description={user ? `Welcome back, ${user.givenName || user.username}` : "Browse listings"}
+      title="Marketplace"
+      description={gameType}
     >
       {/* Mobile search bar */}
       <form onSubmit={handleSearch} className="mb-4 md:hidden sticky top-6 z-10 pb-2">

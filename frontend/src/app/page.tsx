@@ -52,7 +52,7 @@ export default function LandingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <AppHeader hideSearch />
+      <AppHeader />
 
       {/* Hero section */}
       <main className="flex flex-1 items-center px-4 sm:px-8 md:px-12 lg:px-8 py-12 sm:py-16 md:py-20">

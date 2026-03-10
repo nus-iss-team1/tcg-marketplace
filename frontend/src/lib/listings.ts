@@ -3,12 +3,12 @@ const USE_MOCK = true;
 
 /* ── Mock data ── */
 
-const MOCK_SELLERS = [
-  { id: "seller1", name: "CardMaster" },
-  { id: "seller2", name: "PokeFanatic" },
-  { id: "seller3", name: "DuelKing" },
-  { id: "super_long_username_overflow_test", name: "TheUltimateCardCollectorAndTrader" },
-  { id: "x", name: "A" },
+const MOCK_SELLERS: { id: string; name: string; address?: string; joinedAt?: number }[] = [
+  { id: "seller1", name: "CardMaster", address: "Jurong East, Singapore", joinedAt: Date.now() - 120 * 86400000 },
+  { id: "seller2", name: "PokeFanatic", address: "Orchard, Singapore", joinedAt: Date.now() - 90 * 86400000 },
+  { id: "seller3", name: "DuelKing", address: "Tampines, Singapore", joinedAt: Date.now() - 60 * 86400000 },
+  { id: "super_long_username_overflow_test", name: "TheUltimateCardCollectorAndTrader", address: "Bukit Timah, Singapore", joinedAt: Date.now() - 30 * 86400000 },
+  { id: "x", name: "A", joinedAt: Date.now() - 7 * 86400000 },
 ];
 
 const MOCK_CARDS: Record<string, { cardName: string; setName: string; rarity: string; cardId: string }[]> = {
@@ -140,6 +140,36 @@ export interface CreateListingBody {
 }
 
 export type UpdateListingBody = Omit<CreateListingBody, "gameName">;
+
+export interface SellerProfile {
+  username: string;
+  displayName: string;
+  address?: string;
+  joinedAt?: number;
+}
+
+function mockFetchSellerProfile(sellerId: string): SellerProfile | null {
+  const seller = MOCK_SELLERS.find((s) => s.id === sellerId);
+  if (!seller) return { username: sellerId, displayName: sellerId };
+  return {
+    username: seller.id,
+    displayName: seller.name,
+    address: seller.address,
+    joinedAt: seller.joinedAt,
+  };
+}
+
+/* ── GET /api/marketplace/profile/<sellerId> (profile) ── */
+
+export async function fetchSellerProfile(
+  sellerId: string
+): Promise<SellerProfile | null> {
+  if (USE_MOCK) return mockFetchSellerProfile(sellerId);
+
+  const res = await fetch(`${BASE_URL}/api/marketplace/profile/${encodeURIComponent(sellerId)}`);
+  if (!res.ok) return null;
+  return res.json();
+}
 
 /* ── GET /api/marketplace/<gameName> ── */
 

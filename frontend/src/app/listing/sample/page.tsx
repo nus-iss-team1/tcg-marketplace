@@ -37,6 +37,8 @@ import {
 import { fetchMarketplaceListings, type Listing } from "@/lib/listings";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/page-header";
+import { AppHeader } from "@/components/app-header";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ViewListingPage() {
   return (
@@ -47,6 +49,7 @@ export default function ViewListingPage() {
 }
 
 function ViewListingContent() {
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const isEdit = searchParams.get("edit") === "true";
 
@@ -69,59 +72,86 @@ function ViewListingContent() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 flex-col w-full max-w-352 mx-auto px-4 sm:px-0">
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-8 rounded-md" />
-          <Skeleton className="w-48 sm:w-56 md:w-64 mx-auto aspect-3/4 rounded-lg" />
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-24 w-full" />
-        </div>
+      <div className="flex min-h-screen flex-col">
+        <AppHeader />
+        <main className="flex flex-1 flex-col items-center p-4 sm:p-5 md:p-6 lg:p-8">
+          <div className="flex flex-1 flex-col w-full max-w-352 mx-auto px-4 sm:px-0">
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-8 rounded-md" />
+              <Skeleton className="w-48 sm:w-56 md:w-64 mx-auto aspect-3/4 rounded-lg" />
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
 
   if (!listing) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center w-full max-w-352 mx-auto px-4 sm:px-0">
-        <Button variant="outline" size="icon" className="h-8 w-8 sm:w-auto sm:px-3 self-start mb-4" asChild>
-          <Link href="/listing">
-            <ChevronLeftIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Back</span>
-          </Link>
-        </Button>
-        <p className="text-lg font-semibold">Listing Not Found</p>
-        <p className="text-muted-foreground text-sm">This listing doesn&apos;t exist or has been removed.</p>
+      <div className="flex min-h-screen flex-col">
+        <AppHeader />
+        <main className="flex flex-1 flex-col items-center p-4 sm:p-5 md:p-6 lg:p-8">
+          <div className="flex flex-1 flex-col items-center justify-center w-full max-w-352 mx-auto px-4 sm:px-0">
+            <Button variant="outline" size="icon" className="h-8 w-8 sm:w-auto sm:px-3 self-start mb-4" asChild>
+              <Link href="/marketplace">
+                <ChevronLeftIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Back</span>
+              </Link>
+            </Button>
+            <p className="text-lg font-semibold">Listing Not Found</p>
+            <p className="text-muted-foreground text-sm">This listing doesn&apos;t exist or has been removed.</p>
+          </div>
+        </main>
       </div>
     );
   }
 
-  if (isEdit) {
-    return <EditListingView listing={listing} />;
+  // Only allow edit mode for authenticated users
+  if (isEdit && user) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <AppHeader />
+        <main className="flex flex-1 flex-col items-center p-4 sm:p-5 md:p-6 lg:p-8">
+          <EditListingView listing={listing} />
+        </main>
+      </div>
+    );
   }
 
-  return <ReadListingView listing={listing} />;
+  return (
+    <div className="flex min-h-screen flex-col">
+      <AppHeader />
+      <main className="flex flex-1 flex-col items-center p-4 sm:p-5 md:p-6 lg:p-8">
+        <ReadListingView listing={listing} isAuthenticated={!!user} />
+      </main>
+    </div>
+  );
 }
 
-function ReadListingView({ listing }: { listing: Listing }) {
+function ReadListingView({ listing, isAuthenticated }: { listing: Listing; isAuthenticated: boolean }) {
   const sellerInitials = listing.sellerName.substring(0, 2).toUpperCase();
 
   return (
     <div className="flex flex-1 flex-col w-full max-w-352 mx-auto px-4 sm:px-0 animate-[fade-up_0.4s_ease-out_both]">
-      {/* Back button */}
+      {/* Back & Edit buttons */}
       <div className="flex items-center justify-between mb-4">
         <Button variant="outline" size="icon" className="h-8 w-8 sm:w-auto sm:px-3" asChild>
-          <Link href="/listing">
+          <Link href="/marketplace">
             <ChevronLeftIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Back</span>
           </Link>
         </Button>
-        <Button variant="outline" size="icon" className="h-8 w-8 sm:w-auto sm:px-3" asChild>
-          <Link href="/listing/sample?edit=true">
-            <PencilIcon className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Edit</span>
-          </Link>
-        </Button>
+        {isAuthenticated && (
+          <Button variant="outline" size="icon" className="h-8 w-8 sm:w-auto sm:px-3" asChild>
+            <Link href="/listing/sample?edit=true">
+              <PencilIcon className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Edit</span>
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Card images banner */}
@@ -205,7 +235,7 @@ function ReadListingView({ listing }: { listing: Listing }) {
       {/* Seller */}
       <div className="my-4">
         <p className="text-xs text-muted-foreground mb-2">Seller</p>
-        <Link href={`/listing?seller=${listing.sellerId}`} className="flex items-center gap-3 rounded-md p-2 -m-2 hover:bg-muted transition-colors min-w-0 overflow-hidden">
+        <Link href={`/seller/${listing.sellerId}`} className="flex items-center gap-3 rounded-md p-2 -m-2 hover:bg-muted transition-colors min-w-0 overflow-hidden">
           <Avatar className="h-9 w-9">
             <AvatarFallback className="text-xs">{sellerInitials}</AvatarFallback>
           </Avatar>
@@ -216,13 +246,15 @@ function ReadListingView({ listing }: { listing: Listing }) {
         </Link>
       </div>
 
-      {/* Action */}
-      <div className="flex gap-3 pt-2">
-        <Button className="flex-1 sm:flex-none">
-          <TagIcon className="mr-2 h-4 w-4" />
-          Contact Seller
-        </Button>
-      </div>
+      {/* Action — only for authenticated users */}
+      {isAuthenticated && (
+        <div className="flex gap-3 pt-2">
+          <Button className="flex-1 sm:flex-none">
+            <TagIcon className="mr-2 h-4 w-4" />
+            Contact Seller
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
