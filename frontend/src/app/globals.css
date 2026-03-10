@@ -190,6 +190,23 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 80% 60% at 0% 0%, oklch(0.92 0 0 / 80%) 0%, transparent 50%),
+      radial-gradient(ellipse 70% 50% at 100% 100%, oklch(0.88 0 0 / 60%) 0%, transparent 50%);
+  }
+
+  .dark body::before {
+    background:
+      radial-gradient(ellipse 80% 60% at 0% 0%, oklch(0.25 0 0 / 80%) 0%, transparent 50%),
+      radial-gradient(ellipse 70% 50% at 100% 100%, oklch(0.2 0 0 / 60%) 0%, transparent 50%);
+  }
   code, kbd, pre, samp {
     font-family: var(--font-geist-mono), ui-monospace, monospace;
   }

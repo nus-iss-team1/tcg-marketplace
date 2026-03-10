@@ -33,7 +33,7 @@ export function PageContainer({
           )}
           <div className="min-w-0">
             {description && (
-              <p className="text-sm text-muted-foreground mb-1">{description}</p>
+              <p className="text-sm text-muted-foreground">{description}</p>
             )}
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight truncate">
               {title}
