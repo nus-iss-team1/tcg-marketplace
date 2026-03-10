@@ -33,6 +33,10 @@ export default function MyListingsPage() {
   const totalPages = Math.ceil(listings.length / 15) || 1;
 
   useEffect(() => {
+    document.title = "My Listings - TCG Marketplace";
+  }, []);
+
+  useEffect(() => {
     if (user?.username) {
       fetchSellerListings(user.username).then((res) => setListings(res.listings));
     }

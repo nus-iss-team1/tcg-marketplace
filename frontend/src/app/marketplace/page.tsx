@@ -45,6 +45,10 @@ function MarketplaceContent() {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
+    document.title = `${gameType} - TCG Marketplace`;
+  }, [gameType]);
+
+  useEffect(() => {
     fetchMarketplaceListings(gameType).then((res) => setListings(res.listings));
   }, [gameType]);
 

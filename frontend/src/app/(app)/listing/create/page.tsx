@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,10 @@ const GAMES = [
 
 export default function CreateListingPage() {
   const router = useRouter();
+
+  useEffect(() => {
+    document.title = "Sell a Card - TCG Marketplace";
+  }, []);
 
   const [gameName, setGameName] = useState("");
   const [cardName, setCardName] = useState("");
