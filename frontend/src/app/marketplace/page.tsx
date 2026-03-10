@@ -20,7 +20,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { EmptyState } from "@/components/empty-state";
-import { PageContainer } from "@/components/page-header";
+import { PageContainer, PageHeader } from "@/components/page-header";
 import { Input } from "@/components/ui/input";
 import { SearchIcon } from "lucide-react";
 import { fetchMarketplaceListings, type Listing } from "@/lib/listings";
@@ -58,10 +58,8 @@ function MarketplaceContent() {
   };
 
   return (
-    <PageContainer
-      title="Marketplace"
-      description={gameType}
-    >
+    <PageContainer>
+      <PageHeader title="Marketplace" description={gameType} />
       {/* Mobile search bar */}
       <form onSubmit={handleSearch} className="mb-4 md:hidden sticky top-6 z-10 pb-2">
         <div className="relative outline-none">

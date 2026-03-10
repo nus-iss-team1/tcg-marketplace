@@ -28,7 +28,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageContainer } from "@/components/page-header";
+import { PageContainer, PageHeader } from "@/components/page-header";
 
 const GAMES = [
   "Pokemon TCG",
@@ -118,7 +118,8 @@ export default function CreateListingPage() {
   };
 
   return (
-    <PageContainer title="Sell a Card" description="Create a new listing" backHref="/listing">
+    <PageContainer>
+      <PageHeader title="Sell a Card" description="Create a new listing" backHref="/listing" />
       <form onSubmit={handleSubmit} className="animate-[fade-up_0.4s_ease-out_both]">
         {/* Image upload banner */}
         <div className="flex justify-center gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">

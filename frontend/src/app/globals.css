@@ -116,36 +116,58 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-@keyframes fan-front {
+@keyframes fan-center {
   from {
     opacity: 0;
-    transform: rotate(0deg) translateY(20px);
+    transform: rotate(0deg) translateY(20px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: rotate(-3deg) translateY(0);
+    transform: rotate(0deg) translateY(0) scale(1);
   }
 }
 
-@keyframes fan-mid {
+@keyframes fan-left-1 {
   from {
     opacity: 0;
-    transform: rotate(0deg) translateY(20px);
+    transform: rotate(0deg) translateX(0) translateY(20px);
   }
   to {
     opacity: 1;
-    transform: rotate(10deg) translateY(0);
+    transform: rotate(-8deg) translateX(-20px) translateY(5px);
   }
 }
 
-@keyframes fan-back {
+@keyframes fan-left-2 {
   from {
     opacity: 0;
-    transform: rotate(0deg) translateY(20px);
+    transform: rotate(0deg) translateX(0) translateY(20px);
   }
   to {
     opacity: 1;
-    transform: rotate(22deg) translateY(0);
+    transform: rotate(-18deg) translateX(-35px) translateY(15px);
+  }
+}
+
+@keyframes fan-right-1 {
+  from {
+    opacity: 0;
+    transform: rotate(0deg) translateX(0) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(8deg) translateX(20px) translateY(5px);
+  }
+}
+
+@keyframes fan-right-2 {
+  from {
+    opacity: 0;
+    transform: rotate(0deg) translateX(0) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(18deg) translateX(35px) translateY(15px);
   }
 }
 

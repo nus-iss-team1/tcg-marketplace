@@ -17,7 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 
 function AuthForm() {
   const { signIn, signUp } = useAuth();
@@ -33,7 +33,6 @@ function AuthForm() {
 
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
 
   const [signupUsername, setSignupUsername] = useState("");
@@ -43,17 +42,12 @@ function AuthForm() {
   const [signupAddress, setSignupAddress] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
-  const [signupError, setSignupError] = useState("");
-  const [usernameError, setUsernameError] = useState("");
   const [signupLoading, setSignupLoading] = useState(false);
-  const [signupSuccess, setSignupSuccess] = useState(false);
 
   const [verifyUsername, setVerifyUsername] = useState("");
   const [verifyCode, setVerifyCode] = useState("");
-  const [verifyError, setVerifyError] = useState("");
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [resendMsg, setResendMsg] = useState("");
   const [showVerify, setShowVerify] = useState(false);
 
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -65,14 +59,13 @@ function AuthForm() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoginError("");
     setLoginLoading(true);
 
     try {
       await signIn(loginUsername, loginPassword);
       router.push(redirectTo);
     } catch (err) {
-      setLoginError(err instanceof Error ? err.message : "Failed to sign in");
+      toast.error(err instanceof Error ? err.message : "Failed to sign in");
     } finally {
       setLoginLoading(false);
     }
@@ -80,11 +73,8 @@ function AuthForm() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSignupError("");
-    setUsernameError("");
-
     if (signupPassword !== signupConfirmPassword) {
-      setSignupError("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
 
@@ -95,7 +85,7 @@ function AuthForm() {
         email: signupEmail,
         givenName: signupFirstName,
         familyName: signupLastName,
-        address: signupAddress || undefined,
+        address: signupAddress,
       });
       setVerifyUsername(signupUsername);
       setShowVerify(true);
@@ -110,9 +100,9 @@ function AuthForm() {
       const message = err instanceof Error ? err.message : "Failed to sign up";
       const code = (err as { code?: string })?.code;
       if (code === "UsernameExistsException") {
-        setUsernameError("This username is already taken.");
+        toast.error("This username is already taken.");
       } else {
-        setSignupError(message);
+        toast.error(message);
       }
     } finally {
       setSignupLoading(false);
@@ -121,32 +111,29 @@ function AuthForm() {
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    setVerifyError("");
     setVerifyLoading(true);
 
     try {
       await confirmSignUp(verifyUsername, verifyCode);
       setShowVerify(false);
       setVerifyCode("");
-      setSignupSuccess(true);
+      toast.success("Account created successfully. Please sign in.");
       handleTabChange("signin");
     } catch (err) {
-      setVerifyError(err instanceof Error ? err.message : "Verification failed");
+      toast.error(err instanceof Error ? err.message : "Verification failed");
     } finally {
       setVerifyLoading(false);
     }
   };
 
   const handleResendCode = async () => {
-    setResendMsg("");
-    setVerifyError("");
     setResending(true);
 
     try {
       await resendConfirmationCode(verifyUsername);
-      setResendMsg("A new code has been sent to your email.");
+      toast.success("A new code has been sent to your email.");
     } catch (err) {
-      setVerifyError(err instanceof Error ? err.message : "Failed to resend code");
+      toast.error(err instanceof Error ? err.message : "Failed to resend code");
     } finally {
       setResending(false);
     }
@@ -166,17 +153,6 @@ function AuthForm() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {verifyError && (
-                  <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-                    {verifyError}
-                  </div>
-                )}
-                {resendMsg && (
-                  <div className="mb-4 rounded-lg bg-green-500/10 p-3 text-sm text-green-500">
-                    {resendMsg}
-                  </div>
-                )}
-
                 <form onSubmit={handleVerify} className="flex flex-col gap-4">
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="verify-code">Verification Code</Label>
@@ -238,19 +214,6 @@ function AuthForm() {
                   Sign in to your account to continue
                 </CardDescription>
               </CardHeader>
-              {signupSuccess && (
-                <div className="mb-4 flex items-center gap-2 rounded-lg border p-3 text-sm">
-                  <CheckCircle2 className="h-4 w-4 shrink-0" />
-                  Account created successfully. Please sign in.
-                </div>
-              )}
-
-              {loginError && (
-                <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-                  {loginError}
-                </div>
-              )}
-
               <form onSubmit={handleSignIn} className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="login-username">Username</Label>
@@ -299,12 +262,6 @@ function AuthForm() {
                 </CardDescription>
               </CardHeader>
 
-              {signupError && (
-                <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-                  {signupError}
-                </div>
-              )}
-
               <form onSubmit={handleSignUp} className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="signup-username">Username</Label>
@@ -312,16 +269,9 @@ function AuthForm() {
                     id="signup-username"
                     type="text"
                     value={signupUsername}
-                    onChange={(e) => {
-                      setSignupUsername(e.target.value);
-                      if (usernameError) setUsernameError("");
-                    }}
+                    onChange={(e) => setSignupUsername(e.target.value)}
                     required
-                    aria-invalid={!!usernameError}
                   />
-                  {usernameError && (
-                    <p className="text-xs text-destructive">{usernameError}</p>
-                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -362,12 +312,13 @@ function AuthForm() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="signup-address">Address (optional)</Label>
+                  <Label htmlFor="signup-address">Address</Label>
                   <Input
                     id="signup-address"
                     type="text"
                     value={signupAddress}
                     onChange={(e) => setSignupAddress(e.target.value)}
+                    required
                   />
                 </div>
 
