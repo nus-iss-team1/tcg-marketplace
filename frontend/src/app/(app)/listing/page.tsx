@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -22,71 +22,39 @@ import {
 } from "@/components/ui/pagination";
 import { useAuth } from "@/context/AuthContext";
 import { EmptyState } from "@/components/empty-state";
+import { PageContainer } from "@/components/page-header";
 import { PlusIcon } from "lucide-react";
-import type { Listing } from "@/lib/listings";
-
-// const ITEMS_PER_PAGE: number = 15;
-// const TOTAL_ITEMS: number = 23;
-
-// function _fetchMyListings(page: number, username: string) : {listings: Listing[], totalPages: number} {
-//   const totalPages = Math.ceil(TOTAL_ITEMS / ITEMS_PER_PAGE);
-//   const count =
-//     page === totalPages
-//       ? TOTAL_ITEMS - (totalPages - 1) * ITEMS_PER_PAGE
-//       : ITEMS_PER_PAGE;
-
-//   // TODO: Replace with actual API call to GET /api/marketplace/profile/:sellerId
-//   const listings: Listing[] = Array.from({ length: count }, (_, i) => {
-//     const idx = (page - 1) * ITEMS_PER_PAGE + i;
-//     return {
-//       listingId: `listing-${String(idx + 1).padStart(4, "0")}`,
-//       sellerId: username,
-//       sellerName: username,
-//       gameName: "Pokemon TCG",
-//       cardId: `card-${String(idx + 1).padStart(4, "0")}`,
-//       cardName: `Pikachu V #${String(idx + 1).padStart(3, "0")}`,
-//       price: (Math.random() * 100 + 1).toFixed(2),
-//       updatedAt: Date.now() - idx * 60000,
-//     };
-//   });
-
-//   return { listings, totalPages };
-// }
+import { fetchSellerListings, type Listing } from "@/lib/listings";
 
 export default function MyListingsPage() {
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
-  // TODO: Replace with actual API call
-  // const { listings, totalPages } = useMemo(
-  //   () => fetchMyListings(currentPage, user?.username ?? ""),
-  //   [currentPage, user?.username]
-  // );
-  const listings: Listing[] = [];
-  const totalPages = 0;
+  const [listings, setListings] = useState<Listing[]>([]);
+  const totalPages = Math.ceil(listings.length / 15) || 1;
+
+  useEffect(() => {
+    if (user?.username) {
+      fetchSellerListings(user.username).then((res) => setListings(res.listings));
+    }
+  }, [user?.username]);
 
   const initials = user?.username
     ? user.username.substring(0, 2).toUpperCase()
     : "?";
 
   return (
-    <div className="w-full max-w-352 mx-auto px-4 sm:px-0">
-      <div className="mb-4 flex items-center justify-between animate-[fade-up_0.4s_ease-out_both]">
-        <div>
-          <p className="text-sm text-muted-foreground mb-1">
-            Manage your cards
-          </p>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            My Listings
-          </h1>
-        </div>
+    <PageContainer
+      title="My Listings"
+      description="Manage your cards"
+      action={
         <Button asChild size="sm">
           <Link href="/listing/create">
             <PlusIcon className="h-4 w-4 sm:mr-1.5" />
             <span className="hidden sm:inline">New Listing</span>
           </Link>
         </Button>
-      </div>
-
+      }
+    >
       {listings.length === 0 ? (
         <EmptyState
           title="No listings yet"
@@ -96,8 +64,8 @@ export default function MyListingsPage() {
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 sm:gap-6 md:gap-8">
             {listings.map((listing, i) => (
+              <Link key={listing.listingId} href="/listing/sample">
               <Card
-                key={listing.listingId}
                 className="gap-0 py-0 overflow-hidden transition-transform duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] hover:scale-105 cursor-pointer animate-[fade-up_0.4s_ease-out_both]"
                 style={{ animationDelay: `${0.05 * i}s` }}
               >
@@ -137,6 +105,7 @@ export default function MyListingsPage() {
                   </p>
                 </CardFooter>
               </Card>
+              </Link>
             ))}
           </div>
 
@@ -206,6 +175,6 @@ export default function MyListingsPage() {
           </Pagination>
         </>
       )}
-    </div>
+    </PageContainer>
   );
 }

@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -24,11 +27,21 @@ import {
 } from "@/components/ui/dialog";
 import {
   ImageIcon,
-  PlusIcon,
-  UploadIcon,
+  ArrowLeftIcon,
+  TagIcon,
+  MapPinIcon,
+  CreditCardIcon,
+  CalendarIcon,
+  LayersIcon,
+  SparklesIcon,
+  HashIcon,
+  PencilIcon,
+  SaveIcon,
   XIcon,
+  UploadIcon,
   Trash2Icon,
 } from "lucide-react";
+import { fetchMarketplaceListings, type Listing } from "@/lib/listings";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/page-header";
 
@@ -41,26 +54,217 @@ const GAMES = [
   "Star Wars Unlimited",
 ];
 
-export default function CreateListingPage() {
-  const { user } = useAuth();
-  const router = useRouter();
+export default function ViewListingPage() {
+  return (
+    <Suspense>
+      <ViewListingContent />
+    </Suspense>
+  );
+}
 
-  const [gameName, setGameName] = useState("");
-  const [cardName, setCardName] = useState("");
-  const [setName, setSetName] = useState("");
-  const [cardId, setCardId] = useState("");
-  const [rarity, setRarity] = useState("");
-  const [price, setPrice] = useState("");
-  const [pickup, setPickup] = useState("");
-  const [frontImage, setFrontImage] = useState<File | null>(null);
-  const [backImage, setBackImage] = useState<File | null>(null);
-  const [frontPreview, setFrontPreview] = useState<string | null>(null);
-  const [backPreview, setBackPreview] = useState<string | null>(null);
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [uploadTarget, setUploadTarget] = useState<"front" | "back">("front");
+function ViewListingContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isEdit = searchParams.get("edit") === "true";
+
+  const [listing, setListing] = useState<Listing | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // TODO: Replace with single listing fetch when API is ready
+    fetchMarketplaceListings("Pokemon TCG", { limit: 1 })
+      .then((res) => setListing(res.listings[0] ?? null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (listing) {
+      document.title = `${listing.cardName} - TCG Marketplace`;
+    }
+    return () => { document.title = "TCG Marketplace"; };
+  }, [listing]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-1 flex-col w-full max-w-352 mx-auto px-4 sm:px-0">
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-8 rounded-md" />
+          <Skeleton className="w-48 sm:w-56 md:w-64 mx-auto aspect-3/4 rounded-lg" />
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!listing) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center w-full max-w-352 mx-auto px-4 sm:px-0">
+        <Button variant="outline" size="icon" className="h-8 w-8 sm:w-auto sm:px-3 self-start mb-4" asChild>
+          <Link href="/listing">
+            <ArrowLeftIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Back</span>
+          </Link>
+        </Button>
+        <p className="text-lg font-semibold">Listing Not Found</p>
+        <p className="text-muted-foreground text-sm">This listing doesn&apos;t exist or has been removed.</p>
+      </div>
+    );
+  }
+
+  if (isEdit) {
+    return <EditListingView listing={listing} />;
+  }
+
+  return <ReadListingView listing={listing} />;
+}
+
+function ReadListingView({ listing }: { listing: Listing }) {
+  const sellerInitials = listing.sellerName.substring(0, 2).toUpperCase();
+
+  return (
+    <div className="flex flex-1 flex-col w-full max-w-352 mx-auto px-4 sm:px-0 animate-[fade-up_0.4s_ease-out_both]">
+      {/* Back button */}
+      <div className="flex items-center justify-between mb-4">
+        <Button variant="outline" size="icon" className="h-8 w-8 sm:w-auto sm:px-3" asChild>
+          <Link href="/listing">
+            <ArrowLeftIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Back</span>
+          </Link>
+        </Button>
+        <Button variant="outline" size="icon" className="h-8 w-8 sm:w-auto sm:px-3" asChild>
+          <Link href="/listing/sample?edit=true">
+            <PencilIcon className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Edit</span>
+          </Link>
+        </Button>
+      </div>
+
+      {/* Card images banner */}
+      <ImageBanner images={listing.images} />
+
+      {/* Card name and game type */}
+      <div className="mt-4 mb-2">
+        <p className="text-sm text-muted-foreground">{listing.gameName}</p>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{listing.cardName}</h1>
+      </div>
+
+      {/* Price */}
+      <p className="text-xl sm:text-2xl font-bold text-primary mb-4">
+        ${listing.price}
+      </p>
+
+      {/* Status */}
+      <div className="flex items-center gap-2 mb-4">
+        {listing.listingStatus && (
+          <Badge variant={listing.listingStatus === "ACTIVE" ? "default" : "secondary"}>
+            {listing.listingStatus}
+          </Badge>
+        )}
+        <span className="text-sm text-muted-foreground flex items-center gap-1">
+          <CalendarIcon className="h-3.5 w-3.5" />
+          Listed {new Date(listing.updatedAt).toLocaleDateString()}
+        </span>
+      </div>
+
+      <Separator />
+
+      {/* Card details */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 my-4">
+        {listing.setName && (
+          <div className="flex items-center gap-2 text-sm">
+            <LayersIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="text-muted-foreground">Set:</span>
+            <span className="font-medium">{listing.setName}</span>
+          </div>
+        )}
+        {listing.cardId && (
+          <div className="flex items-center gap-2 text-sm">
+            <HashIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="text-muted-foreground">Card ID:</span>
+            <span className="font-medium">{listing.cardId}</span>
+          </div>
+        )}
+        {listing.rarity && (
+          <div className="flex items-center gap-2 text-sm">
+            <SparklesIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="text-muted-foreground">Rarity:</span>
+            <span className="font-medium">{listing.rarity}</span>
+          </div>
+        )}
+        {listing.pickup && (
+          <div className="flex items-center gap-2 text-sm">
+            <MapPinIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="text-muted-foreground">Pickup:</span>
+            <span className="font-medium">{listing.pickup}</span>
+          </div>
+        )}
+        {listing.paymentMethod && (
+          <div className="flex items-center gap-2 text-sm">
+            <CreditCardIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="text-muted-foreground">Payment:</span>
+            <span className="font-medium">
+              {[
+                listing.paymentMethod.cash && "Cash",
+                listing.paymentMethod.paynow && "PayNow",
+                listing.paymentMethod.bank && "Bank Transfer",
+              ]
+                .filter(Boolean)
+                .join(", ") || "—"}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <Separator />
+
+      {/* Seller */}
+      <div className="my-4">
+        <p className="text-xs text-muted-foreground mb-2">Seller</p>
+        <Link href={`/listing?seller=${listing.sellerId}`} className="flex items-center gap-3 rounded-md p-2 -m-2 hover:bg-muted transition-colors">
+          <Avatar className="h-9 w-9">
+            <AvatarFallback className="text-xs">{sellerInitials}</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">{listing.sellerName}</span>
+            <span className="text-xs text-muted-foreground">@{listing.sellerId}</span>
+          </div>
+        </Link>
+      </div>
+
+      {/* Action */}
+      <div className="flex gap-3 pt-2">
+        <Button className="flex-1 sm:flex-none">
+          <TagIcon className="mr-2 h-4 w-4" />
+          Contact Seller
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function EditListingView({ listing }: { listing: Listing }) {
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const canSubmit = gameName && cardName && price && Number(price) > 0;
+  const [cardName, setCardName] = useState(listing.cardName);
+  const [setName, setSetNameValue] = useState(listing.setName || "");
+  const [cardId, setCardId] = useState(listing.cardId || "");
+  const [rarity, setRarity] = useState(listing.rarity || "");
+  const [price, setPrice] = useState(listing.price);
+  const [pickup, setPickup] = useState(listing.pickup || "");
+
+  const [frontPreview, setFrontPreview] = useState<string | null>(
+    listing.images?.[0] || null
+  );
+  const [backPreview, setBackPreview] = useState<string | null>(
+    listing.images?.[1] || null
+  );
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [uploadTarget, setUploadTarget] = useState<"front" | "back">("front");
+
+  const canSubmit = cardName && price && Number(price) > 0;
 
   const handleOpenUpload = (target: "front" | "back") => {
     setUploadTarget(target);
@@ -75,11 +279,9 @@ export default function CreateListingPage() {
 
     if (uploadTarget === "front") {
       if (frontPreview) URL.revokeObjectURL(frontPreview);
-      setFrontImage(file);
       setFrontPreview(previewUrl);
     } else {
       if (backPreview) URL.revokeObjectURL(backPreview);
-      setBackImage(file);
       setBackPreview(previewUrl);
     }
     setUploadDialogOpen(false);
@@ -89,38 +291,23 @@ export default function CreateListingPage() {
   const handleRemoveImage = (target: "front" | "back") => {
     if (target === "front") {
       if (frontPreview) URL.revokeObjectURL(frontPreview);
-      setFrontImage(null);
       setFrontPreview(null);
     } else {
       if (backPreview) URL.revokeObjectURL(backPreview);
-      setBackImage(null);
       setBackPreview(null);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Call backend API to create listing
-    console.log({
-      gameName,
-      cardName,
-      setName: setName || undefined,
-      cardId: cardId || undefined,
-      rarity: rarity || undefined,
-      price: Number(Number(price).toFixed(2)),
-      pickup: pickup || undefined,
-      frontImage,
-      backImage,
-    });
-    toast.success("Listing created successfully.");
+    // TODO: Call updateListing API
+    toast.success("Listing updated successfully.");
     router.push("/listing/sample");
   };
 
-  const previews = [frontPreview, backPreview].filter(Boolean) as string[];
-
   return (
-    <PageContainer title="Sell a Card" description="Create a new listing" backHref="/listing">
-      <form onSubmit={handleSubmit}>
+    <PageContainer title="Edit Listing" backHref="/listing/sample">
+      <form onSubmit={handleSubmit} className="animate-[fade-up_0.4s_ease-out_both]">
         {/* Image upload banner */}
         <div className="flex justify-center gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
           {frontPreview ? (
@@ -202,24 +389,10 @@ export default function CreateListingPage() {
           )}
         </div>
 
-        {/* Game & Card Name */}
+        {/* Game (read-only) & Card Name */}
         <div className="mt-4 mb-2">
-          <div className="space-y-2 mb-3">
-            <Label htmlFor="gameName">Game *</Label>
-            <Select value={gameName} onValueChange={setGameName}>
-              <SelectTrigger id="gameName" className="h-9">
-                <SelectValue placeholder="Select a game" />
-              </SelectTrigger>
-              <SelectContent>
-                {GAMES.map((game) => (
-                  <SelectItem key={game} value={game}>
-                    {game}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">{listing.gameName}</p>
+          <div className="space-y-2 mt-1">
             <Label htmlFor="cardName">Card Name *</Label>
             <Input
               id="cardName"
@@ -257,7 +430,7 @@ export default function CreateListingPage() {
               id="setName"
               placeholder="e.g. Darkness Ablaze"
               value={setName}
-              onChange={(e) => setSetName(e.target.value)}
+              onChange={(e) => setSetNameValue(e.target.value)}
               maxLength={100}
               className="h-9"
             />
@@ -302,13 +475,13 @@ export default function CreateListingPage() {
         {/* Submit */}
         <div className="flex gap-3 my-4">
           <Button type="submit" disabled={!canSubmit} className="flex-1 sm:flex-none">
-            <PlusIcon className="mr-1.5 h-4 w-4" />
-            Create Listing
+            <SaveIcon className="mr-1.5 h-4 w-4" />
+            Save Changes
           </Button>
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/listing")}
+            onClick={() => router.push("/listing/sample")}
           >
             <XIcon className="mr-1.5 h-4 w-4" />
             Cancel
@@ -349,5 +522,38 @@ export default function CreateListingPage() {
         </DialogContent>
       </Dialog>
     </PageContainer>
+  );
+}
+
+function ImageBanner({ images }: { images?: string[] }) {
+  const hasImages = images && images.length > 0;
+
+  if (!hasImages) {
+    return (
+      <div className="flex justify-center gap-3 overflow-x-auto pb-2">
+        <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-lg bg-muted flex items-center justify-center border">
+          <ImageIcon className="h-12 w-12 text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex justify-center gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
+      {images.map((src, i) => (
+        <div
+          key={i}
+          className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-lg bg-muted border overflow-hidden snap-start"
+        >
+          <Image
+            src={src}
+            alt={`Card image ${i + 1}`}
+            width={256}
+            height={341}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ))}
+    </div>
   );
 }

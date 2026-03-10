@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useRef, Suspense } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -20,7 +21,10 @@ import {
 } from "@/components/ui/pagination";
 import { useAuth } from "@/context/AuthContext";
 import { EmptyState } from "@/components/empty-state";
-import { fetchMarketplaceListings } from "@/lib/listings";
+import { PageContainer } from "@/components/page-header";
+import { Input } from "@/components/ui/input";
+import { SearchIcon } from "lucide-react";
+import { fetchMarketplaceListings, type Listing } from "@/lib/listings";
 
 export default function MarketplacePage() {
   return (
@@ -32,25 +36,43 @@ export default function MarketplacePage() {
 
 function MarketplaceContent() {
   const { user } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const gameType = searchParams.get("game") || "Pokemon TCG";
-  const query = searchParams.get("q") || undefined;
   const [currentPage, setCurrentPage] = useState(1);
-  const { listings, totalPages } = useMemo(
-    () => fetchMarketplaceListings({ game: gameType, query, page: currentPage }),
-    [gameType, query, currentPage]
-  );
+  const [listings, setListings] = useState<Listing[]>([]);
+  const totalPages = Math.ceil(listings.length / 15) || 1;
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    fetchMarketplaceListings(gameType).then((res) => setListings(res.listings));
+  }, [gameType]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    router.push(`/marketplace?q=${encodeURIComponent(trimmed)}`);
+  };
 
   return (
-    <div className="w-full max-w-352 mx-auto px-4 sm:px-0">
-      <div className="mb-4 animate-[fade-up_0.4s_ease-out_both]">
-        <p className="text-sm text-muted-foreground mb-1">
-          {user ? `Welcome back, ${user.givenName || user.username}` : "Browse listings"}
-        </p>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-          {gameType}
-        </h1>
-      </div>
+    <PageContainer
+      title={gameType}
+      description={user ? `Welcome back, ${user.givenName || user.username}` : "Browse listings"}
+    >
+      {/* Mobile search bar */}
+      <form onSubmit={handleSearch} className="mb-4 md:hidden">
+        <div className="relative">
+          <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <Input
+            type="search"
+            placeholder="Search listings..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="pl-10 h-9 text-sm bg-muted"
+          />
+        </div>
+      </form>
 
       {listings.length === 0 ? (
         <EmptyState
@@ -61,8 +83,8 @@ function MarketplaceContent() {
         <>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 sm:gap-6 md:gap-8">
         {listings.map((listing, i) => (
+          <Link key={listing.listingId} href="/listing/sample">
           <Card
-            key={listing.listingId}
             className="gap-0 py-0 overflow-hidden transition-transform duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] hover:scale-105 cursor-pointer animate-[fade-up_0.4s_ease-out_both]"
             style={{ animationDelay: `${0.05 * i}s` }}
           >
@@ -102,6 +124,7 @@ function MarketplaceContent() {
               </p>
             </CardFooter>
           </Card>
+          </Link>
         ))}
       </div>
 
@@ -171,6 +194,6 @@ function MarketplaceContent() {
       </Pagination>
         </>
       )}
-    </div>
+    </PageContainer>
   );
 }

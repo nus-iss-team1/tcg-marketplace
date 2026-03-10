@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
   getUserAttributes,
@@ -33,29 +33,10 @@ import { cn } from "@/lib/utils";
 
 /* ── Theme helpers ── */
 
-function subscribeTheme(callback: () => void) {
-  const onStorage = (e: StorageEvent) => {
-    if (e.key === "theme") callback();
-  };
-  window.addEventListener("storage", onStorage);
-  const observer = new MutationObserver(callback);
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["class"],
-  });
-  return () => {
-    window.removeEventListener("storage", onStorage);
-    observer.disconnect();
-  };
-}
-
-function getThemeSnapshot(): "light" | "dark" | "system" {
+function getStoredTheme(): "light" | "dark" | "system" {
+  if (typeof window === "undefined") return "system";
   const stored = localStorage.getItem("theme");
   if (stored === "light" || stored === "dark") return stored;
-  return "system";
-}
-
-function getServerThemeSnapshot(): "light" | "dark" | "system" {
   return "system";
 }
 
@@ -110,7 +91,6 @@ export default function SettingsPage() {
   const [address, setAddress] = useState("");
   const [loadingAttrs, setLoadingAttrs] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
-  const [profileError, setProfileError] = useState("");
 
   useEffect(() => {
     getUserAttributes()
@@ -126,7 +106,6 @@ export default function SettingsPage() {
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setProfileError("");
     setSavingProfile(true);
     try {
       const attrs: Record<string, string> = {};
@@ -138,7 +117,7 @@ export default function SettingsPage() {
       await refreshUser();
       toast.success("Profile updated successfully.");
     } catch (err) {
-      setProfileError(
+      toast.error(
         err instanceof Error ? err.message : "Failed to update profile"
       );
     } finally {
@@ -151,17 +130,15 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
-  const [passwordError, setPasswordError] = useState("");
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPasswordError("");
     if (newPassword !== confirmPassword) {
-      setPasswordError("New passwords do not match.");
+      toast.error("New passwords do not match.");
       return;
     }
     if (newPassword.length < 8) {
-      setPasswordError("Password must be at least 8 characters.");
+      toast.error("Password must be at least 8 characters.");
       return;
     }
     setSavingPassword(true);
@@ -172,23 +149,24 @@ export default function SettingsPage() {
       setNewPassword("");
       setConfirmPassword("");
     } catch (err) {
-      setPasswordError(
-        err instanceof Error ? err.message : "Failed to change password"
-      );
+      const message =
+        err instanceof Error && err.message.toLowerCase().includes("password")
+          ? "Incorrect password."
+          : err instanceof Error
+            ? err.message
+            : "Failed to change password.";
+      toast.error(message);
     } finally {
       setSavingPassword(false);
     }
   };
 
   /* ── Theme state ── */
-  const theme = useSyncExternalStore(
-    subscribeTheme,
-    getThemeSnapshot,
-    getServerThemeSnapshot
-  );
+  const [theme, setThemeState] = useState<"light" | "dark" | "system">(getStoredTheme);
 
   const setTheme = useCallback((value: "light" | "dark" | "system") => {
     localStorage.setItem("theme", value);
+    setThemeState(value);
     if (value === "system") {
       const prefersDark = window.matchMedia(
         "(prefers-color-scheme: dark)"
@@ -199,8 +177,30 @@ export default function SettingsPage() {
     }
   }, []);
 
+  if (loadingAttrs) {
+    return (
+      <div className="flex flex-1 flex-col md:flex-row items-start gap-6 md:gap-8 w-full max-w-5xl mx-auto my-auto">
+        {/* Sidebar skeleton */}
+        <div className="w-full md:w-56 shrink-0">
+          <Skeleton className="h-6 w-24 mb-3 mx-2" />
+          <div className="flex md:flex-col gap-1">
+            <Skeleton className="h-9 w-full rounded-md" />
+            <Skeleton className="h-9 w-full rounded-md" />
+            <Skeleton className="h-9 w-full rounded-md" />
+          </div>
+        </div>
+        {/* Content skeleton */}
+        <div className="flex-1 min-w-0 flex flex-col gap-6 max-w-2xl mx-auto w-full">
+          <Skeleton className="h-72 w-full rounded-lg" />
+          <Skeleton className="h-56 w-full rounded-lg" />
+          <Skeleton className="h-48 w-full rounded-lg" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-1 flex-col md:flex-row gap-6 md:gap-8 w-full max-w-5xl mx-auto">
+    <div className="flex flex-1 flex-col md:flex-row items-start gap-6 md:gap-8 w-full max-w-5xl mx-auto my-auto">
       {/* Sidebar nav */}
       <nav className="w-full md:w-56 shrink-0 md:sticky md:top-20 md:self-start">
         <h2 className="text-lg font-semibold mb-3 px-2">Settings</h2>
@@ -226,15 +226,9 @@ export default function SettingsPage() {
       </nav>
 
       {/* Content sections */}
-      <div className="flex-1 min-w-0 flex flex-col gap-6">
+      <div className="flex-1 min-w-0 flex flex-col gap-6 max-w-2xl mx-auto w-full">
         {/* Profile */}
-        <section id="profile">
-          {loadingAttrs ? (
-            <div className="space-y-4">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-64 w-full" />
-            </div>
-          ) : (
+        <section id="profile" className="animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0s" }}>
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
@@ -251,11 +245,6 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {profileError && (
-                  <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-                    {profileError}
-                  </div>
-                )}
                 <form
                   onSubmit={handleSaveProfile}
                   className="flex flex-col gap-4"
@@ -308,11 +297,10 @@ export default function SettingsPage() {
                 </form>
               </CardContent>
             </Card>
-          )}
         </section>
 
         {/* Change Password */}
-        <section id="password">
+        <section id="password" className="animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0.1s" }}>
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
@@ -322,11 +310,6 @@ export default function SettingsPage() {
               <CardDescription>Update your account password</CardDescription>
             </CardHeader>
             <CardContent>
-              {passwordError && (
-                <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-                  {passwordError}
-                </div>
-              )}
               <form
                 onSubmit={handleChangePassword}
                 className="flex flex-col gap-4"
@@ -377,7 +360,7 @@ export default function SettingsPage() {
         </section>
 
         {/* Appearance */}
-        <section id="appearance">
+        <section id="appearance" className="animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0.2s" }}>
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
