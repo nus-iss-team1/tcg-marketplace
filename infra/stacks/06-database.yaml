@@ -9,6 +9,8 @@ Parameters:
 Resources:
   GameCardLookup:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       TableName: GameCardLookup
       BillingMode: PAY_PER_REQUEST
@@ -43,6 +45,8 @@ Resources:
   # ──────────────────────────────────────────────
   MessagingPlatform:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       TableName: MessagingPlatform
       BillingMode: PAY_PER_REQUEST
@@ -103,6 +107,8 @@ Resources:
   # ──────────────────────────────────────────────
   TCGMarketplace:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       TableName: TCGMarketplace
       BillingMode: PAY_PER_REQUEST
