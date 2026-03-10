@@ -12,13 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -45,15 +38,6 @@ import { fetchMarketplaceListings, type Listing } from "@/lib/listings";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/page-header";
 
-const GAMES = [
-  "Pokemon TCG",
-  "Yu-Gi-Oh!",
-  "Magic: The Gathering",
-  "Digimon Card Game",
-  "One Piece Card Game",
-  "Star Wars Unlimited",
-];
-
 export default function ViewListingPage() {
   return (
     <Suspense>
@@ -63,7 +47,6 @@ export default function ViewListingPage() {
 }
 
 function ViewListingContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const isEdit = searchParams.get("edit") === "true";
 
