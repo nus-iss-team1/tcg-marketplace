@@ -1,33 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { AppHeader } from "@/components/app-header";
-import { ProfileContent, ProfileSkeleton, type ProfileData } from "@/components/profile-content";
+import { ProfileContent, ProfileSkeleton } from "@/components/profile-content";
 import { Button } from "@/components/ui/button";
 import { ChevronLeftIcon, SettingsIcon } from "lucide-react";
 import Link from "next/link";
 
 export default function ProfilePage() {
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     document.title = "Profile - TCG Marketplace";
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      // TODO: Fetch full profile from API when ready
-      setProfile({
-        username: user.username,
-        displayName: user.givenName
-          ? `${user.givenName}${user.familyName ? ` ${user.familyName}` : ""}`
-          : user.username,
-      });
-      setLoading(false);
-    }
+  const profile = useMemo(() => {
+    if (!user) return null;
+    return {
+      username: user.username,
+      displayName: user.givenName
+        ? `${user.givenName}${user.familyName ? ` ${user.familyName}` : ""}`
+        : user.username,
+    };
   }, [user]);
 
   return (
