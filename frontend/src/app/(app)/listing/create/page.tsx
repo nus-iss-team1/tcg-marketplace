@@ -3,7 +3,6 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +22,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  ImageIcon,
   PlusIcon,
   UploadIcon,
   XIcon,
@@ -42,7 +40,6 @@ const GAMES = [
 ];
 
 export default function CreateListingPage() {
-  const { user } = useAuth();
   const router = useRouter();
 
   const [gameName, setGameName] = useState("");
@@ -115,8 +112,6 @@ export default function CreateListingPage() {
     toast.success("Listing created successfully.");
     router.push("/listing/sample");
   };
-
-  const previews = [frontPreview, backPreview].filter(Boolean) as string[];
 
   return (
     <PageContainer title="Sell a Card" description="Create a new listing" backHref="/listing">
