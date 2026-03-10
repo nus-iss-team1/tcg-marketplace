@@ -48,10 +48,11 @@ export function ProfileContent({ profile, isOwnProfile }: ProfileContentProps) {
     : profile.username.substring(0, 2).toUpperCase();
 
   useEffect(() => {
-    setLoadingListings(true);
+    let cancelled = false;
     fetchSellerListings(profile.username)
-      .then((res) => setListings(res.listings))
-      .finally(() => setLoadingListings(false));
+      .then((res) => { if (!cancelled) setListings(res.listings); })
+      .finally(() => { if (!cancelled) setLoadingListings(false); });
+    return () => { cancelled = true; };
   }, [profile.username]);
 
   return (
