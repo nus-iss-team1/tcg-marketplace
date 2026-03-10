@@ -47,9 +47,9 @@ export default function MyListingsPage() {
       title="My Listings"
       description="Manage your cards"
       action={
-        <Button asChild size="sm">
+        <Button asChild size="icon" className="h-8 w-8 sm:w-auto sm:px-3">
           <Link href="/listing/create">
-            <PlusIcon className="h-4 w-4 sm:mr-1.5" />
+            <PlusIcon className="h-4 w-4" />
             <span className="hidden sm:inline">New Listing</span>
           </Link>
         </Button>

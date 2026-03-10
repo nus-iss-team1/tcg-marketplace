@@ -1,4 +1,4 @@
-import { ArrowLeftIcon } from "lucide-react";
+import { ChevronLeftIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -26,7 +26,7 @@ export function PageContainer({
           {backHref && (
             <Button variant="outline" size="icon" className="h-8 w-8 sm:w-auto sm:px-3 shrink-0" asChild>
               <Link href={backHref}>
-                <ArrowLeftIcon className="h-4 w-4" />
+                <ChevronLeftIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Back</span>
               </Link>
             </Button>

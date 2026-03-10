@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   ImageIcon,
-  ArrowLeftIcon,
+  ChevronLeftIcon,
   TagIcon,
   MapPinIcon,
   CreditCardIcon,
@@ -86,7 +86,7 @@ function ViewListingContent() {
       <div className="flex flex-1 flex-col items-center justify-center w-full max-w-352 mx-auto px-4 sm:px-0">
         <Button variant="outline" size="icon" className="h-8 w-8 sm:w-auto sm:px-3 self-start mb-4" asChild>
           <Link href="/listing">
-            <ArrowLeftIcon className="h-4 w-4" />
+            <ChevronLeftIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Back</span>
           </Link>
         </Button>
@@ -112,7 +112,7 @@ function ReadListingView({ listing }: { listing: Listing }) {
       <div className="flex items-center justify-between mb-4">
         <Button variant="outline" size="icon" className="h-8 w-8 sm:w-auto sm:px-3" asChild>
           <Link href="/listing">
-            <ArrowLeftIcon className="h-4 w-4" />
+            <ChevronLeftIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Back</span>
           </Link>
         </Button>
@@ -205,13 +205,13 @@ function ReadListingView({ listing }: { listing: Listing }) {
       {/* Seller */}
       <div className="my-4">
         <p className="text-xs text-muted-foreground mb-2">Seller</p>
-        <Link href={`/listing?seller=${listing.sellerId}`} className="flex items-center gap-3 rounded-md p-2 -m-2 hover:bg-muted transition-colors">
+        <Link href={`/listing?seller=${listing.sellerId}`} className="flex items-center gap-3 rounded-md p-2 -m-2 hover:bg-muted transition-colors min-w-0 overflow-hidden">
           <Avatar className="h-9 w-9">
             <AvatarFallback className="text-xs">{sellerInitials}</AvatarFallback>
           </Avatar>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">{listing.sellerName}</span>
-            <span className="text-xs text-muted-foreground">@{listing.sellerId}</span>
+          <div className="flex flex-col min-w-0">
+            <span className="text-sm font-medium truncate">{listing.sellerName}</span>
+            <span className="text-xs text-muted-foreground truncate">@{listing.sellerId}</span>
           </div>
         </Link>
       </div>
@@ -289,7 +289,7 @@ function EditListingView({ listing }: { listing: Listing }) {
   };
 
   return (
-    <PageContainer title="Edit Listing" backHref="/listing/sample">
+    <PageContainer title="Edit Listing" description="Update your listing details" backHref="/listing/sample">
       <form onSubmit={handleSubmit} className="animate-[fade-up_0.4s_ease-out_both]">
         {/* Image upload banner */}
         <div className="flex justify-center gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
