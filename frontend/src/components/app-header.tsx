@@ -102,11 +102,11 @@ export function AppHeader() {
 
         {user ? (
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Search icon button */}
+            {/* Search icon button — hidden on mobile where inline search is shown */}
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="hidden md:inline-flex h-8 w-8"
               onClick={() => setSearchOpen(true)}
             >
               <SearchIcon className="h-4 w-4" />
@@ -180,6 +180,15 @@ export function AppHeader() {
           </div>
         ) : (
           <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden md:inline-flex h-8 w-8"
+              onClick={() => setSearchOpen(true)}
+            >
+              <SearchIcon className="h-4 w-4" />
+              <span className="sr-only">Search</span>
+            </Button>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/login?tab=signin">Sign In</Link>
             </Button>
