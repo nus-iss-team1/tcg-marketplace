@@ -5,12 +5,12 @@ export const GameLookup = {
     type: "string",
     pk: true,
     hidden: true
-  }), // value: game
+  }), // value: gamedata
   meta: field({
     type: "string",
     sk: true,
     hidden: true
-  }), // value: META
+  }), // value: game#<gameName>
   gameName: field({
     type: "string"
   })
@@ -21,7 +21,7 @@ export const CardLookup = {
     type: "string",
     pk: true,
     hidden: true
-  }), // value: card
+  }), // value: carddata
   meta: field({
     type: "string",
     sk: true,

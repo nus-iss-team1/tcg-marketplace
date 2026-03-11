@@ -1,8 +1,15 @@
-import { Injectable } from "@nestjs/common";
+import {
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  LoggerService
+} from "@nestjs/common";
 import { DateTime } from "luxon";
 import { ulid } from "ulid";
+import { S3Service } from "../s3/s3.service";
 import { MarketplaceRepository } from "./marketplace.repository";
 import {
+  ListingAttachment,
   ListingStatus,
   OrderListing,
   QueryListing,
@@ -12,10 +19,20 @@ import {
 import { Listing } from "./types/marketplace.schema";
 import { padPrice } from "../common/utils/common.utils";
 import { CreateListingDto, QueryListingDto, UpdateListingDto } from "./dto/marketplace.dto";
+import { BASE_FOLDER } from "../s3/constants/s3.constant";
+import { LoggingService } from "../logger/logging.service";
 
 @Injectable()
 export class MarketplaceService {
-  constructor(private readonly marketplaceRepo: MarketplaceRepository) {}
+  private logger: LoggerService;
+
+  constructor(
+    loggingService: LoggingService,
+    private readonly s3Service: S3Service,
+    private readonly marketplaceRepo: MarketplaceRepository
+  ) {
+    this.logger = loggingService.getLogger();
+  }
 
   private configureQuery(query?: QueryListingDto) {
     const limit = query?.limit ?? 50;
@@ -49,29 +66,54 @@ export class MarketplaceService {
     return newQuery;
   }
 
-  async createListing(sellerId: string, listing: CreateListingDto) {
-    // generate listingId
-    listing.listingId = ulid();
-
-    // include timestamp
+  async createListing(
+    sellerId: string,
+    listing: CreateListingDto,
+    frontImage?: Express.Multer.File,
+    backImage?: Express.Multer.File
+  ) {
+    const newUlid = ulid();
     const currentTs = DateTime.now().toMillis();
-    listing.createdAt = currentTs;
-    listing.updatedAt = currentTs;
-
-    // other mandatory fields
-    listing.sellerId = sellerId;
-    listing.listingStatus = ListingStatus.ACTIVE;
-
-    // combine together
     const paddedPrice = padPrice(listing.price);
-    const newListing: Listing = {
-      ...listing,
-      listingUpdatedAt: `${listing.updatedAt}#${listing.listingId}`.toLowerCase(),
-      listingCardName: `${listing.cardName}#${listing.listingId}`.toLowerCase(),
-      listingPrice: `${paddedPrice}#${listing.listingId}`.toLowerCase()
+
+    const attachment: ListingAttachment = {
+      front: "",
+      back: ""
     };
 
-    return await this.marketplaceRepo.createListing(newListing);
+    try {
+      // upload image to s3
+      if (frontImage) {
+        attachment.front = await this.s3Service.uploadImage(frontImage, newUlid);
+      }
+      if (backImage) {
+        attachment.back = await this.s3Service.uploadImage(backImage, newUlid);
+      }
+
+      const newListing: Listing = {
+        ...listing,
+        listingId: newUlid,
+        createdAt: currentTs,
+        updatedAt: currentTs,
+        sellerId: sellerId,
+        attachment: attachment,
+        listingStatus: ListingStatus.ACTIVE,
+        listingUpdatedAt: `${listing.updatedAt}#${listing.listingId}`.toLowerCase(),
+        listingCardName: `${listing.cardName}#${listing.listingId}`.toLowerCase(),
+        listingPrice: `${paddedPrice}#${listing.listingId}`.toLowerCase()
+      };
+
+      // write into database
+      return await this.marketplaceRepo.createListing(newListing);
+    } catch (err) {
+      this.logger.error(err);
+      try {
+        await this.s3Service.deleteObject(`${BASE_FOLDER}/${newUlid}/`);
+      } catch (err) {
+        this.logger.error(err);
+        throw new InternalServerErrorException("Failed to upload file");
+      }
+    }
   }
 
   async listing(gameName: string, query?: QueryListingDto) {
@@ -105,13 +147,52 @@ export class MarketplaceService {
   }
 
   async updateListing(sellerId: string, listingId: string, listing: UpdateListingDto) {
-    // include timestamp
-    listing.updatedAt = DateTime.now().toMillis();
+    // check if sellerId is owner of the record
+    const result = (await this.marketplaceRepo.retrieveSpecificListing(
+      sellerId,
+      listingId
+    )) as Listing[];
 
-    return await this.marketplaceRepo.updateListing(sellerId, listingId, listing);
+    if (result.length !== 0) {
+      const record = result[0];
+
+      const cardName = listing.cardName ? listing.cardName : record.cardName;
+      const paddedPrice = padPrice(listing.price);
+      const updateListing: Listing = {
+        ...listing,
+        listingUpdatedAt: `${listing.updatedAt}#${listingId}`.toLowerCase(),
+        listingCardName: `${cardName}#${listingId}`.toLowerCase(),
+        listingPrice: `${paddedPrice}#${listingId}`.toLowerCase(),
+        gameName: record.gameName,
+        cardName: cardName,
+        sellerId: record.sellerId,
+        listingId: listingId,
+        createdAt: record.createdAt,
+        updatedAt: DateTime.now().toMillis()
+      };
+
+      return await this.marketplaceRepo.updateListing(updateListing);
+    } else {
+      throw new ForbiddenException("Record doesn't exist or unauthorized");
+    }
   }
 
   async deleteListing(sellerId: string, listingId: string) {
-    return await this.marketplaceRepo.deleteListing(sellerId, listingId);
+    // check if sellerId is owner of the record
+    const result = (await this.marketplaceRepo.retrieveSpecificListing(
+      sellerId,
+      listingId
+    )) as Listing[];
+
+    if (result.length !== 0) {
+      const record = result[0];
+
+      // include timestamp
+      record.updatedAt = DateTime.now().toMillis();
+
+      return await this.marketplaceRepo.deleteListing(record);
+    } else {
+      throw new ForbiddenException("Record doesn't exist or unauthorized");
+    }
   }
 }
