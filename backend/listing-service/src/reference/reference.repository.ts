@@ -1,20 +1,24 @@
 import { DynamoDBDocumentClient, QueryCommand, QueryCommandInput } from "@aws-sdk/lib-dynamodb";
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, LoggerService } from "@nestjs/common";
 import { DYNAMODB_CLIENT } from "../dynamodb/dynamodb.constants";
 import { buildProjection } from "../dynamodb/dynamodb.util";
 import { CardLookup, GameLookup } from "./types/reference.schema";
 import { handleDynamoError } from "../common/utils/common.utils";
+import { LoggingService } from "../logger/logging.service";
 
 @Injectable()
 export class ReferenceRepository {
+  private logger: LoggerService;
   private readonly tableName = "GameCardLookup";
   private gameProjection: ReturnType<typeof buildProjection>;
   private cardProjection: ReturnType<typeof buildProjection>;
 
   constructor(
+    loggingService: LoggingService,
     @Inject(DYNAMODB_CLIENT)
     private readonly docClient: DynamoDBDocumentClient
   ) {
+    this.logger = loggingService.getLogger();
     this.gameProjection = buildProjection(GameLookup);
     this.cardProjection = buildProjection(CardLookup);
   }
@@ -35,6 +39,7 @@ export class ReferenceRepository {
 
       return result.Items ?? [];
     } catch (err) {
+      this.logger.error(err);
       handleDynamoError(err);
     }
   }
@@ -65,6 +70,7 @@ export class ReferenceRepository {
 
       return result.Items ?? [];
     } catch (err) {
+      this.logger.error(err);
       handleDynamoError(err);
     }
   }

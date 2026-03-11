@@ -1,13 +1,20 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable, LoggerService, UnauthorizedException } from "@nestjs/common";
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 import { ConfigService } from "@nestjs/config";
 import { CognitoJwtPayload } from "./types/cognito-jwt-payload";
+import { LoggingService } from "../logger/logging.service";
 
 @Injectable()
 export class CognitoVerifierService {
+  private logger: LoggerService;
   private readonly verifier: ReturnType<typeof CognitoJwtVerifier.create>;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    loggingService: LoggingService,
+    private readonly configService: ConfigService
+  ) {
+    this.logger = loggingService.getLogger();
+
     const userPoolId = this.configService.getOrThrow<string>("COGNITO_USER_POOL_ID");
     const clientId = this.configService.getOrThrow<string>("COGNITO_APP_CLIENT_ID");
 
@@ -22,7 +29,8 @@ export class CognitoVerifierService {
     try {
       const payload = await this.verifier.verify(token);
       return payload;
-    } catch {
+    } catch (err) {
+      this.logger.error(err);
       throw new UnauthorizedException("Invalid or expired token");
     }
   }
