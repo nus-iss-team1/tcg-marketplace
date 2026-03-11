@@ -7,23 +7,54 @@ import {
   Param,
   Delete,
   Query,
-  UseGuards
+  UseGuards,
+  UseInterceptors,
+  UploadedFiles
 } from "@nestjs/common";
+import { FileFieldsInterceptor } from "@nestjs/platform-express";
 import { CognitoAuthGuard } from "../auth/cognito-auth.guard";
 import { Public } from "../auth/public.decorator";
 import { CurrentUser } from "../auth/current-user.decorator";
 import { MarketplaceService } from "./marketplace.service";
 import { CreateListingDto, QueryListingDto, UpdateListingDto } from "./dto/marketplace.dto";
+import { ImageUploadPipe } from "./pipes/image-validation.pipe";
+import { MAX_SIZE } from "../s3/constants/s3.constant";
 
 @UseGuards(CognitoAuthGuard)
 @Controller("marketplace")
 export class MarketplaceController {
+  private readonly imagePipe = new ImageUploadPipe();
+
   constructor(private readonly marketplaceService: MarketplaceService) {}
 
   @Public()
   @Post()
-  async create(@CurrentUser("email") username: string, @Body() listing: CreateListingDto) {
-    return await this.marketplaceService.createListing(username, listing);
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: "frontImage", maxCount: 1 },
+        { name: "backImage", maxCount: 1 }
+      ],
+      {
+        limits: {
+          fileSize: MAX_SIZE
+        }
+      }
+    )
+  )
+  async create(
+    @CurrentUser("email") username: string,
+    @UploadedFiles()
+    files: {
+      frontImage?: Express.Multer.File[];
+      backImage?: Express.Multer.File[];
+    },
+    @Body() listing: CreateListingDto
+  ) {
+    const frontImage = this.imagePipe.transform(files.frontImage?.[0]);
+    const backImage = this.imagePipe.transform(files.backImage?.[0]);
+
+    return await this.marketplaceService.createListing(username, listing, frontImage, backImage);
   }
 
   @Public()

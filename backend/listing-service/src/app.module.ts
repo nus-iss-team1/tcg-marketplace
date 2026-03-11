@@ -7,6 +7,7 @@ import { LoggingModule } from "./logger/logging.module";
 import { MarketplaceModule } from "./marketplace/marketplace.module";
 import { DynamoDbModule } from "./dynamodb/dynamodb.module";
 import { ReferenceModule } from "./reference/reference.module";
+import { S3Module } from "./s3/s3.module";
 
 @Module({
   imports: [
@@ -32,7 +33,8 @@ import { ReferenceModule } from "./reference/reference.module";
     LoggingModule,
     DynamoDbModule,
     MarketplaceModule,
-    ReferenceModule
+    ReferenceModule,
+    S3Module
   ],
   controllers: [AppController],
   providers: []
