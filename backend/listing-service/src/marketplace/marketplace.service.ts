@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { ForbiddenException, Injectable } from "@nestjs/common";
 import { DateTime } from "luxon";
 import { ulid } from "ulid";
 import { MarketplaceRepository } from "./marketplace.repository";
@@ -105,13 +105,55 @@ export class MarketplaceService {
   }
 
   async updateListing(sellerId: string, listingId: string, listing: UpdateListingDto) {
-    // include timestamp
-    listing.updatedAt = DateTime.now().toMillis();
+    // check if sellerId is owner of the record
+    const result = (await this.marketplaceRepo.retrieveSpecificListing(
+      sellerId,
+      listingId
+    )) as Listing[];
 
-    return await this.marketplaceRepo.updateListing(sellerId, listingId, listing);
+    if (result.length !== 0) {
+      const record = result[0];
+
+      // include timestamp
+      listing.updatedAt = DateTime.now().toMillis();
+
+      // combine together
+      const cardName = listing.cardName ? listing.cardName : record.cardName;
+      const paddedPrice = padPrice(listing.price);
+      const updateListing: Listing = {
+        ...listing,
+        listingUpdatedAt: `${listing.updatedAt}#${listingId}`.toLowerCase(),
+        listingCardName: `${cardName}#${listingId}`.toLowerCase(),
+        listingPrice: `${paddedPrice}#${listingId}`.toLowerCase(),
+        gameName: record.gameName,
+        cardName: cardName,
+        sellerId: record.sellerId,
+        listingId: listingId,
+        createdAt: record.createdAt
+      };
+
+      return await this.marketplaceRepo.updateListing(updateListing);
+    } else {
+      throw new ForbiddenException("Record doesn't exist or unauthorized");
+    }
   }
 
   async deleteListing(sellerId: string, listingId: string) {
-    return await this.marketplaceRepo.deleteListing(sellerId, listingId);
+    // check if sellerId is owner of the record
+    const result = (await this.marketplaceRepo.retrieveSpecificListing(
+      sellerId,
+      listingId
+    )) as Listing[];
+
+    if (result.length !== 0) {
+      const record = result[0];
+
+      // include timestamp
+      record.updatedAt = DateTime.now().toMillis();
+
+      return await this.marketplaceRepo.deleteListing(record);
+    } else {
+      throw new ForbiddenException("Record doesn't exist or unauthorized");
+    }
   }
 }
