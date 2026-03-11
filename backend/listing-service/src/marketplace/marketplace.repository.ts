@@ -6,12 +6,11 @@ import {
   QueryCommandInput,
   UpdateCommand
 } from "@aws-sdk/lib-dynamodb";
-import { ForbiddenException, Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { DYNAMODB_CLIENT } from "../dynamodb/dynamodb.constants";
 import { buildProjection } from "../dynamodb/dynamodb.util";
 import { Listing, TCGMarketplaceSchema } from "./types/marketplace.schema";
 import { QueryListing } from "./types/marketplace.type";
-import { UpdateListingDto } from "./dto/marketplace.dto";
 import { handleDynamoError } from "../common/utils/common.utils";
 
 @Injectable()
@@ -24,28 +23,6 @@ export class MarketplaceRepository {
     private readonly docClient: DynamoDBDocumentClient
   ) {
     this.projection = buildProjection(TCGMarketplaceSchema);
-  }
-
-  private async validateIsSellerListing(sellerId: string, listingId: string) {
-    try {
-      const result = await this.docClient.send(
-        new QueryCommand({
-          TableName: this.tableName,
-          IndexName: "SellerListingIndex",
-          KeyConditionExpression: "sellerId = :sellerId",
-          FilterExpression: "listingId = :listingId AND listingStatus <> :listingStatus",
-          ExpressionAttributeValues: {
-            ":sellerId": sellerId,
-            ":listingId": listingId,
-            ":listingStatus": "DELETED"
-          }
-        })
-      );
-
-      return result.Items ?? [];
-    } catch (err) {
-      handleDynamoError(err);
-    }
   }
 
   async createListing(listing: Listing) {
@@ -105,6 +82,28 @@ export class MarketplaceRepository {
     }
   }
 
+  async retrieveSpecificListing(sellerId: string, listingId: string) {
+    try {
+      const result = await this.docClient.send(
+        new QueryCommand({
+          TableName: this.tableName,
+          IndexName: "SellerListingIndex",
+          KeyConditionExpression: "sellerId = :sellerId",
+          FilterExpression: "listingId = :listingId AND listingStatus <> :listingStatus",
+          ExpressionAttributeValues: {
+            ":sellerId": sellerId,
+            ":listingId": listingId,
+            ":listingStatus": "DELETED"
+          }
+        })
+      );
+
+      return result.Items ?? [];
+    } catch (err) {
+      handleDynamoError(err);
+    }
+  }
+
   async retrieveSellerListing(sellerId: string, query: QueryListing) {
     const param: QueryCommandInput = {
       TableName: this.tableName,
@@ -136,71 +135,57 @@ export class MarketplaceRepository {
     }
   }
 
-  async updateListing(sellerId: string, listingId: string, listing: UpdateListingDto) {
-    // check if sellerId is owner of the record
-    const record = (await this.validateIsSellerListing(sellerId, listingId)) as Listing[];
+  async updateListing(listing: Listing) {
+    const { gameName, listingId, ...updateListing } = listing;
+    try {
+      await this.docClient.send(
+        new UpdateCommand({
+          TableName: this.tableName,
+          Key: {
+            listingId: listingId
+          },
+          ...updateListing,
+          ConditionExpression: "attribute_exists(listingId)"
+        })
+      );
 
-    if (record.length !== 0) {
-      try {
-        await this.docClient.send(
-          new UpdateCommand({
-            TableName: this.tableName,
-            Key: {
-              listingId: listingId
-            },
-            ...listing,
-            ConditionExpression: "attribute_exists(listingId)"
-          })
-        );
+      // retrieve updated result
+      const result = await this.docClient.send(
+        new GetCommand({
+          TableName: this.tableName,
+          Key: {
+            gameName: gameName,
+            listingId: listingId
+          },
+          ...this.projection
+        })
+      );
 
-        // retrieve updated result
-        const gameName = record[0].gameName;
-        const result = await this.docClient.send(
-          new GetCommand({
-            TableName: this.tableName,
-            Key: {
-              gameName: gameName,
-              listingId: listingId
-            },
-            ...this.projection
-          })
-        );
-
-        return result.Item;
-      } catch (err) {
-        handleDynamoError(err);
-      }
-    } else {
-      throw new ForbiddenException("Record doesn't exist or unauthorized");
+      return result.Item;
+    } catch (err) {
+      handleDynamoError(err);
     }
   }
 
-  async deleteListing(sellerId: string, listingId: string) {
-    // check if sellerId is owner of the record
-    const record = (await this.validateIsSellerListing(sellerId, listingId)) as Listing[];
+  async deleteListing(listing: Listing) {
+    try {
+      await this.docClient.send(
+        new UpdateCommand({
+          TableName: this.tableName,
+          Key: {
+            listingId: listing.listingId
+          },
+          UpdateExpression: "SET listingStatus = :listingStatus",
+          ExpressionAttributeValues: {
+            ":listingStatus": "DELETED"
+          },
+          ConditionExpression: "attribute_exists(listingId)"
+        })
+      );
 
-    if (record.length !== 0) {
-      try {
-        await this.docClient.send(
-          new UpdateCommand({
-            TableName: this.tableName,
-            Key: {
-              listingId: listingId
-            },
-            UpdateExpression: "SET listingStatus = :listingStatus",
-            ExpressionAttributeValues: {
-              ":listingStatus": "DELETED"
-            },
-            ConditionExpression: "attribute_exists(listingId)"
-          })
-        );
-
-        return { message: "Deleted successfully" };
-      } catch (err) {
-        handleDynamoError(err);
-      }
-    } else {
-      throw new ForbiddenException("Record doesn't exist or unauthorized");
+      return { message: "Deleted successfully" };
+    } catch (err) {
+      handleDynamoError(err);
     }
   }
 }
