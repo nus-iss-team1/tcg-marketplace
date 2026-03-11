@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, InternalServerErrorException } from "@nestjs/common";
+import {
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  LoggerService
+} from "@nestjs/common";
 import { DateTime } from "luxon";
 import { ulid } from "ulid";
 import { S3Service } from "../s3/s3.service";
@@ -15,13 +20,19 @@ import { Listing } from "./types/marketplace.schema";
 import { padPrice } from "../common/utils/common.utils";
 import { CreateListingDto, QueryListingDto, UpdateListingDto } from "./dto/marketplace.dto";
 import { BASE_FOLDER } from "../s3/constants/s3.constant";
+import { LoggingService } from "../logger/logging.service";
 
 @Injectable()
 export class MarketplaceService {
+  private logger: LoggerService;
+
   constructor(
+    loggingService: LoggingService,
     private readonly s3Service: S3Service,
     private readonly marketplaceRepo: MarketplaceRepository
-  ) {}
+  ) {
+    this.logger = loggingService.getLogger();
+  }
 
   private configureQuery(query?: QueryListingDto) {
     const limit = query?.limit ?? 50;
@@ -94,10 +105,12 @@ export class MarketplaceService {
 
       // write into database
       return await this.marketplaceRepo.createListing(newListing);
-    } catch {
+    } catch (err) {
+      this.logger.error(err);
       try {
         await this.s3Service.deleteObject(`${BASE_FOLDER}/${newUlid}/`);
-      } catch {
+      } catch (err) {
+        this.logger.error(err);
         throw new InternalServerErrorException("Failed to upload file");
       }
     }

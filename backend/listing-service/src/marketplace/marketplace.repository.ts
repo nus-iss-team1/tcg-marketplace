@@ -6,23 +6,27 @@ import {
   QueryCommandInput,
   UpdateCommand
 } from "@aws-sdk/lib-dynamodb";
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, LoggerService } from "@nestjs/common";
 import { DYNAMODB_CLIENT } from "../dynamodb/dynamodb.constants";
 import { buildProjection } from "../dynamodb/dynamodb.util";
 import { Listing, TCGMarketplaceSchema } from "./types/marketplace.schema";
 import { QueryListing } from "./types/marketplace.type";
 import { handleDynamoError } from "../common/utils/common.utils";
+import { LoggingService } from "../logger/logging.service";
 
 @Injectable()
 export class MarketplaceRepository {
+  private logger: LoggerService;
   private readonly tableName = "TCGMarketplace";
   private projection: ReturnType<typeof buildProjection>;
 
   constructor(
+    loggingService: LoggingService,
     @Inject(DYNAMODB_CLIENT)
     private readonly docClient: DynamoDBDocumentClient
   ) {
     this.projection = buildProjection(TCGMarketplaceSchema);
+    this.logger = loggingService.getLogger();
   }
 
   async createListing(listing: Listing) {
@@ -47,6 +51,7 @@ export class MarketplaceRepository {
       );
       return result.Item;
     } catch (err) {
+      this.logger.error(err);
       handleDynamoError(err);
     }
   }
@@ -78,6 +83,7 @@ export class MarketplaceRepository {
         nextCursor: result.LastEvaluatedKey ?? null
       };
     } catch (err) {
+      this.logger.error(err);
       handleDynamoError(err);
     }
   }
@@ -100,6 +106,7 @@ export class MarketplaceRepository {
 
       return result.Items ?? [];
     } catch (err) {
+      this.logger.error(err);
       handleDynamoError(err);
     }
   }
@@ -131,6 +138,7 @@ export class MarketplaceRepository {
         nextCursor: result.LastEvaluatedKey ?? null
       };
     } catch (err) {
+      this.logger.error(err);
       handleDynamoError(err);
     }
   }
@@ -163,6 +171,7 @@ export class MarketplaceRepository {
 
       return result.Item;
     } catch (err) {
+      this.logger.error(err);
       handleDynamoError(err);
     }
   }
@@ -185,6 +194,7 @@ export class MarketplaceRepository {
 
       return { message: "Deleted successfully" };
     } catch (err) {
+      this.logger.error(err);
       handleDynamoError(err);
     }
   }
