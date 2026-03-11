@@ -47,7 +47,7 @@ class BaseListingDto {
   @IsNotEmpty()
   @IsNumber()
   @Min(0.01)
-  @Transform(({ value }: { value: number }) => Number(value.toFixed(2)))
+  @Transform(({ value }: { value: number }) => Number(Number(value).toFixed(2)))
   readonly price!: number;
 
   @ValidateNested()
