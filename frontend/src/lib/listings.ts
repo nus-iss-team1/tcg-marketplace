@@ -86,6 +86,24 @@ function mockFetchSellerListings(sellerId: string, params?: FetchListingsParams)
   return { listings, cursor: btoa(`mock-seller-cursor-${limit}`) };
 }
 
+/* ── Card types ── */
+
+export interface CardType {
+  label: string;
+  value: string;
+}
+
+export async function getCardTypes(): Promise<CardType[]> {
+  return [
+    { label: "Pokemon TCG", value: "Pokemon TCG" },
+    { label: "Yu-Gi-Oh!", value: "Yu-Gi-Oh!" },
+    { label: "Magic: The Gathering", value: "Magic: The Gathering" },
+    { label: "Digimon", value: "Digimon Card Game" },
+    { label: "One Piece", value: "One Piece Card Game" },
+    { label: "Star Wars", value: "Star Wars Unlimited" },
+  ];
+}
+
 export interface Listing {
   listingId: string;
   sellerId: string;

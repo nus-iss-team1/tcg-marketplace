@@ -19,18 +19,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  ImageIcon,
   ChevronLeftIcon,
-  TagIcon,
   MapPinIcon,
   CreditCardIcon,
   CalendarIcon,
   LayersIcon,
   SparklesIcon,
   HashIcon,
-  PencilIcon,
-  SaveIcon,
-  XIcon,
   UploadIcon,
   Trash2Icon,
 } from "lucide-react";
@@ -39,6 +34,7 @@ import { toast } from "sonner";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { AppHeader } from "@/components/app-header";
 import { useAuth } from "@/context/AuthContext";
+import { ImagePlaceholder } from "@/components/image-placeholder";
 
 export default function ViewListingPage() {
   return (
@@ -78,7 +74,7 @@ function ViewListingContent() {
           <div className="flex flex-1 flex-col w-full max-w-352 mx-auto px-4 sm:px-0">
             <div className="space-y-4">
               <Skeleton className="h-8 w-8 rounded-md" />
-              <Skeleton className="w-48 sm:w-56 md:w-64 mx-auto aspect-3/4 rounded-lg" />
+              <Skeleton className="w-48 sm:w-56 md:w-64 mx-auto aspect-3/4 rounded-none" />
               <Skeleton className="h-8 w-48" />
               <Skeleton className="h-5 w-32" />
               <Skeleton className="h-24 w-full" />
@@ -101,8 +97,8 @@ function ViewListingContent() {
                 <span className="hidden sm:inline">Back</span>
               </Link>
             </Button>
-            <p className="text-lg font-semibold">Listing Not Found</p>
-            <p className="text-muted-foreground text-sm">This listing doesn&apos;t exist or has been removed.</p>
+            <p className="text-lg">Listing Not Found</p>
+            <p className="text-muted-foreground text-xs">This listing doesn&apos;t exist or has been removed.</p>
           </div>
         </main>
       </div>
@@ -144,10 +140,9 @@ function ReadListingView({ listing, isAuthenticated }: { listing: Listing; isAut
           </Link>
         </Button>
         {isAuthenticated && (
-          <Button variant="outline" size="icon" className="h-8 w-8 sm:w-auto sm:px-3" asChild>
+          <Button variant="outline" size="sm" asChild>
             <Link href="/listing/sample?edit=true">
-              <PencilIcon className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Edit</span>
+              Edit
             </Link>
           </Button>
         )}
@@ -158,12 +153,12 @@ function ReadListingView({ listing, isAuthenticated }: { listing: Listing; isAut
 
       {/* Card name and game type */}
       <div className="mt-4 mb-2">
-        <p className="text-sm text-muted-foreground">{listing.gameName}</p>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{listing.cardName}</h1>
+        <p className="text-xs text-muted-foreground">{listing.gameName}</p>
+        <h1 className="text-3xl sm:text-4xl font-heading">{listing.cardName}</h1>
       </div>
 
       {/* Price */}
-      <p className="text-xl sm:text-2xl font-bold text-primary mb-4">
+      <p className="text-lg sm:text-xl text-primary mb-4">
         ${listing.price}
       </p>
 
@@ -174,7 +169,7 @@ function ReadListingView({ listing, isAuthenticated }: { listing: Listing; isAut
             {listing.listingStatus}
           </Badge>
         )}
-        <span className="text-sm text-muted-foreground flex items-center gap-1">
+        <span className="text-xs text-muted-foreground flex items-center gap-1">
           <CalendarIcon className="h-3.5 w-3.5" />
           Listed {new Date(listing.updatedAt).toLocaleDateString()}
         </span>
@@ -185,38 +180,38 @@ function ReadListingView({ listing, isAuthenticated }: { listing: Listing; isAut
       {/* Card details */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 my-4">
         {listing.setName && (
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-xs">
             <LayersIcon className="h-4 w-4 text-muted-foreground shrink-0" />
             <span className="text-muted-foreground">Set:</span>
-            <span className="font-medium">{listing.setName}</span>
+            <span>{listing.setName}</span>
           </div>
         )}
         {listing.cardId && (
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-xs">
             <HashIcon className="h-4 w-4 text-muted-foreground shrink-0" />
             <span className="text-muted-foreground">Card ID:</span>
-            <span className="font-medium">{listing.cardId}</span>
+            <span>{listing.cardId}</span>
           </div>
         )}
         {listing.rarity && (
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-xs">
             <SparklesIcon className="h-4 w-4 text-muted-foreground shrink-0" />
             <span className="text-muted-foreground">Rarity:</span>
-            <span className="font-medium">{listing.rarity}</span>
+            <span>{listing.rarity}</span>
           </div>
         )}
         {listing.pickUp && (
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-xs">
             <MapPinIcon className="h-4 w-4 text-muted-foreground shrink-0" />
             <span className="text-muted-foreground">Pickup:</span>
-            <span className="font-medium">{listing.pickUp}</span>
+            <span>{listing.pickUp}</span>
           </div>
         )}
         {listing.paymentMethod && (
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-xs">
             <CreditCardIcon className="h-4 w-4 text-muted-foreground shrink-0" />
             <span className="text-muted-foreground">Payment:</span>
-            <span className="font-medium">
+            <span>
               {[
                 listing.paymentMethod.cash && "Cash",
                 listing.paymentMethod.paynow && "PayNow",
@@ -234,23 +229,24 @@ function ReadListingView({ listing, isAuthenticated }: { listing: Listing; isAut
       {/* Seller */}
       <div className="my-4">
         <p className="text-xs text-muted-foreground mb-2">Seller</p>
-        <Link href={`/seller/${listing.sellerId}`} className="flex items-center gap-3 rounded-md p-2 -m-2 hover:bg-muted transition-colors min-w-0 overflow-hidden">
+        <div className="flex items-center gap-3 p-2 -m-2 min-w-0 overflow-hidden">
           <Avatar className="h-9 w-9">
             <AvatarFallback className="text-xs">{sellerInitials}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col min-w-0">
-            <span className="text-sm font-medium truncate">{listing.sellerName}</span>
+            <span className="text-xs truncate">{listing.sellerName}</span>
             <span className="text-xs text-muted-foreground truncate">@{listing.sellerId}</span>
           </div>
-        </Link>
+        </div>
       </div>
 
       {/* Action — only for authenticated users */}
       {isAuthenticated && (
         <div className="flex gap-3 pt-2">
-          <Button className="flex-1 sm:flex-none">
-            <TagIcon className="mr-2 h-4 w-4" />
-            Contact Seller
+          <Button className="flex-1 sm:flex-none" asChild>
+            <Link href={`/seller/${listing.sellerId}`}>
+              Contact Seller
+            </Link>
           </Button>
         </div>
       )}
@@ -326,7 +322,7 @@ function EditListingView({ listing }: { listing: Listing }) {
         {/* Image upload banner */}
         <div className="flex justify-center gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
           {frontPreview ? (
-            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-lg bg-muted border overflow-hidden snap-start relative group">
+            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none bg-muted overflow-hidden snap-start relative group">
               <Image
                 src={frontPreview}
                 alt="Card front"
@@ -334,7 +330,7 @@ function EditListingView({ listing }: { listing: Listing }) {
                 height={341}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-none flex items-center justify-center gap-2">
                 <Button
                   type="button"
                   size="sm"
@@ -357,7 +353,7 @@ function EditListingView({ listing }: { listing: Listing }) {
             <button
               type="button"
               onClick={() => handleOpenUpload("front")}
-              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 flex flex-col items-center justify-center gap-1.5 hover:border-muted-foreground/50 hover:bg-muted transition-colors cursor-pointer snap-start"
+              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none border-2 border-dashed border-muted-foreground/25 bg-muted/50 flex flex-col items-center justify-center gap-1.5 hover:border-muted-foreground/50 hover:bg-muted transition-colors cursor-pointer snap-start"
             >
               <UploadIcon className="h-6 w-6 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Front</span>
@@ -365,7 +361,7 @@ function EditListingView({ listing }: { listing: Listing }) {
           )}
 
           {backPreview ? (
-            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-lg bg-muted border overflow-hidden snap-start relative group">
+            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none bg-muted overflow-hidden snap-start relative group">
               <Image
                 src={backPreview}
                 alt="Card back"
@@ -373,7 +369,7 @@ function EditListingView({ listing }: { listing: Listing }) {
                 height={341}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-none flex items-center justify-center gap-2">
                 <Button
                   type="button"
                   size="sm"
@@ -396,7 +392,7 @@ function EditListingView({ listing }: { listing: Listing }) {
             <button
               type="button"
               onClick={() => handleOpenUpload("back")}
-              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 flex flex-col items-center justify-center gap-1.5 hover:border-muted-foreground/50 hover:bg-muted transition-colors cursor-pointer snap-start"
+              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none border-2 border-dashed border-muted-foreground/25 bg-muted/50 flex flex-col items-center justify-center gap-1.5 hover:border-muted-foreground/50 hover:bg-muted transition-colors cursor-pointer snap-start"
             >
               <UploadIcon className="h-6 w-6 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Back</span>
@@ -406,7 +402,7 @@ function EditListingView({ listing }: { listing: Listing }) {
 
         {/* Game (read-only) & Card Name */}
         <div className="mt-4 mb-2">
-          <p className="text-sm text-muted-foreground">{listing.gameName}</p>
+          <p className="text-xs text-muted-foreground">{listing.gameName}</p>
           <div className="space-y-2 mt-1">
             <Label htmlFor="cardName">Card Name *</Label>
             <Input
@@ -490,7 +486,6 @@ function EditListingView({ listing }: { listing: Listing }) {
         {/* Submit */}
         <div className="flex gap-3 my-4">
           <Button type="submit" disabled={!canSubmit} className="flex-1 sm:flex-none">
-            <SaveIcon className="mr-1.5 h-4 w-4" />
             Save Changes
           </Button>
           <Button
@@ -498,7 +493,6 @@ function EditListingView({ listing }: { listing: Listing }) {
             variant="outline"
             onClick={() => router.push("/listing/sample")}
           >
-            <XIcon className="mr-1.5 h-4 w-4" />
             Cancel
           </Button>
         </div>
@@ -522,7 +516,7 @@ function EditListingView({ listing }: { listing: Listing }) {
             >
               <UploadIcon className="h-8 w-8 text-muted-foreground" />
               <div className="text-center">
-                <p className="text-sm font-medium">Click to select a file</p>
+                <p className="text-sm">Click to select a file</p>
                 <p className="text-xs text-muted-foreground mt-1">JPG, PNG or WebP up to 5MB</p>
               </div>
             </div>
@@ -546,9 +540,7 @@ function ImageBanner({ attachment }: { attachment?: { front?: string; back?: str
   if (images.length === 0) {
     return (
       <div className="flex justify-center gap-3 overflow-x-auto pb-2">
-        <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-lg bg-muted flex items-center justify-center border">
-          <ImageIcon className="h-12 w-12 text-muted-foreground" />
-        </div>
+        <ImagePlaceholder className="w-48 sm:w-56 md:w-64 shrink-0 rounded-none" />
       </div>
     );
   }
@@ -558,7 +550,7 @@ function ImageBanner({ attachment }: { attachment?: { front?: string; back?: str
       {images.map((src, i) => (
         <div
           key={i}
-          className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-lg bg-muted border overflow-hidden snap-start"
+          className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none bg-muted overflow-hidden snap-start"
         >
           <Image
             src={src}
