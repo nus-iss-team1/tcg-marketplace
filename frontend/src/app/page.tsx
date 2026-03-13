@@ -15,11 +15,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  SearchIcon,
-  PlusCircleIcon,
-  SparklesIcon,
-} from "lucide-react";
 import { CardFan } from "@/components/card-fan";
 
 export default function LandingPage() {
@@ -27,7 +22,7 @@ export default function LandingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    document.title = "TCG Marketplace";
+    document.title = "HOUSE OF CARDS";
   }, []);
 
   const handleCreateListing = () => {
@@ -66,17 +61,16 @@ export default function LandingPage() {
             </div>
 
             <Card className="relative z-10 border-0 bg-transparent shadow-none">
-              <CardHeader className="px-0 pb-4 sm:pb-6">
-                <Badge variant="secondary" className="w-fit mb-3 sm:mb-4 animate-[fade-up_0.5s_ease-out_both]">
-                  <SparklesIcon className="mr-1.5 h-3 w-3" />
-                  Buy, Sell &amp; Trade
+              <CardHeader className="px-0 pb-4 sm:pb-6 items-center text-center lg:items-start lg:text-left">
+                <Badge className="w-fit mx-auto lg:mx-0 mb-3 sm:mb-4 font-heading text-lg sm:text-xl tracking-[0.15em] px-2 py-0.5 animate-[fade-up_0.5s_ease-out_both]">
+                  HOC
                 </Badge>
-                <CardTitle className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight tracking-tight animate-[fade-up_0.5s_ease-out_0.1s_both]">
-                  <span className="bg-gradient-to-r from-foreground to-foreground/85 bg-clip-text text-transparent">
+                <CardTitle className="text-5xl sm:text-6xl md:text-7xl leading-none animate-[fade-up_0.5s_ease-out_0.1s_both]">
+                  <span className="bg-linear-to-r from-foreground to-foreground/85 bg-clip-text text-transparent">
                     Your One-Stop Destination for All TCG Needs
                   </span>
                 </CardTitle>
-                <CardDescription className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed animate-[fade-up_0.5s_ease-out_0.2s_both]">
+                <CardDescription className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground leading-relaxed animate-[fade-up_0.5s_ease-out_0.2s_both]">
                   Discover rare cards, build your dream collection, and connect
                   with fellow collectors. Whether you&apos;re hunting for vintage
                   gems or the latest releases, our marketplace brings the entire
@@ -84,10 +78,9 @@ export default function LandingPage() {
                 </CardDescription>
               </CardHeader>
 
-              <CardContent className="flex flex-row gap-3 px-0 animate-[fade-up_0.5s_ease-out_0.3s_both]">
+              <CardContent className="flex flex-row justify-center lg:justify-start gap-3 px-0 animate-[fade-up_0.5s_ease-out_0.3s_both]">
                 <Button size="lg" asChild>
                   <Link href="/marketplace">
-                    <SearchIcon className="mr-2 h-4 w-4" />
                     Start Exploring
                   </Link>
                 </Button>
@@ -96,7 +89,6 @@ export default function LandingPage() {
                   variant="secondary"
                   onClick={handleCreateListing}
                 >
-                  <PlusCircleIcon className="mr-2 h-4 w-4" />
                   Create Listing
                 </Button>
               </CardContent>
@@ -111,7 +103,7 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t px-4 sm:px-6 lg:px-8 py-4 animate-[fade-in_0.5s_ease-out_0.5s_both]">
+      <footer className="px-4 sm:px-6 lg:px-8 py-4 animate-[fade-in_0.5s_ease-out_0.5s_both]">
         <p className="text-center text-xs text-muted-foreground">
           &copy; 2026 TCG Marketplace. All rights reserved.
         </p>

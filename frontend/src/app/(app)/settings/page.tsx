@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
   getUserAttributes,
@@ -19,47 +19,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  UserIcon,
-  SaveIcon,
-  KeyRoundIcon,
-  PaletteIcon,
-  SunIcon,
-  MoonIcon,
-  MonitorIcon,
-} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { PageContainer, PageHeader } from "@/components/page-header";
 
-/* ── Theme helpers ── */
-
-function getStoredTheme(): "light" | "dark" | "system" {
-  if (typeof window === "undefined") return "system";
-  const stored = localStorage.getItem("theme");
-  if (stored === "light" || stored === "dark") return stored;
-  return "system";
-}
-
-const THEMES = [
-  { value: "light" as const, label: "Light", icon: SunIcon },
-  { value: "dark" as const, label: "Dark", icon: MoonIcon },
-  { value: "system" as const, label: "System", icon: MonitorIcon },
-];
-
 /* ── Nav sections ── */
 
 const SECTIONS = [
-  { id: "profile", label: "Profile", icon: UserIcon },
-  { id: "password", label: "Change Password", icon: KeyRoundIcon },
-  { id: "appearance", label: "Appearance", icon: PaletteIcon },
+  { id: "profile", label: "Profile" },
+  { id: "password", label: "Change Password" },
 ];
 
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth();
 
   useEffect(() => {
-    document.title = "Settings - TCG Marketplace";
+    document.title = "Settings - HOUSE OF CARDS";
   }, []);
 
   /* ── Active section tracking ── */
@@ -166,22 +141,6 @@ export default function SettingsPage() {
     }
   };
 
-  /* ── Theme state ── */
-  const [theme, setThemeState] = useState<"light" | "dark" | "system">(getStoredTheme);
-
-  const setTheme = useCallback((value: "light" | "dark" | "system") => {
-    localStorage.setItem("theme", value);
-    setThemeState(value);
-    if (value === "system") {
-      const prefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
-      document.documentElement.classList.toggle("dark", prefersDark);
-    } else {
-      document.documentElement.classList.toggle("dark", value === "dark");
-    }
-  }, []);
-
   if (loadingAttrs) {
     return (
       <PageContainer>
@@ -189,9 +148,9 @@ export default function SettingsPage() {
         <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full">
           {/* Content skeleton */}
           <div className="flex-1 min-w-0 flex flex-col gap-6">
-            <Skeleton className="h-72 w-full rounded-lg" />
-            <Skeleton className="h-56 w-full rounded-lg" />
-            <Skeleton className="h-48 w-full rounded-lg" />
+            <Skeleton className="h-72 w-full rounded-none" />
+            <Skeleton className="h-56 w-full rounded-none" />
+            <Skeleton className="h-48 w-full rounded-none" />
           </div>
           {/* TOC skeleton */}
           <div className="hidden md:block w-44 shrink-0">
@@ -215,11 +174,10 @@ export default function SettingsPage() {
         <div className="flex-1 min-w-0 flex flex-col gap-6 order-2 md:order-1">
         {/* Profile */}
         <section id="profile" className="animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0s" }}>
-            <Card>
+            <Card className="bg-background">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <UserIcon className="h-5 w-5 text-muted-foreground" />
-                  <CardTitle className="text-lg">Profile Details</CardTitle>
+                  <CardTitle>Profile Details</CardTitle>
                   {user?.isAdmin && (
                     <Badge variant="secondary" className="text-xs">
                       Admin
@@ -237,11 +195,11 @@ export default function SettingsPage() {
                 >
                   <div className="flex flex-col gap-1">
                     <Label className="text-muted-foreground">Email</Label>
-                    <p className="text-sm font-medium">{email}</p>
+                    <p className="text-sm normal-case">{email}</p>
                   </div>
                   <div className="flex flex-col gap-1">
                     <Label className="text-muted-foreground">Username</Label>
-                    <p className="text-sm font-medium">{user?.username}</p>
+                    <p className="text-sm normal-case">{user?.username}</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="flex flex-col gap-2">
@@ -277,8 +235,7 @@ export default function SettingsPage() {
                     disabled={savingProfile}
                     className="w-full sm:w-auto self-end mt-2"
                   >
-                    <SaveIcon className="mr-2 h-4 w-4" />
-                    {savingProfile ? "Saving..." : "Save Changes"}
+                                        {savingProfile ? "Saving..." : "Save Changes"}
                   </Button>
                 </form>
               </CardContent>
@@ -287,11 +244,10 @@ export default function SettingsPage() {
 
         {/* Change Password */}
         <section id="password" className="animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0.1s" }}>
-          <Card>
+          <Card className="bg-background">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <KeyRoundIcon className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg">Change Password</CardTitle>
+                <CardTitle>Change Password</CardTitle>
               </div>
               <CardDescription>Update your account password</CardDescription>
             </CardHeader>
@@ -337,58 +293,19 @@ export default function SettingsPage() {
                   disabled={savingPassword}
                   className="w-full sm:w-auto self-end mt-2"
                 >
-                  <SaveIcon className="mr-2 h-4 w-4" />
-                  {savingPassword ? "Saving..." : "Update Password"}
+                                    {savingPassword ? "Saving..." : "Update Password"}
                 </Button>
               </form>
             </CardContent>
           </Card>
         </section>
 
-        {/* Appearance */}
-        <section id="appearance" className="animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0.2s" }}>
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <PaletteIcon className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg">Appearance</CardTitle>
-              </div>
-              <CardDescription>
-                Customize the look and feel of the app
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-3">
-                <p className="text-sm font-medium">Theme</p>
-                <div className="grid grid-cols-3 gap-3">
-                  {THEMES.map(({ value, label, icon: Icon }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setTheme(value)}
-                      className={cn(
-                        "flex flex-col items-center gap-3 rounded-lg border-2 p-4 transition-colors cursor-pointer",
-                        theme === value
-                          ? "border-primary bg-muted"
-                          : "border-transparent hover:border-muted-foreground/25"
-                      )}
-                    >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background border">
-                        <Icon className="h-6 w-6" />
-                      </div>
-                      <span className="text-sm font-medium">{label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
+      
       </div>
 
         {/* Table of contents nav — hidden on mobile, right side on md+ */}
         <nav className="hidden md:block w-44 shrink-0 sticky top-20 self-start order-2">
-          <p className="text-xs font-medium text-muted-foreground mb-3">On this page</p>
+          <p className="text-xs text-muted-foreground mb-3">On this page</p>
           <ul className="flex flex-col border-l border-border">
             {SECTIONS.map(({ id, label }) => (
               <li key={id}>
