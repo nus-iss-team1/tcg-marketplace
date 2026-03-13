@@ -49,7 +49,7 @@ export class MarketplaceRepository {
           ...this.projection
         })
       );
-      return result.Item;
+      return result.Item as Listing;
     } catch (err) {
       this.logger.error(err);
       handleDynamoError(err);
@@ -144,15 +144,29 @@ export class MarketplaceRepository {
   }
 
   async updateListing(listing: Listing) {
-    const { gameName, listingId, ...updateListing } = listing;
+    const { gameName, listingId, sellerId: _sellerId, ...updateListing } = listing;
+
+    // remove undefined value
+    const filteredListing = Object.fromEntries(
+      Object.entries(updateListing).filter(([, v]) => v !== undefined)
+    );
+
+    const keys = Object.keys(filteredListing);
+    const updateStatement = `SET ${keys.map((k) => `#${k} = :${k}`).join(", ")}`;
+    const attributeNames = Object.fromEntries(keys.map((k) => [`#${k}`, k]));
+    const attributeValues = Object.fromEntries(keys.map((k) => [`:${k}`, filteredListing[k]]));
+
     try {
       await this.docClient.send(
         new UpdateCommand({
           TableName: this.tableName,
           Key: {
+            gameName: gameName,
             listingId: listingId
           },
-          ...updateListing,
+          UpdateExpression: updateStatement,
+          ExpressionAttributeNames: attributeNames,
+          ExpressionAttributeValues: attributeValues,
           ConditionExpression: "attribute_exists(listingId)"
         })
       );
@@ -169,7 +183,7 @@ export class MarketplaceRepository {
         })
       );
 
-      return result.Item;
+      return result.Item as Listing;
     } catch (err) {
       this.logger.error(err);
       handleDynamoError(err);

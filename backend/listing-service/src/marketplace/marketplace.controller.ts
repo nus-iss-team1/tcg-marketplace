@@ -54,7 +54,12 @@ export class MarketplaceController {
     const frontImage = this.imagePipe.transform(files.frontImage?.[0]);
     const backImage = this.imagePipe.transform(files.backImage?.[0]);
 
-    return await this.marketplaceService.createListing(username, listing, frontImage, backImage);
+    return await this.marketplaceService.createListing(
+      "chew.jingkai",
+      listing,
+      frontImage,
+      backImage
+    );
   }
 
   @Public()
@@ -72,12 +77,39 @@ export class MarketplaceController {
   // @Roles("User")
   @Public()
   @Patch(":listingId")
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: "frontImage", maxCount: 1 },
+        { name: "backImage", maxCount: 1 }
+      ],
+      {
+        limits: {
+          fileSize: MAX_SIZE
+        }
+      }
+    )
+  )
   async update(
     @CurrentUser("email") username: string,
+    @UploadedFiles()
+    files: {
+      frontImage?: Express.Multer.File[];
+      backImage?: Express.Multer.File[];
+    },
     @Param("listingId") listingId: string,
     @Body() listing: UpdateListingDto
   ) {
-    return await this.marketplaceService.updateListing(username, listingId, listing);
+    const frontImage = this.imagePipe.transform(files.frontImage?.[0]);
+    const backImage = this.imagePipe.transform(files.backImage?.[0]);
+
+    return await this.marketplaceService.updateListing(
+      "chew.jingkai",
+      listingId,
+      listing,
+      frontImage,
+      backImage
+    );
   }
 
   @Public()

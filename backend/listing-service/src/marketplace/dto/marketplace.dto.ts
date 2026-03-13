@@ -12,7 +12,7 @@ import {
   Min,
   ValidateNested
 } from "class-validator";
-import { ListingStatus, OrderListing, SortListing } from "../types/marketplace.type";
+import { ImageAction, OrderListing, SortListing } from "../types/marketplace.type";
 
 class PaymentMethodDto {
   @IsDefined()
@@ -50,18 +50,15 @@ class BaseListingDto {
   @Transform(({ value }: { value: number }) => Number(Number(value).toFixed(2)))
   readonly price!: number;
 
-  @ValidateNested()
+  @IsDefined()
   @Type(() => PaymentMethodDto)
+  @ValidateNested()
   readonly paymentMethod!: PaymentMethodDto;
 
   @IsOptional()
   @IsString()
   @MaxLength(100)
   readonly pickup?: string;
-
-  @IsOptional()
-  @IsEnum(ListingStatus)
-  listingStatus!: ListingStatus;
 }
 
 export class CreateListingDto extends BaseListingDto {
@@ -70,26 +67,10 @@ export class CreateListingDto extends BaseListingDto {
   @MaxLength(100)
   readonly gameName!: string;
 
-  @IsOptional()
-  @Transform(() => undefined)
-  sellerId!: string;
-
-  @IsOptional()
-  @Transform(() => undefined)
-  listingId!: string;
-
   @IsNotEmpty()
   @IsString()
   @MaxLength(100)
   readonly cardName!: string;
-
-  @IsOptional()
-  @Transform(() => undefined)
-  createdAt!: number;
-
-  @IsOptional()
-  @Transform(() => undefined)
-  updatedAt!: number;
 }
 
 export class UpdateListingDto extends BaseListingDto {
@@ -98,9 +79,13 @@ export class UpdateListingDto extends BaseListingDto {
   @MaxLength(100)
   readonly cardName?: string;
 
-  @IsOptional()
-  @Transform(() => undefined)
-  updatedAt!: number;
+  @IsNotEmpty()
+  @IsEnum(ImageAction)
+  readonly frontImageAction!: ImageAction;
+
+  @IsNotEmpty()
+  @IsEnum(ImageAction)
+  readonly backImageAction!: ImageAction;
 }
 
 export class QueryListingDto {
