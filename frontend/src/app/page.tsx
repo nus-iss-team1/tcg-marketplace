@@ -67,11 +67,13 @@ export default function LandingPage() {
                 </Badge>
                 <CardTitle className="text-5xl sm:text-6xl md:text-7xl leading-none animate-[fade-up_0.5s_ease-out_0.1s_both]">
                   <span className="bg-linear-to-r from-foreground to-foreground/85 bg-clip-text text-transparent">
-                    A COMPLETE SYSTEM FOR COLLECTORS
+                    A complete system for collectors
                   </span>
                 </CardTitle>
                 <CardDescription className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground leading-relaxed animate-[fade-up_0.5s_ease-out_0.2s_both]">
-                  A curated system for the modern community. From vintage rarities to contemporary releases—discover, acquire, and connect within a single, refined environment.
+                  A curated system for the modern community. From vintage
+                  rarities to contemporary releases—discover, acquire, and
+                  connect within a single, refined environment.
                 </CardDescription>
               </CardHeader>
 

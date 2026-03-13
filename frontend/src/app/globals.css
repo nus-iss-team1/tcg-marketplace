@@ -206,19 +206,29 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
   body {
     @apply text-foreground text-sm;
     font-family: var(--font-sans);
     font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background: var(--background);
   }
+  button, a {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  input, textarea, select, [contenteditable] {
+    text-transform: none;
+    letter-spacing: normal;
+  }
   code, kbd, pre, samp {
     font-family: var(--font-mono);
+    text-transform: none;
+    letter-spacing: normal;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
