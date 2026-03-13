@@ -69,22 +69,20 @@ function MarketplaceContent() {
         />
       ) : (
         <>
-          <div className="flex-1 overflow-y-auto min-h-0">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 sm:gap-6 md:gap-8">
-              {listings.map((listing, i) => (
-                <ListingCard key={listing.listingId} listing={listing} index={i} />
-              ))}
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 sm:gap-6 md:gap-8">
+            {listings.map((listing, i) => (
+              <ListingCard key={listing.listingId} listing={listing} index={i} />
+            ))}
           </div>
 
-          {/* Fixed bottom: pagination */}
-          <div className="shrink-0 py-3">
-            <PaginationControls
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </div>
+          <div className="h-14 sm:hidden" />
+
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            className="mt-8 sticky bottom-2 sm:static bg-background/40 backdrop-blur-md py-3 sm:py-0 sm:bg-transparent sm:backdrop-blur-none rounded-none mx-2 sm:mx-0"
+          />
         </>
       )}
     </PageContainer>
