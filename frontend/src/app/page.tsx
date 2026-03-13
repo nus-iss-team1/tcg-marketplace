@@ -67,22 +67,19 @@ export default function LandingPage() {
                 </Badge>
                 <CardTitle className="text-5xl sm:text-6xl md:text-7xl leading-none animate-[fade-up_0.5s_ease-out_0.1s_both]">
                   <span className="bg-linear-to-r from-foreground to-foreground/85 bg-clip-text text-transparent">
-                    Your One-Stop Destination for All TCG Needs
+                    A complete system for collectors
                   </span>
                 </CardTitle>
                 <CardDescription className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground leading-relaxed animate-[fade-up_0.5s_ease-out_0.2s_both]">
-                  Discover rare cards, build your dream collection, and connect
-                  with fellow collectors. Whether you&apos;re hunting for vintage
-                  gems or the latest releases, our marketplace brings the entire
-                  trading card community together in one place.
+                  A curated system for the modern community. From vintage
+                  rarities to contemporary releases—discover, acquire, and
+                  connect within a single, refined environment.
                 </CardDescription>
               </CardHeader>
 
               <CardContent className="flex flex-row justify-center lg:justify-start gap-3 px-0 animate-[fade-up_0.5s_ease-out_0.3s_both]">
                 <Button size="lg" asChild>
-                  <Link href="/marketplace">
-                    Start Exploring
-                  </Link>
+                  <Link href="/marketplace">Start Exploring</Link>
                 </Button>
                 <Button
                   size="lg"
@@ -111,3 +108,4 @@ export default function LandingPage() {
     </div>
   );
 }
+
