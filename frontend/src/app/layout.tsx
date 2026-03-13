@@ -21,8 +21,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "TCG Marketplace",
-  description: "TCG Marketplace",
+  title: "HOUSE OF CARDS",
+  description: "HOUSE OF CARDS",
   icons: {
     icon: "/favicon.png",
   },
