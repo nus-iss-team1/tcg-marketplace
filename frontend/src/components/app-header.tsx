@@ -1,21 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LayersIcon, LogOutIcon, MenuIcon, SettingsIcon, UserIcon } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ChevronDownIcon, MenuIcon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -24,16 +18,19 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { getCardTypes, type CardType } from "@/lib/listings";
 
 export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [cardTypes, setCardTypes] = useState<CardType[]>([]);
 
-  const homeHref = user ? "/marketplace" : "/";
-  const initials = user?.username
-    ? user.username.substring(0, 2).toUpperCase()
-    : "?";
+  useEffect(() => {
+    getCardTypes().then(setCardTypes);
+  }, []);
+
+  const homeHref = user ? "/" : "/";
 
   const handleSignOut = () => {
     setSidebarOpen(false);
@@ -43,17 +40,25 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
 
   return (
     <>
-      <header className="relative z-50 flex h-12 sm:h-14 shrink-0 items-center gap-4 sm:gap-6 lg:gap-8 border-b px-4 sm:px-6 lg:px-8 bg-background">
+      <header className="sticky top-0 z-50 flex h-12 sm:h-14 shrink-0 items-center gap-4 sm:gap-6 lg:gap-8 px-4 sm:px-6 lg:px-8 bg-background">
+        {/* Mobile: hamburger on the left */}
+        {user && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden h-8 w-8 shrink-0"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <MenuIcon className="h-5 w-5" />
+            <span className="sr-only">Menu</span>
+          </Button>
+        )}
+
         <Link
           href={homeHref}
-          className="hidden md:flex items-center gap-1.5 text-lg font-semibold shrink-0"
+          className="absolute left-1/2 -translate-x-1/2 font-heading text-lg sm:text-xl tracking-[0.15em]"
         >
-          <LayersIcon className="h-5 w-5 text-primary" />
-          TCG Marketplace
-        </Link>
-        <Link href={homeHref} className="flex md:hidden items-center gap-1.5 text-base font-semibold shrink-0">
-          <LayersIcon className="h-5 w-5 text-primary" />
-          TCG
+          House of Cards
         </Link>
 
         <div className="flex-1" />
@@ -62,73 +67,39 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {children}
 
-            <ThemeToggle />
-
-            {/* Mobile: hamburger → sidebar */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden h-8 w-8"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <MenuIcon className="h-5 w-5" />
-              <span className="sr-only">Menu</span>
-            </Button>
-
-            {/* Desktop: avatar → dropdown */}
+            {/* Desktop: Shop dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative hidden md:flex h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>{initials}</AvatarFallback>
-                  </Avatar>
+                <Button variant="ghost" className="hidden md:flex items-center gap-1 h-8 rounded-none px-1 text-xs">
+                  Shop
+                  <ChevronDownIcon className="h-3.5 w-3.5 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9">
-                      <AvatarFallback>
-                        <UserIcon className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col gap-1">
-                      {(user.givenName || user.familyName) && (
-                        <p className="text-sm font-medium">
-                          {[user.givenName, user.familyName].filter(Boolean).join(" ")}
-                        </p>
-                      )}
-                      <p className="text-xs text-muted-foreground">{user.username}</p>
-                      <div className="flex gap-1">
-                        {user.groups.map((group) => (
-                          <Badge
-                            key={group}
-                            variant="secondary"
-                            className="text-[10px] px-1.5 py-0"
-                          >
-                            {group}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">
-                    <SettingsIcon className="mr-2 h-4 w-4" />
-                    Settings
-                  </Link>
+                {cardTypes.map((game) => (
+                  <DropdownMenuItem key={game.value} asChild className="focus:bg-transparent hover:bg-transparent hover:text-muted-foreground">
+                    <Link href={`/marketplace?game=${encodeURIComponent(game.value)}`}>{game.label}</Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Desktop: Account dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="hidden md:flex items-center gap-1 h-8 rounded-none px-1 text-xs">
+                  Account
+                  <ChevronDownIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild className="focus:bg-transparent hover:bg-transparent hover:text-muted-foreground">
+                  <Link href="/settings">Settings</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/profile">
-                    <UserIcon className="mr-2 h-4 w-4" />
-                    Profile
-                  </Link>
+                <DropdownMenuItem asChild className="focus:bg-transparent hover:bg-transparent hover:text-muted-foreground">
+                  <Link href="/profile">Profile</Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => { signOut(); router.push("/"); }}>
-                  <LogOutIcon className="mr-2 h-4 w-4" />
+                <DropdownMenuItem className="focus:bg-transparent hover:bg-transparent hover:text-muted-foreground" onClick={() => { signOut(); router.push("/"); }}>
                   Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -137,10 +108,12 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
         ) : (
           <div className="flex items-center gap-2 shrink-0">
             {children}
-            <Button size="sm" asChild>
-              <Link href="/login">Login</Link>
-            </Button>
-            <ThemeToggle />
+            <Link
+              href="/login"
+              className="text-xs hover:text-muted-foreground transition-colors"
+            >
+              Login
+            </Link>
           </div>
         )}
       </header>
@@ -148,65 +121,48 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
       {/* Mobile sidebar */}
       {user && (
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent side="right" className="w-72 p-0">
+          <SheetContent side="left" className="w-72 p-0 bg-background">
             <SheetHeader className="p-4 pb-0">
               <SheetTitle className="sr-only">Menu</SheetTitle>
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col gap-0.5 min-w-0">
-                  {(user.givenName || user.familyName) && (
-                    <p className="text-sm font-medium truncate">
-                      {[user.givenName, user.familyName].filter(Boolean).join(" ")}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground truncate">{user.username}</p>
-                  <div className="flex gap-1 mt-0.5">
-                    {user.groups.map((group) => (
-                      <Badge
-                        key={group}
-                        variant="secondary"
-                        className="text-[10px] px-1.5 py-0"
-                      >
-                        {group}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
             </SheetHeader>
 
-            <Separator className="my-1.5" />
+            {/* Card types */}
+            <nav className="flex flex-col px-2 mt-2">
+              <p className="px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground">Browse</p>
+              {cardTypes.map((game) => (
+                <Link
+                  key={game.value}
+                  href={`/marketplace?game=${encodeURIComponent(game.value)}`}
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex items-center gap-3 rounded-none px-3 py-2.5 text-xs hover:text-muted-foreground transition-colors"
+                >
+                  {game.label}
+                </Link>
+              ))}
+            </nav>
+
+            <div className="mx-4 my-2 h-px bg-border" />
 
             <nav className="flex flex-col px-2">
               <Link
                 href="/profile"
                 onClick={() => setSidebarOpen(false)}
-                className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
+                className="flex items-center gap-3 rounded-none px-3 py-2.5 text-xs hover:text-muted-foreground transition-colors"
               >
-                <UserIcon className="h-4 w-4 text-muted-foreground" />
                 Profile
               </Link>
               <Link
                 href="/settings"
                 onClick={() => setSidebarOpen(false)}
-                className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
+                className="flex items-center gap-3 rounded-none px-3 py-2.5 text-xs hover:text-muted-foreground transition-colors"
               >
-                <SettingsIcon className="h-4 w-4 text-muted-foreground" />
                 Settings
               </Link>
-            </nav>
-
-            <Separator className="my-1.5" />
-
-            <nav className="flex flex-col px-2">
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors w-full cursor-pointer"
+                className="flex items-center gap-3 rounded-none px-3 py-2.5 text-xs hover:text-muted-foreground transition-colors w-full cursor-pointer"
               >
-                <LogOutIcon className="h-4 w-4 text-muted-foreground" />
                 Sign Out
               </button>
             </nav>

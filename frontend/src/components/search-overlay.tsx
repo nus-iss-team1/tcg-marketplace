@@ -5,15 +5,7 @@ import { useRouter } from "next/navigation";
 import { SearchIcon, GamepadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-const GAME_SHORTCUTS = [
-  { label: "Pokemon TCG", value: "Pokemon TCG" },
-  { label: "Yu-Gi-Oh!", value: "Yu-Gi-Oh!" },
-  { label: "Magic: The Gathering", value: "Magic: The Gathering" },
-  { label: "Digimon", value: "Digimon Card Game" },
-  { label: "One Piece", value: "One Piece Card Game" },
-  { label: "Star Wars", value: "Star Wars Unlimited" },
-];
+import { getCardTypes, type CardType } from "@/lib/listings";
 
 export function SearchButton({ onClick }: { onClick: () => void }) {
   return (
@@ -32,10 +24,15 @@ export function SearchButton({ onClick }: { onClick: () => void }) {
 export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [gameShortcuts, setGameShortcuts] = useState<CardType[]>([]);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [contentHeight, setContentHeight] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    getCardTypes().then(setGameShortcuts);
+  }, []);
 
   const close = useCallback(() => {
     setQuery("");
@@ -115,12 +112,12 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               {query.trim() ? (
                 <div className="mt-3 space-y-1.5">
                   <p className="text-xs text-muted-foreground">Games matching &ldquo;{query.trim()}&rdquo;</p>
-                  {GAME_SHORTCUTS.filter((game) =>
+                  {gameShortcuts.filter((game) =>
                     game.label.toLowerCase().includes(query.trim().toLowerCase()) ||
                     game.value.toLowerCase().includes(query.trim().toLowerCase())
                   ).length > 0 ? (
                     <div className="space-y-1">
-                      {GAME_SHORTCUTS.filter((game) =>
+                      {gameShortcuts.filter((game) =>
                         game.label.toLowerCase().includes(query.trim().toLowerCase()) ||
                         game.value.toLowerCase().includes(query.trim().toLowerCase())
                       ).map((game, i) => (
@@ -128,12 +125,12 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                           key={game.value}
                           type="button"
                           onClick={() => handleGameShortcut(game.value)}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-muted transition-colors cursor-pointer animate-[fade-up_0.15s_ease-out_both]"
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-none hover:bg-muted transition-colors cursor-pointer animate-[fade-up_0.15s_ease-out_both]"
                           style={{ animationDelay: `${0.03 * i}s` }}
                         >
                           <GamepadIcon className="h-4 w-4 text-muted-foreground shrink-0" />
                           <div className="text-left min-w-0">
-                            <p className="text-sm font-medium truncate">{game.label}</p>
+                            <p className="text-sm truncate">{game.label}</p>
                             <p className="text-xs text-muted-foreground truncate">{game.value}</p>
                           </div>
                         </button>
@@ -147,12 +144,12 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                 <div className="mt-4">
                   <p className="text-xs text-muted-foreground mb-2">Browse by game</p>
                   <div className="flex flex-wrap gap-2">
-                    {GAME_SHORTCUTS.map((game, i) => (
+                    {gameShortcuts.map((game, i) => (
                       <button
                         key={game.value}
                         type="button"
                         onClick={() => handleGameShortcut(game.value)}
-                        className="px-3 py-1.5 text-xs font-medium rounded-full border bg-muted/50 hover:bg-muted transition-colors cursor-pointer animate-[fade-up_0.2s_ease-out_both]"
+                        className="px-3 py-1.5 text-xs rounded-none border bg-muted/50 hover:bg-muted transition-colors cursor-pointer animate-[fade-up_0.2s_ease-out_both]"
                         style={{ animationDelay: `${0.03 * i}s` }}
                       >
                         {game.label}

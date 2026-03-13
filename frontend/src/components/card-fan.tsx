@@ -7,9 +7,9 @@ interface CardFanProps {
 
 function CardShape({ className }: { className?: string }) {
   return (
-    <div className={cn("absolute inset-0 rounded-xl border-2 flex flex-col overflow-hidden", className)}>
-      <div className="flex-1 m-[2px] mb-[1px] rounded-lg bg-background/70" />
-      <div className="h-1/3 m-[2px] mt-[1px] rounded-lg bg-background/70" />
+    <div className={cn("absolute inset-0 rounded-none border-2 flex flex-col overflow-hidden", className)}>
+      <div className="flex-1 m-[2px] mb-[1px] rounded-none bg-background/70" />
+      <div className="h-1/3 m-[2px] mt-[1px] rounded-none bg-background/70" />
     </div>
   );
 }
@@ -35,11 +35,11 @@ export function CardFan({ className, animated = true }: CardFanProps) {
       />
       {/* Center */}
       <div className={cn(
-        "absolute inset-0 origin-bottom rounded-xl border-2 border-foreground bg-foreground shadow-2xl flex flex-col overflow-hidden z-10",
+        "absolute inset-0 origin-bottom rounded-none border-2 border-foreground bg-foreground shadow-2xl flex flex-col overflow-hidden z-10",
         animated && "animate-[fan-center_0.7s_ease-out_both]"
       )}>
-        <div className="flex-1 m-[2px] mb-[1px] rounded-lg bg-background" />
-        <div className="h-1/3 m-[2px] mt-[1px] rounded-lg bg-background" />
+        <div className="flex-1 m-[2px] mb-[1px] rounded-none bg-background" />
+        <div className="h-1/3 m-[2px] mt-[1px] rounded-none bg-background" />
       </div>
       {/* Right */}
       <CardShape

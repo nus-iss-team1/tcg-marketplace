@@ -7,7 +7,6 @@ import { ProfileContent, ProfileSkeleton, type ProfileData } from "@/components/
 import { PageContainer } from "@/components/page-header";
 import { ProfileHeader } from "@/components/profile-header";
 import { Button } from "@/components/ui/button";
-import { SettingsIcon } from "lucide-react";
 import { fetchSellerProfile } from "@/lib/listings";
 import Link from "next/link";
 
@@ -42,10 +41,9 @@ export default function SellerProfilePage() {
         backHref="/marketplace"
         action={
           isOwnProfile ? (
-            <Button variant="outline" size="icon" className="h-8 w-8 sm:w-auto sm:px-3" asChild>
+            <Button variant="outline" size="sm" asChild>
               <Link href="/settings">
-                <SettingsIcon className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Settings</span>
+                Settings
               </Link>
             </Button>
           ) : undefined
