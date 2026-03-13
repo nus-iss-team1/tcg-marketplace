@@ -37,7 +37,7 @@ export class S3Service {
       })
     );
 
-    return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
+    return key;
   }
 
   async deleteObject(key: string) {

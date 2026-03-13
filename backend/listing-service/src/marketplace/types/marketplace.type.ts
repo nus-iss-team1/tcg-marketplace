@@ -38,3 +38,9 @@ export enum ListingStatus {
   DELETED = "DELETED",
   SOLD = "SOLD"
 }
+
+export enum ImageAction {
+  KEEP = "KEEP",
+  REPLACE = "REPLACE",
+  DELETE = "DELETE"
+}

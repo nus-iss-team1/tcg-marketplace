@@ -97,7 +97,7 @@ export type Listing = {
   cardId?: string;
   rarity?: string;
   price: number;
-  attachment?: ListingAttachment;
+  attachment: ListingAttachment;
   paymentMethod?: ListingPaymentMethod;
   pickUp?: string;
   listingStatus: ListingStatus;
