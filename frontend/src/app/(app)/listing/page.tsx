@@ -17,7 +17,7 @@ export default function MyListingsPage() {
   const totalPages = Math.ceil(listings.length / 15) || 1;
 
   useEffect(() => {
-    document.title = "My Listings - TCG Marketplace";
+    document.title = "My Listings - HOUSE OF CARDS";
   }, []);
 
   useEffect(() => {

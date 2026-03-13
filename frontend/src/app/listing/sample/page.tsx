@@ -61,9 +61,9 @@ function ViewListingContent() {
 
   useEffect(() => {
     if (listing) {
-      document.title = `${listing.cardName} - TCG Marketplace`;
+      document.title = `${listing.cardName} - HOUSE OF CARDS`;
     }
-    return () => { document.title = "TCG Marketplace"; };
+    return () => { document.title = "HOUSE OF CARDS"; };
   }, [listing]);
 
   if (loading) {

@@ -11,7 +11,7 @@ export default function ProfilePage() {
   const { user, loading } = useAuth();
 
   useEffect(() => {
-    document.title = "Profile - TCG Marketplace";
+    document.title = "Profile - HOUSE OF CARDS";
   }, []);
 
   const profile = useMemo(() => {

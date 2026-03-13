@@ -26,9 +26,9 @@ export default function SellerProfilePage() {
 
   useEffect(() => {
     if (profile) {
-      document.title = `${profile.displayName} - TCG Marketplace`;
+      document.title = `${profile.displayName} - HOUSE OF CARDS`;
     }
-    return () => { document.title = "TCG Marketplace"; };
+    return () => { document.title = "HOUSE OF CARDS"; };
   }, [profile]);
 
   const isOwnProfile = !!user && user.username === profile?.username;

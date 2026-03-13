@@ -58,7 +58,7 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
           href={homeHref}
           className="absolute left-1/2 -translate-x-1/2 font-heading text-lg sm:text-xl tracking-[0.15em]"
         >
-          House of Cards
+          HOUSE OF CARDS
         </Link>
 
         <div className="flex-1" />
