@@ -26,7 +26,7 @@ function MarketplaceContent() {
   const [listings, setListings] = useState<Listing[]>([]);
   const totalPages = Math.ceil(listings.length / 15) || 1;
   useEffect(() => {
-    document.title = `Marketplace - TCG Marketplace`;
+    document.title = `Marketplace - HOUSE OF CARDS`;
   }, [gameType]);
 
   const [query, setQuery] = useState("");

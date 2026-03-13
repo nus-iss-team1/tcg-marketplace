@@ -26,7 +26,7 @@ function AuthForm() {
   const initialTab = tabParam === "signup" ? "signup" : "signin";
 
   useEffect(() => {
-    document.title = "Login - TCG Marketplace";
+    document.title = "Login - HOUSE OF CARDS";
   }, []);
 
   const [loginUsername, setLoginUsername] = useState("");

@@ -22,7 +22,7 @@ export default function LandingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    document.title = "TCG Marketplace";
+    document.title = "HOUSE OF CARDS";
   }, []);
 
   const handleCreateListing = () => {
