@@ -9,7 +9,8 @@ import {
   Query,
   UseGuards,
   UseInterceptors,
-  UploadedFiles
+  UploadedFiles,
+  BadRequestException
 } from "@nestjs/common";
 import { FileFieldsInterceptor } from "@nestjs/platform-express";
 import { CognitoAuthGuard } from "../auth/cognito-auth.guard";
@@ -53,15 +54,14 @@ export class MarketplaceController {
     },
     @Body() listing: CreateListingDto
   ) {
-    const frontImage = this.imagePipe.transform(files.frontImage?.[0]);
+    if (!files.frontImage) {
+      throw new BadRequestException("frontImage is required");
+    }
+
+    const frontImage = this.imagePipe.transform(files.frontImage[0]);
     const backImage = this.imagePipe.transform(files.backImage?.[0]);
 
-    return await this.marketplaceService.createListing(
-      "chew.jingkai",
-      listing,
-      frontImage,
-      backImage
-    );
+    return await this.marketplaceService.createListing("jaryl.o", listing, frontImage, backImage);
   }
 
   @Public()
