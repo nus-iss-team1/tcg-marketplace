@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
-import { PageContainer, PageHeader } from "@/components/page-header";
+import { PageHeader } from "@/components/page-header";
 import { Input } from "@/components/ui/input";
 import { SearchIcon, PlusIcon } from "lucide-react";
 import { ListingCard } from "@/components/listing-card";
@@ -45,7 +45,7 @@ function MarketplaceContent() {
   };
 
   return (
-    <PageContainer>
+    <>
       {/* Fixed top: title + search */}
       <div className="shrink-0">
         <PageHeader title="Marketplace" description={gameType} />
@@ -100,6 +100,6 @@ function MarketplaceContent() {
           />
         </>
       )}
-    </PageContainer>
+    </>
   );
 }

@@ -18,7 +18,7 @@ export function ListingCard({ listing, index, animationDelayOffset = 0 }: Listin
     >
       <div className="overflow-hidden">
         <div className="transition-transform duration-500 ease-out group-hover:scale-105">
-          <ImagePlaceholder className="w-full" />
+          <ImagePlaceholder className="w-full" seed={listing.listingId} />
         </div>
       </div>
       <div className="mt-2 space-y-0.5">

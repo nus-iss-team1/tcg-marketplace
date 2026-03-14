@@ -74,7 +74,18 @@ function generateMockListings(gameName: string, count: number, sellerId?: string
 }
 
 export function fetchSampleListing(): Listing {
-  return generateMockListings("Pokemon TCG", 1)[0]!;
+  const listing = generateMockListings("Pokemon TCG", 1)[0]!;
+  listing.attachment = {
+    ...listing.attachment,
+    images: [
+      "https://picsum.photos/seed/card1/512/683",
+      "https://picsum.photos/seed/card2/512/683",
+      "https://picsum.photos/seed/card3/512/683",
+      "https://picsum.photos/seed/card4/512/683",
+      "https://picsum.photos/seed/card5/512/683",
+    ],
+  };
+  return listing;
 }
 
 function mockFetchListings(gameName: string, params?: FetchListingsParams): FetchListingsResponse {
@@ -129,6 +140,7 @@ export interface Listing {
 export interface ListingAttachment {
   front?: string;
   back?: string;
+  images?: string[];
 }
 
 export interface PaymentMethod {
