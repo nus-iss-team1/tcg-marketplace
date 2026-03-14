@@ -203,7 +203,9 @@ export async function fetchSellerProfile(
   const res = await fetch(`${BASE_URL}/api/marketplace/profile/${encodeURIComponent(sellerId)}`);
   if (!res.ok) return null;
   const json = await res.json();
-  const firstListing = json.data?.[0];
+  const listings = json.data ?? [];
+  if (listings.length === 0) return null;
+  const firstListing = listings[0];
   return {
     username: sellerId,
     displayName: firstListing?.sellerName ?? sellerId,
