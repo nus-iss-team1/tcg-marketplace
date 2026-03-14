@@ -43,10 +43,18 @@ export default function RootLayout({
             {children}
           </AppShell>
           <Toaster />
-          {process.env.NEXT_PUBLIC_IMAGE_TAG && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `window.__ENV=${JSON.stringify({
+                COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID ?? "",
+                COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID ?? "",
+              })}`,
+            }}
+          />
+          {process.env.IMAGE_TAG && (
             <div className="fixed bottom-1 right-2 z-50">
               <span className="text-[10px] text-muted-foreground/50 font-mono">
-                {process.env.NEXT_PUBLIC_IMAGE_TAG}
+                {process.env.IMAGE_TAG}
               </span>
             </div>
           )}

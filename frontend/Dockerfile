@@ -12,12 +12,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Cognito config – inlined into the JS bundle at build time
-ARG NEXT_PUBLIC_COGNITO_USER_POOL_ID
-ARG NEXT_PUBLIC_COGNITO_CLIENT_ID
-ARG NEXT_PUBLIC_BACKEND_API
-ARG NEXT_PUBLIC_IMAGE_TAG
-
 # Disable telemetry during build for privacy/speed
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
@@ -43,5 +37,8 @@ USER nextjs
 
 EXPOSE 3000
 ENV PORT=3000
+
+# Runtime env vars — set these when running the container:
+# COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID, BACKEND_API, IMAGE_TAG
 
 CMD ["node", "server.js"]

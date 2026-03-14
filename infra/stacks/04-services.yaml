@@ -184,11 +184,19 @@ Resources:
           PortMappings:
             - ContainerPort: 3000
           Environment:
-            - Name: NEXT_PUBLIC_BACKEND_API
+            - Name: BACKEND_API
               Value: !Sub
                 - "http://${ALBDns}"
                 - ALBDns: !ImportValue
                     Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+            - Name: COGNITO_USER_POOL_ID
+              Value: !ImportValue
+                Fn::Sub: "${ProjectNamespace}-dev-UserPoolId"
+            - Name: COGNITO_CLIENT_ID
+              Value: !ImportValue
+                Fn::Sub: "${ProjectNamespace}-dev-UserPoolClientId"
+            - Name: IMAGE_TAG
+              Value: !Ref WebImageTag
           LogConfiguration:
             LogDriver: awslogs
             Options:
