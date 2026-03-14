@@ -63,7 +63,7 @@ export default function LandingPage() {
             <Card className="relative z-10 border-0 bg-transparent shadow-none">
               <CardHeader className="px-0 pb-4 sm:pb-6 items-center text-center lg:items-start lg:text-left">
                 <Badge className="w-fit mx-auto lg:mx-0 mb-3 sm:mb-4 font-heading text-lg sm:text-xl tracking-[0.15em] px-2 py-0.5 animate-[fade-up_0.5s_ease-out_both]">
-                  VOC
+                  VOC                  
                 </Badge>
                 <CardTitle className="text-5xl sm:text-6xl md:text-7xl leading-none animate-[fade-up_0.5s_ease-out_0.1s_both]">
                   <span className="bg-linear-to-r from-foreground to-foreground/85 bg-clip-text text-transparent">

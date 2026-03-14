@@ -96,7 +96,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               <Input
                 ref={inputRef}
                 type="search"
-                placeholder="Search listings or sellers..."
+                placeholder="SEARCH LISTINGS OR SELLERS..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="pl-10 h-10 text-sm bg-muted"
