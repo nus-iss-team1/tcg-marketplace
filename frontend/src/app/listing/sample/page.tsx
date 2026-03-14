@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, startTransition, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -46,8 +46,11 @@ function ViewListingContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setListing(fetchSampleListing());
-    setLoading(false);
+    const listing = fetchSampleListing();
+    startTransition(() => {
+      setListing(listing);
+      setLoading(false);
+    });
   }, []);
 
   useEffect(() => {

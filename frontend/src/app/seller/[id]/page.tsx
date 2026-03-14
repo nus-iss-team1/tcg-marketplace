@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { ProfileContent, ProfileSkeleton, type ProfileData } from "@/components/profile-content";
 
@@ -16,13 +16,23 @@ export default function SellerProfilePage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [notFoundState, setNotFoundState] = useState(false);
+
   useEffect(() => {
     fetchSellerProfile(id)
       .then((data) => {
-        if (data) setProfile(data);
+        if (data) {
+          setProfile(data);
+        } else {
+          setNotFoundState(true);
+        }
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  if (notFoundState) {
+    notFound();
+  }
 
   useEffect(() => {
     if (profile) {
@@ -52,11 +62,7 @@ export default function SellerProfilePage() {
         <ProfileSkeleton />
       ) : profile ? (
         <ProfileContent profile={profile} isOwnProfile={isOwnProfile} />
-      ) : (
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-muted-foreground">Seller not found.</p>
-        </div>
-      )}
+      ) : null}
     </>
   );
 }

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { Input } from "@/components/ui/input";
-import { SearchIcon, PlusIcon } from "lucide-react";
+import { SearchIcon } from "lucide-react";
 import { ListingCard } from "@/components/listing-card";
 import { PaginationControls } from "@/components/pagination-controls";
 import { Button } from "@/components/ui/button";
