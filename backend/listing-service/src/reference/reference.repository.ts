@@ -1,17 +1,14 @@
 import { DynamoDBDocumentClient, QueryCommand, QueryCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Inject, Injectable, LoggerService } from "@nestjs/common";
 import { DYNAMODB_CLIENT } from "../dynamodb/dynamodb.constants";
-import { buildProjection } from "../dynamodb/dynamodb.util";
-import { CardLookup, GameLookup } from "./types/reference.schema";
 import { handleDynamoError } from "../common/utils/common.utils";
 import { LoggingService } from "../logger/logging.service";
+import { GameCardProjections } from "./types/reference.view";
 
 @Injectable()
 export class ReferenceRepository {
   private logger: LoggerService;
   private readonly tableName = "GameCardLookup";
-  private gameProjection: ReturnType<typeof buildProjection>;
-  private cardProjection: ReturnType<typeof buildProjection>;
 
   constructor(
     loggingService: LoggingService,
@@ -19,8 +16,6 @@ export class ReferenceRepository {
     private readonly docClient: DynamoDBDocumentClient
   ) {
     this.logger = loggingService.getLogger();
-    this.gameProjection = buildProjection(GameLookup);
-    this.cardProjection = buildProjection(CardLookup);
   }
 
   async retrieveGameName() {
@@ -30,7 +25,7 @@ export class ReferenceRepository {
       ExpressionAttributeValues: {
         ":gameId": "gamedata"
       },
-      ...this.gameProjection,
+      ...GameCardProjections.gameLookup,
       ScanIndexForward: true
     };
 
@@ -61,7 +56,7 @@ export class ReferenceRepository {
       KeyConditionExpression: expression,
       FilterExpression: "gameName = :gameName",
       ExpressionAttributeValues: value,
-      ...this.cardProjection,
+      ...GameCardProjections.cardLookup,
       ScanIndexForward: true
     };
 

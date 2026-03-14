@@ -9,7 +9,8 @@ import {
   Query,
   UseGuards,
   UseInterceptors,
-  UploadedFiles
+  UploadedFiles,
+  BadRequestException
 } from "@nestjs/common";
 import { FileFieldsInterceptor } from "@nestjs/platform-express";
 import { CognitoAuthGuard } from "../auth/cognito-auth.guard";
@@ -19,6 +20,7 @@ import { MarketplaceService } from "./marketplace.service";
 import { CreateListingDto, QueryListingDto, UpdateListingDto } from "./dto/marketplace.dto";
 import { ImageUploadPipe } from "./pipes/image-validation.pipe";
 import { MAX_SIZE } from "../s3/constants/s3.constant";
+import { MultipartJsonInterceptor } from "./interceptors/multipart-json.Interceptor";
 
 @UseGuards(CognitoAuthGuard)
 @Controller("marketplace")
@@ -40,7 +42,8 @@ export class MarketplaceController {
           fileSize: MAX_SIZE
         }
       }
-    )
+    ),
+    MultipartJsonInterceptor
   )
   async create(
     @CurrentUser("email") username: string,
@@ -51,10 +54,14 @@ export class MarketplaceController {
     },
     @Body() listing: CreateListingDto
   ) {
-    const frontImage = this.imagePipe.transform(files.frontImage?.[0]);
+    if (!files.frontImage) {
+      throw new BadRequestException("frontImage is required");
+    }
+
+    const frontImage = this.imagePipe.transform(files.frontImage[0]);
     const backImage = this.imagePipe.transform(files.backImage?.[0]);
 
-    return await this.marketplaceService.createListing(username, listing, frontImage, backImage);
+    return await this.marketplaceService.createListing("jaryl.o", listing, frontImage, backImage);
   }
 
   @Public()
@@ -72,12 +79,40 @@ export class MarketplaceController {
   // @Roles("User")
   @Public()
   @Patch(":listingId")
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: "frontImage", maxCount: 1 },
+        { name: "backImage", maxCount: 1 }
+      ],
+      {
+        limits: {
+          fileSize: MAX_SIZE
+        }
+      }
+    ),
+    MultipartJsonInterceptor
+  )
   async update(
     @CurrentUser("email") username: string,
+    @UploadedFiles()
+    files: {
+      frontImage?: Express.Multer.File[];
+      backImage?: Express.Multer.File[];
+    },
     @Param("listingId") listingId: string,
     @Body() listing: UpdateListingDto
   ) {
-    return await this.marketplaceService.updateListing(username, listingId, listing);
+    const frontImage = this.imagePipe.transform(files.frontImage?.[0]);
+    const backImage = this.imagePipe.transform(files.backImage?.[0]);
+
+    return await this.marketplaceService.updateListing(
+      "chew.jingkai",
+      listingId,
+      listing,
+      frontImage,
+      backImage
+    );
   }
 
   @Public()

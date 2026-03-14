@@ -7,25 +7,24 @@ import {
   UpdateCommand
 } from "@aws-sdk/lib-dynamodb";
 import { Inject, Injectable, LoggerService } from "@nestjs/common";
+import { instanceToPlain } from "class-transformer";
 import { DYNAMODB_CLIENT } from "../dynamodb/dynamodb.constants";
-import { buildProjection } from "../dynamodb/dynamodb.util";
-import { Listing, TCGMarketplaceSchema } from "./types/marketplace.schema";
+import { Listing } from "./types/marketplace.schema";
 import { QueryListing } from "./types/marketplace.type";
 import { handleDynamoError } from "../common/utils/common.utils";
 import { LoggingService } from "../logger/logging.service";
+import { ListingProjections } from "./types/marketplace.view";
 
 @Injectable()
 export class MarketplaceRepository {
   private logger: LoggerService;
   private readonly tableName = "TCGMarketplace";
-  private projection: ReturnType<typeof buildProjection>;
 
   constructor(
     loggingService: LoggingService,
     @Inject(DYNAMODB_CLIENT)
     private readonly docClient: DynamoDBDocumentClient
   ) {
-    this.projection = buildProjection(TCGMarketplaceSchema);
     this.logger = loggingService.getLogger();
   }
 
@@ -34,7 +33,7 @@ export class MarketplaceRepository {
       await this.docClient.send(
         new PutCommand({
           TableName: this.tableName,
-          Item: listing
+          Item: instanceToPlain(listing)
         })
       );
 
@@ -46,10 +45,10 @@ export class MarketplaceRepository {
             gameName: listing.gameName,
             listingId: listing.listingId
           },
-          ...this.projection
+          ...ListingProjections.specificListing
         })
       );
-      return result.Item;
+      return result.Item as Listing;
     } catch (err) {
       this.logger.error(err);
       handleDynamoError(err);
@@ -66,7 +65,7 @@ export class MarketplaceRepository {
         ":gameName": gameName,
         ":listingStatus": "ACTIVE"
       },
-      ...this.projection,
+      ...ListingProjections.overview,
       Limit: query.limit,
       ScanIndexForward: query.order
     };
@@ -121,7 +120,7 @@ export class MarketplaceRepository {
         ":sellerId": sellerId,
         ":listingStatus": "DELETED"
       },
-      ...this.projection,
+      ...ListingProjections.overview,
       Limit: query.limit,
       ScanIndexForward: query.order
     };
@@ -144,15 +143,29 @@ export class MarketplaceRepository {
   }
 
   async updateListing(listing: Listing) {
-    const { gameName, listingId, ...updateListing } = listing;
+    const { gameName, listingId, sellerId: _sellerId, ...updateListing } = listing;
+
+    // remove undefined value
+    const filteredListing = Object.fromEntries(
+      Object.entries(instanceToPlain(updateListing)).filter(([, v]) => v !== undefined)
+    );
+
+    const keys = Object.keys(filteredListing);
+    const updateStatement = `SET ${keys.map((k) => `#${k} = :${k}`).join(", ")}`;
+    const attributeNames = Object.fromEntries(keys.map((k) => [`#${k}`, k]));
+    const attributeValues = Object.fromEntries(keys.map((k) => [`:${k}`, filteredListing[k]]));
+
     try {
       await this.docClient.send(
         new UpdateCommand({
           TableName: this.tableName,
           Key: {
+            gameName: gameName,
             listingId: listingId
           },
-          ...updateListing,
+          UpdateExpression: updateStatement,
+          ExpressionAttributeNames: attributeNames,
+          ExpressionAttributeValues: attributeValues,
           ConditionExpression: "attribute_exists(listingId)"
         })
       );
@@ -165,11 +178,11 @@ export class MarketplaceRepository {
             gameName: gameName,
             listingId: listingId
           },
-          ...this.projection
+          ...ListingProjections.specificListing
         })
       );
 
-      return result.Item;
+      return result.Item as Listing;
     } catch (err) {
       this.logger.error(err);
       handleDynamoError(err);
