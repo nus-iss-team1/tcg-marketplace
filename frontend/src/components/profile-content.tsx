@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
-import { MapPinIcon, CalendarIcon } from "lucide-react";
+import { MapPinIcon, CalendarIcon, PlusIcon } from "lucide-react";
 import { ListingCard } from "@/components/listing-card";
 import { PaginationControls } from "@/components/pagination-controls";
+import { Button } from "@/components/ui/button";
 import { fetchSellerListings, type Listing } from "@/lib/listings";
+import Link from "next/link";
 
 export interface ProfileData {
   username: string;
@@ -79,7 +81,16 @@ export function ProfileContent({ profile, isOwnProfile, action }: ProfileContent
                 ? "You haven't created any listings yet."
                 : "This user hasn't listed any cards yet."
             }
-          />
+          >
+            {isOwnProfile && (
+              <Button asChild size="sm">
+                <Link href="/listing/create">
+                  <PlusIcon className="h-4 w-4 mr-1" />
+                  Create Listing
+                </Link>
+              </Button>
+            )}
+          </EmptyState>
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 sm:gap-6 md:gap-8">

@@ -28,7 +28,7 @@ import {
   UploadIcon,
   Trash2Icon,
 } from "lucide-react";
-import { fetchMarketplaceListings, type Listing } from "@/lib/listings";
+import { fetchSampleListing, type Listing } from "@/lib/listings";
 import { toast } from "sonner";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { AppHeader } from "@/components/app-header";
@@ -52,10 +52,8 @@ function ViewListingContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Replace with single listing fetch when API is ready
-    fetchMarketplaceListings("Pokemon TCG", { limit: 1 })
-      .then((res) => setListing(res.listings[0] ?? null))
-      .finally(() => setLoading(false));
+    setListing(fetchSampleListing());
+    setLoading(false);
   }, []);
 
   useEffect(() => {
