@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CardFan } from "@/components/card-fan";
+// import { CardFan } from "@/components/card-fan";
 import Image from "next/image";
 
 export default function LandingPage() {
@@ -61,10 +61,10 @@ export default function LandingPage() {
 
       {/* Hero section */}
       <div className="relative w-full">
-        {/* Background card fan — mobile only */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06]">
+        {/* Background card fan — hidden for now */}
+        {/* <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06]">
           <CardFan className="h-72 w-56 sm:h-80 sm:w-60 md:h-96 md:w-72" />
-        </div>
+        </div> */}
 
         <Card className="relative z-10 border-0 bg-transparent shadow-none">
           <CardHeader className="px-0 pb-4 sm:pb-6 items-center text-center">
@@ -72,7 +72,7 @@ export default function LandingPage() {
               VOC
             </Badge>
             <div className="text-center max-w-5xl mx-auto">
-              <CardTitle className="text-5xl sm:text-6xl md:text-7xl leading-none animate-[fade-up_0.5s_ease-out_0.1s_both]">
+              <CardTitle className="text-7xl sm:text-8xl md:text-9xl leading-none animate-[fade-up_0.5s_ease-out_0.1s_both]">
                 <span className="bg-linear-to-r from-foreground to-foreground/85 bg-clip-text text-transparent">
                   A complete system for collectors
                 </span>
