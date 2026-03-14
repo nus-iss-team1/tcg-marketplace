@@ -26,9 +26,9 @@ export default function SellerProfilePage() {
 
   useEffect(() => {
     if (profile) {
-      document.title = `${profile.displayName} - HOUSE OF CARDS`;
+      document.title = `${profile.displayName} - VAULT OF CARDS`;
     }
-    return () => { document.title = "HOUSE OF CARDS"; };
+    return () => { document.title = "VAULT OF CARDS"; };
   }, [profile]);
 
   const isOwnProfile = !!user && user.username === profile?.username;

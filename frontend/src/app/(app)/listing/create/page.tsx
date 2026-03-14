@@ -34,7 +34,7 @@ export default function CreateListingPage() {
   const [games, setGames] = useState<string[]>([]);
 
   useEffect(() => {
-    document.title = "Sell a Card - HOUSE OF CARDS";
+    document.title = "Sell a Card - VAULT OF CARDS";
     getCardTypes().then((types) => setGames(types.map((ct) => ct.value)));
   }, []);
 

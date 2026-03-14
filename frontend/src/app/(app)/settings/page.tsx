@@ -34,7 +34,7 @@ export default function SettingsPage() {
   const { user, refreshUser } = useAuth();
 
   useEffect(() => {
-    document.title = "Settings - HOUSE OF CARDS";
+    document.title = "Settings - VAULT OF CARDS";
   }, []);
 
   /* ── Active section tracking ── */

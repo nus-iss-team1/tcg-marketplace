@@ -21,8 +21,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "HOUSE OF CARDS",
-  description: "HOUSE OF CARDS",
+  title: "VAULT OF CARDS",
+  description: "VAULT OF CARDS",
   icons: {
     icon: "/favicon.png",
   },
