@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECR Repositories for Monorepo (App and Web)
+
+Parameters:
+  ProjectNamespace:
+    Type: String
+    Default: nusiss-team-1-voc
+    Description: The prefix for your repositories
+
+Resources:
+  ListingServiceRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "${ProjectNamespace}/tcgm-listing"
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {"rules":[{"rulePriority":1,"description":"Keep last 10","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}}]}
+
+  WebRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "${ProjectNamespace}/tcgm-web"
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {"rules":[{"rulePriority":1,"description":"Keep last 10","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}}]}
+
+Outputs:
+  ListingServiceRepoUri:
+    Value: !GetAtt ListingServiceRepository.RepositoryUri
+  WebRepoUri:
+    Value: !GetAtt WebRepository.RepositoryUri
