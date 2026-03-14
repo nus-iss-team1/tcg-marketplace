@@ -50,11 +50,6 @@ class BaseListingDto {
   @Transform(({ value }: { value: number }) => Number(Number(value).toFixed(2)))
   readonly price!: number;
 
-  @IsDefined()
-  @Type(() => PaymentMethodDto)
-  @ValidateNested()
-  readonly paymentMethod!: PaymentMethodDto;
-
   @IsOptional()
   @IsString()
   @MaxLength(100)
@@ -71,6 +66,11 @@ export class CreateListingDto extends BaseListingDto {
   @IsString()
   @MaxLength(100)
   readonly cardName!: string;
+
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => PaymentMethodDto)
+  paymentMethod!: PaymentMethodDto;
 }
 
 export class UpdateListingDto extends BaseListingDto {
@@ -78,6 +78,11 @@ export class UpdateListingDto extends BaseListingDto {
   @IsString()
   @MaxLength(100)
   readonly cardName?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PaymentMethodDto)
+  paymentMethod?: PaymentMethodDto;
 
   @IsNotEmpty()
   @IsEnum(ImageAction)

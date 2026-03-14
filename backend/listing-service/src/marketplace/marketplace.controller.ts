@@ -19,6 +19,7 @@ import { MarketplaceService } from "./marketplace.service";
 import { CreateListingDto, QueryListingDto, UpdateListingDto } from "./dto/marketplace.dto";
 import { ImageUploadPipe } from "./pipes/image-validation.pipe";
 import { MAX_SIZE } from "../s3/constants/s3.constant";
+import { MultipartJsonInterceptor } from "./interceptors/multipart-json.Interceptor";
 
 @UseGuards(CognitoAuthGuard)
 @Controller("marketplace")
@@ -40,7 +41,8 @@ export class MarketplaceController {
           fileSize: MAX_SIZE
         }
       }
-    )
+    ),
+    MultipartJsonInterceptor
   )
   async create(
     @CurrentUser("email") username: string,
@@ -88,7 +90,8 @@ export class MarketplaceController {
           fileSize: MAX_SIZE
         }
       }
-    )
+    ),
+    MultipartJsonInterceptor
   )
   async update(
     @CurrentUser("email") username: string,

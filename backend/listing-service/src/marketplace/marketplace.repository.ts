@@ -13,6 +13,7 @@ import { Listing, TCGMarketplaceSchema } from "./types/marketplace.schema";
 import { QueryListing } from "./types/marketplace.type";
 import { handleDynamoError } from "../common/utils/common.utils";
 import { LoggingService } from "../logger/logging.service";
+import { instanceToPlain } from "class-transformer";
 
 @Injectable()
 export class MarketplaceRepository {
@@ -34,7 +35,7 @@ export class MarketplaceRepository {
       await this.docClient.send(
         new PutCommand({
           TableName: this.tableName,
-          Item: listing
+          Item: instanceToPlain(listing)
         })
       );
 
@@ -148,7 +149,7 @@ export class MarketplaceRepository {
 
     // remove undefined value
     const filteredListing = Object.fromEntries(
-      Object.entries(updateListing).filter(([, v]) => v !== undefined)
+      Object.entries(instanceToPlain(updateListing)).filter(([, v]) => v !== undefined)
     );
 
     const keys = Object.keys(filteredListing);
