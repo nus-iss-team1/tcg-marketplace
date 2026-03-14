@@ -4,11 +4,9 @@ import { Suspense, useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { confirmSignUp, resendConfirmationCode } from "@/lib/cognito";
-import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LogInIcon, MailCheckIcon, UserPlusIcon } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -16,7 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
 function AuthForm() {
@@ -28,7 +25,7 @@ function AuthForm() {
   const initialTab = tabParam === "signup" ? "signup" : "signin";
 
   useEffect(() => {
-    document.title = "Login - TCG Marketplace";
+    document.title = "Login - VAULT OF CARDS";
   }, []);
 
   const [loginUsername, setLoginUsername] = useState("");
@@ -141,229 +138,225 @@ function AuthForm() {
 
   if (showVerify) {
     return (
-      <div className="flex min-h-screen flex-col bg-background">
-        <AppHeader />
-        <div className="flex flex-1 items-center justify-center px-4">
-          <div className="w-full max-w-lg lg:max-w-xl animate-[fade-up_0.4s_ease-out_both]">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl">Verify your email</CardTitle>
-                <CardDescription>
-                  We sent a verification code to your email. Enter it below to activate your account.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleVerify} className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="verify-code">Verification Code</Label>
-                    <Input
-                      id="verify-code"
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="Enter 6-digit code"
-                      value={verifyCode}
-                      onChange={(e) => setVerifyCode(e.target.value)}
-                      required
-                      autoFocus
-                    />
-                  </div>
-
-                  <Button type="submit" disabled={verifyLoading} className="w-full">
-                    <MailCheckIcon className="h-4 w-4 mr-2" />
-                    {verifyLoading ? "Verifying..." : "Verify Email"}
-                  </Button>
-                </form>
-
-                <div className="mt-4 text-center text-sm text-muted-foreground">
-                  Didn&apos;t receive a code?{" "}
-                  <button
-                    type="button"
-                    onClick={handleResendCode}
-                    disabled={resending}
-                    className="text-primary underline-offset-4 hover:underline disabled:opacity-50"
-                  >
-                    {resending ? "Resending..." : "Resend code"}
-                  </button>
+      <div className="flex flex-1 items-center justify-center">
+        <div className="w-full max-w-xs mx-auto animate-[fade-up_0.4s_ease-out_both]">
+          <Card className="bg-background">
+            <CardHeader>
+              <CardTitle>Verify your email</CardTitle>
+              <CardDescription>
+                We sent a verification code to your email. Enter it below to activate your account.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleVerify} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="verify-code">Verification Code</Label>
+                  <Input
+                    id="verify-code"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="ENTER 6-DIGIT CODE"
+                    value={verifyCode}
+                    onChange={(e) => setVerifyCode(e.target.value)}
+                    required
+                    autoFocus
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+
+                <Button type="submit" disabled={verifyLoading} className="w-full">
+                  {verifyLoading ? "Verifying..." : "Verify Email"}
+                </Button>
+              </form>
+
+              <div className="mt-4 text-center text-sm text-muted-foreground">
+                Didn&apos;t receive a code?{" "}
+                <button
+                  type="button"
+                  onClick={handleResendCode}
+                  disabled={resending}
+                  className="text-primary underline-offset-4 hover:underline disabled:opacity-50"
+                >
+                  {resending ? "Resending..." : "Resend code"}
+                </button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <AppHeader />
-      <div className="flex flex-1 items-center justify-center px-4">
-      <div className="w-full max-w-lg lg:max-w-xl animate-[fade-up_0.4s_ease-out_both]">
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          </TabsList>
-
-          <Card>
+    <div className="flex flex-1 items-center justify-center">
+      <div className="w-xl animate-[fade-up_0.4s_ease-out_both]">
+          <Card className="bg-background">
             <CardContent className="pt-4 pb-8">
 
-            <TabsContent value="signin">
-              <CardHeader className="px-0 pt-0 pb-4">
-                <CardTitle className="text-2xl">Welcome back</CardTitle>
-                <CardDescription>
-                  Sign in to your account to continue
-                </CardDescription>
-              </CardHeader>
-              <form onSubmit={handleSignIn} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="login-username">Username</Label>
-                  <Input
-                    id="login-username"
-                    type="text"
-                    value={loginUsername}
-                    onChange={(e) => setLoginUsername(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="login-password">Password</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <Button type="submit" disabled={loginLoading} className="mt-2 w-full">
-                  <LogInIcon className="h-4 w-4 mr-2" />
-                  {loginLoading ? "Signing in..." : "Sign In"}
-                </Button>
-              </form>
-              <p className="text-sm text-muted-foreground text-center mt-4">
-                Don&apos;t have an account?{" "}
-                <button
-                  type="button"
-                  onClick={() => handleTabChange("signup")}
-                  className="text-primary hover:underline cursor-pointer font-medium"
-                >
-                  Sign up
-                </button>
-              </p>
-            </TabsContent>
-
-            <TabsContent value="signup">
-              <CardHeader className="px-0 pt-0 pb-4">
-                <CardTitle className="text-2xl">Create account</CardTitle>
-                <CardDescription>
-                  Join the marketplace to buy, sell, and trade cards
-                </CardDescription>
-              </CardHeader>
-
-              <form onSubmit={handleSignUp} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="signup-username">Username</Label>
-                  <Input
-                    id="signup-username"
-                    type="text"
-                    value={signupUsername}
-                    onChange={(e) => setSignupUsername(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
+            {activeTab === "signin" ? (
+              <>
+                <CardHeader className="px-0 pt-0 pb-4">
+                  <CardTitle>Welcome back</CardTitle>
+                  <CardDescription>
+                    Sign in to your account to continue
+                  </CardDescription>
+                </CardHeader>
+                <form onSubmit={handleSignIn} className="flex flex-col gap-4">
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="signup-first-name">First Name</Label>
+                    <Label htmlFor="login-username">Username</Label>
                     <Input
-                      id="signup-first-name"
+                      id="login-username"
                       type="text"
-                      value={signupFirstName}
-                      onChange={(e) => setSignupFirstName(e.target.value)}
+                      value={loginUsername}
+                      onChange={(e) => setLoginUsername(e.target.value)}
                       required
                     />
                   </div>
+
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="signup-last-name">Last Name</Label>
+                    <Label htmlFor="login-password">Password</Label>
                     <Input
-                      id="signup-last-name"
-                      type="text"
-                      value={signupLastName}
-                      onChange={(e) => setSignupLastName(e.target.value)}
+                      id="login-password"
+                      type="password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
                       required
                     />
                   </div>
-                </div>
 
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    value={signupEmail}
-                    onChange={(e) => setSignupEmail(e.target.value)}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Used for verification and password resets
-                  </p>
-                </div>
+                  <Button type="submit" disabled={loginLoading} className="mt-2 w-full">
+                    {loginLoading ? "Signing in..." : "Sign In"}
+                  </Button>
+                </form>
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                  Don&apos;t have an account?{" "}
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange("signup")}
+                    className="text-primary hover:underline cursor-pointer"
+                  >
+                    Sign up
+                  </button>
+                </p>
+              </>
+            ) : (
+              <>
+                <CardHeader className="px-0 pt-0 pb-4">
+                  <CardTitle>Create account</CardTitle>
+                  <CardDescription>
+                    Join the marketplace to buy, sell, and trade cards
+                  </CardDescription>
+                </CardHeader>
 
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="signup-address">Address</Label>
-                  <Input
-                    id="signup-address"
-                    type="text"
-                    value={signupAddress}
-                    onChange={(e) => setSignupAddress(e.target.value)}
-                    required
-                  />
-                </div>
+                <form onSubmit={handleSignUp} className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="signup-username">Username</Label>
+                    <Input
+                      id="signup-username"
+                      type="text"
+                      value={signupUsername}
+                      onChange={(e) => setSignupUsername(e.target.value)}
+                      required
+                    />
+                  </div>
 
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    value={signupPassword}
-                    onChange={(e) => setSignupPassword(e.target.value)}
-                    required
-                    minLength={8}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Min 8 characters, uppercase, lowercase, and number required
-                  </p>
-                </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="signup-first-name">First Name</Label>
+                      <Input
+                        id="signup-first-name"
+                        type="text"
+                        value={signupFirstName}
+                        onChange={(e) => setSignupFirstName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="signup-last-name">Last Name</Label>
+                      <Input
+                        id="signup-last-name"
+                        type="text"
+                        value={signupLastName}
+                        onChange={(e) => setSignupLastName(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
 
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="signup-confirm-password">Confirm Password</Label>
-                  <Input
-                    id="signup-confirm-password"
-                    type="password"
-                    value={signupConfirmPassword}
-                    onChange={(e) => setSignupConfirmPassword(e.target.value)}
-                    required
-                    minLength={8}
-                  />
-                  {signupConfirmPassword && signupPassword !== signupConfirmPassword && (
-                    <p className="text-xs text-destructive">
-                      Passwords do not match
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="signup-email">Email</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      value={signupEmail}
+                      onChange={(e) => setSignupEmail(e.target.value)}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Used for verification and password resets
                     </p>
-                  )}
-                </div>
+                  </div>
 
-                <Button type="submit" disabled={signupLoading || (!!signupConfirmPassword && signupPassword !== signupConfirmPassword)} className="mt-2 w-full">
-                  <UserPlusIcon className="h-4 w-4 mr-2" />
-                  {signupLoading ? "Creating account..." : "Sign Up"}
-                </Button>
-              </form>
-            </TabsContent>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="signup-address">Address</Label>
+                    <Input
+                      id="signup-address"
+                      type="text"
+                      value={signupAddress}
+                      onChange={(e) => setSignupAddress(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="signup-password">Password</Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      required
+                      minLength={8}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Min 8 characters, uppercase, lowercase, and number required
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                    <Input
+                      id="signup-confirm-password"
+                      type="password"
+                      value={signupConfirmPassword}
+                      onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                      required
+                      minLength={8}
+                    />
+                    {signupConfirmPassword && signupPassword !== signupConfirmPassword && (
+                      <p className="text-xs text-destructive">
+                        Passwords do not match
+                      </p>
+                    )}
+                  </div>
+
+                  <Button type="submit" disabled={signupLoading || (!!signupConfirmPassword && signupPassword !== signupConfirmPassword)} className="mt-2 w-full">
+                    {signupLoading ? "Creating account..." : "Sign Up"}
+                  </Button>
+                </form>
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                  Already have an account?{" "}
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange("signin")}
+                    className="text-primary hover:underline cursor-pointer"
+                  >
+                    Sign in
+                  </button>
+                </p>
+              </>
+            )}
             </CardContent>
           </Card>
-        </Tabs>
-      </div>
       </div>
     </div>
   );

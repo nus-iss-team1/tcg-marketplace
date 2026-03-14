@@ -22,28 +22,20 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  PlusIcon,
   UploadIcon,
-  XIcon,
   Trash2Icon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageContainer, PageHeader } from "@/components/page-header";
-
-const GAMES = [
-  "Pokemon TCG",
-  "Yu-Gi-Oh!",
-  "Magic: The Gathering",
-  "Digimon Card Game",
-  "One Piece Card Game",
-  "Star Wars Unlimited",
-];
+import { PageHeader } from "@/components/page-header";
+import { getCardTypes } from "@/lib/listings";
 
 export default function CreateListingPage() {
   const router = useRouter();
+  const [games, setGames] = useState<string[]>([]);
 
   useEffect(() => {
-    document.title = "Sell a Card - TCG Marketplace";
+    document.title = "Sell a Card - VAULT OF CARDS";
+    getCardTypes().then((types) => setGames(types.map((ct) => ct.value)));
   }, []);
 
   const [gameName, setGameName] = useState("");
@@ -118,13 +110,13 @@ export default function CreateListingPage() {
   };
 
   return (
-    <PageContainer>
-      <PageHeader title="Sell a Card" description="Create a new listing" backHref="/listing" />
+    <>
+      <PageHeader title="Sell a Card" description="Create a new listing" />
       <form onSubmit={handleSubmit} className="animate-[fade-up_0.4s_ease-out_both]">
         {/* Image upload banner */}
         <div className="flex justify-center gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
           {frontPreview ? (
-            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-lg bg-muted border overflow-hidden snap-start relative group">
+            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none bg-muted overflow-hidden snap-start relative group">
               <Image
                 src={frontPreview}
                 alt="Card front"
@@ -132,7 +124,7 @@ export default function CreateListingPage() {
                 height={341}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-none flex items-center justify-center gap-2">
                 <Button
                   type="button"
                   size="sm"
@@ -155,7 +147,7 @@ export default function CreateListingPage() {
             <button
               type="button"
               onClick={() => handleOpenUpload("front")}
-              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 flex flex-col items-center justify-center gap-1.5 hover:border-muted-foreground/50 hover:bg-muted transition-colors cursor-pointer snap-start"
+              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none border-2 border-dashed border-muted-foreground/25 bg-muted/50 flex flex-col items-center justify-center gap-1.5 hover:border-muted-foreground/50 hover:bg-muted transition-colors cursor-pointer snap-start"
             >
               <UploadIcon className="h-6 w-6 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Front</span>
@@ -163,7 +155,7 @@ export default function CreateListingPage() {
           )}
 
           {backPreview ? (
-            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-lg bg-muted border overflow-hidden snap-start relative group">
+            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none bg-muted overflow-hidden snap-start relative group">
               <Image
                 src={backPreview}
                 alt="Card back"
@@ -171,7 +163,7 @@ export default function CreateListingPage() {
                 height={341}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-none flex items-center justify-center gap-2">
                 <Button
                   type="button"
                   size="sm"
@@ -194,7 +186,7 @@ export default function CreateListingPage() {
             <button
               type="button"
               onClick={() => handleOpenUpload("back")}
-              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 flex flex-col items-center justify-center gap-1.5 hover:border-muted-foreground/50 hover:bg-muted transition-colors cursor-pointer snap-start"
+              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none border-2 border-dashed border-muted-foreground/25 bg-muted/50 flex flex-col items-center justify-center gap-1.5 hover:border-muted-foreground/50 hover:bg-muted transition-colors cursor-pointer snap-start"
             >
               <UploadIcon className="h-6 w-6 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Back</span>
@@ -208,10 +200,10 @@ export default function CreateListingPage() {
             <Label htmlFor="gameName">Game *</Label>
             <Select value={gameName} onValueChange={setGameName}>
               <SelectTrigger id="gameName" className="h-9">
-                <SelectValue placeholder="Select a game" />
+                <SelectValue placeholder="SELECT A GAME" />
               </SelectTrigger>
               <SelectContent>
-                {GAMES.map((game) => (
+                {games.map((game) => (
                   <SelectItem key={game} value={game}>
                     {game}
                   </SelectItem>
@@ -223,7 +215,7 @@ export default function CreateListingPage() {
             <Label htmlFor="cardName">Card Name *</Label>
             <Input
               id="cardName"
-              placeholder="e.g. Charizard VMAX"
+              placeholder="E.G. CHARIZARD VMAX"
               value={cardName}
               onChange={(e) => setCardName(e.target.value)}
               maxLength={100}
@@ -255,7 +247,7 @@ export default function CreateListingPage() {
             <Label htmlFor="setName">Set Name</Label>
             <Input
               id="setName"
-              placeholder="e.g. Darkness Ablaze"
+              placeholder="E.G. DARKNESS ABLAZE"
               value={setName}
               onChange={(e) => setSetName(e.target.value)}
               maxLength={100}
@@ -266,7 +258,7 @@ export default function CreateListingPage() {
             <Label htmlFor="cardId">Card ID</Label>
             <Input
               id="cardId"
-              placeholder="e.g. 020/189"
+              placeholder="E.G. 020/189"
               value={cardId}
               onChange={(e) => setCardId(e.target.value)}
               maxLength={100}
@@ -277,7 +269,7 @@ export default function CreateListingPage() {
             <Label htmlFor="rarity">Rarity</Label>
             <Input
               id="rarity"
-              placeholder="e.g. Ultra Rare"
+              placeholder="E.G. ULTRA RARE"
               value={rarity}
               onChange={(e) => setRarity(e.target.value)}
               maxLength={100}
@@ -288,7 +280,7 @@ export default function CreateListingPage() {
             <Label htmlFor="pickup">Pickup Location</Label>
             <Input
               id="pickup"
-              placeholder="e.g. Jurong East MRT"
+              placeholder="E.G. JURONG EAST MRT"
               value={pickUp}
               onChange={(e) => setPickUp(e.target.value)}
               maxLength={100}
@@ -302,7 +294,6 @@ export default function CreateListingPage() {
         {/* Submit */}
         <div className="flex gap-3 my-4">
           <Button type="submit" disabled={!canSubmit} className="flex-1 sm:flex-none">
-            <PlusIcon className="mr-1.5 h-4 w-4" />
             Create Listing
           </Button>
           <Button
@@ -310,7 +301,6 @@ export default function CreateListingPage() {
             variant="outline"
             onClick={() => router.push("/listing")}
           >
-            <XIcon className="mr-1.5 h-4 w-4" />
             Cancel
           </Button>
         </div>
@@ -334,7 +324,7 @@ export default function CreateListingPage() {
             >
               <UploadIcon className="h-8 w-8 text-muted-foreground" />
               <div className="text-center">
-                <p className="text-sm font-medium">Click to select a file</p>
+                <p className="text-sm">Click to select a file</p>
                 <p className="text-xs text-muted-foreground mt-1">JPG, PNG or WebP up to 5MB</p>
               </div>
             </div>
@@ -348,6 +338,6 @@ export default function CreateListingPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </PageContainer>
+    </>
   );
 }

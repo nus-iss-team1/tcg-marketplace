@@ -1,5 +1,3 @@
-import { PackageOpenIcon } from "lucide-react";
-
 interface EmptyStateProps {
   title?: string;
   description?: string;
@@ -13,11 +11,8 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center min-h-[50vh] text-center animate-[fade-up_0.4s_ease-out_both]">
-      <div className="flex items-center justify-center h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-muted mb-5">
-        <PackageOpenIcon className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground" />
-      </div>
-      <h3 className="text-base sm:text-lg font-medium mb-1">{title}</h3>
-      <p className="text-sm sm:text-base text-muted-foreground mb-5 max-w-sm">
+      <h3 className="text-lg sm:text-xl mb-1">{title}</h3>
+      <p className="text-xs text-muted-foreground mb-5 max-w-sm">
         {description}
       </p>
       {children}
