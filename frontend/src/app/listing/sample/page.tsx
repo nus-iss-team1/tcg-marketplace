@@ -61,9 +61,9 @@ function ViewListingContent() {
 
   useEffect(() => {
     if (listing) {
-      document.title = `${listing.cardName} - HOUSE OF CARDS`;
+      document.title = `${listing.cardName} - VAULT OF CARDS`;
     }
-    return () => { document.title = "HOUSE OF CARDS"; };
+    return () => { document.title = "VAULT OF CARDS"; };
   }, [listing]);
 
   if (loading) {
