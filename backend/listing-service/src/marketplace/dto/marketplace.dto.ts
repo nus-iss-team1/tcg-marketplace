@@ -29,6 +29,16 @@ class PaymentMethodDto {
 }
 
 class BaseListingDto {
+  @IsNotEmpty()
+  @IsString()
+  @MaxLength(100)
+  readonly title!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  readonly description?: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(100)

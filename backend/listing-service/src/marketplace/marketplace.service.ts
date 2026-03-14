@@ -98,6 +98,7 @@ export class MarketplaceService {
         updatedAt: currentTs,
         sellerId: sellerId,
         attachment: attachment,
+        thumbnail: attachment.front,
         listingStatus: ListingStatus.ACTIVE,
         listingUpdatedAt: `${currentTs}#${newUlid}`.toLowerCase(),
         listingCardName: `${listing.cardName}#${newUlid}`.toLowerCase(),
@@ -175,6 +176,7 @@ export class MarketplaceService {
         // replace image in s3
         if (frontImageAction === ImageAction.REPLACE && frontImage) {
           attachment.front = await this.s3Service.uploadImage(frontImage, listingId);
+          oldRecord.thumbnail = attachment.front;
           uploadedKeys.push(attachment.front);
         }
         if (backImageAction === ImageAction.REPLACE && backImage) {
@@ -184,6 +186,7 @@ export class MarketplaceService {
 
         if (frontImageAction === ImageAction.DELETE) {
           attachment.front = "";
+          oldRecord.thumbnail = attachment.front;
         }
         if (backImageAction === ImageAction.DELETE) {
           attachment.back = "";
