@@ -1,5 +1,5 @@
 const BASE_URL = "";
-const USE_MOCK = false;
+const USE_MOCK = process.env.NODE_ENV === "test";
 
 /* ── Mock data ── */
 
