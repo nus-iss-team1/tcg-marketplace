@@ -1,6 +1,6 @@
 import { field } from "../../dynamodb/dynamodb.util";
 
-export const GameLookup = {
+export const GameCardLookup = {
   gameId: field({
     type: "string",
     pk: true,
@@ -11,22 +11,6 @@ export const GameLookup = {
     sk: true,
     hidden: true
   }), // value: game#<gameName>
-  gameName: field({
-    type: "string"
-  })
-};
-
-export const CardLookup = {
-  gameId: field({
-    type: "string",
-    pk: true,
-    hidden: true
-  }), // value: carddata
-  meta: field({
-    type: "string",
-    sk: true,
-    hidden: true
-  }), // value: card#<cardName>#<rarity>
   gameName: field({
     type: "string"
   }),
@@ -54,15 +38,15 @@ export const CardLookup = {
   })
 };
 
-export type Game = {
-  gameId: string;
-  meta: string;
+export type GameLookup = {
+  gameId: string; // value: gamedata
+  meta: string; // value: game#<gameName>
   gameName: string;
 };
 
-export type Card = {
-  gameId: string;
-  meta: string;
+export type CardLookup = {
+  gameId: string; // value: carddata
+  meta: string; // value: card#<cardName>#<rarity>
   gameName: string;
   cardName: string;
   cardId?: string;

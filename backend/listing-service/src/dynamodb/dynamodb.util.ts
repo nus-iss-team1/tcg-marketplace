@@ -23,8 +23,13 @@ export function field(options: FieldOptions) {
   return options;
 }
 
-export function buildProjection(schema: Record<string, FieldOptions>) {
-  const keys = Object.keys(schema).filter((key) => !schema[key].hidden);
+export function buildProjection<
+  T extends Record<string, FieldOptions>,
+  K extends readonly (keyof T)[]
+>(schema: T, view?: K) {
+  const keys = view
+    ? (view as readonly string[]).filter((key) => !schema[key].hidden)
+    : Object.keys(schema).filter((key) => !schema[key].hidden);
 
   return {
     ProjectionExpression: keys.map((k) => `#${k}`).join(", "),
