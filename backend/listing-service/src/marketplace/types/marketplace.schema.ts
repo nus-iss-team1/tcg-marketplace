@@ -35,6 +35,13 @@ export const TCGMarketplaceSchema = {
     gsi: { PriceListingIndex: "sk" },
     hidden: true
   }), // value: <paddedPrice>#<listingId>
+  title: field({
+    type: "string"
+  }),
+  description: field({
+    type: "string",
+    optional: true
+  }),
   cardName: field({
     type: "string"
   }),
@@ -60,6 +67,9 @@ export const TCGMarketplaceSchema = {
       back: "string"
     },
     optional: true
+  }),
+  thumbnail: field({
+    type: "string"
   }),
   paymentMethod: field({
     type: "list",
@@ -92,12 +102,15 @@ export type Listing = {
   listingUpdatedAt: string;
   listingCardName: string;
   listingPrice: string;
+  title: string;
+  description?: string;
   cardName: string;
   setName?: string;
   cardId?: string;
   rarity?: string;
   price: number;
   attachment: ListingAttachment;
+  thumbnail: string;
   paymentMethod?: ListingPaymentMethod;
   pickUp?: string;
   listingStatus: ListingStatus;
