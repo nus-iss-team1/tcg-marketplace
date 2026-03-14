@@ -52,7 +52,7 @@ function MarketplaceContent() {
             <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <Input
               type="search"
-              placeholder="Search listings..."
+              placeholder="SEARCH LISTINGS..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-10 h-9 text-sm bg-muted border-0 shadow-none focus-visible:ring-0"

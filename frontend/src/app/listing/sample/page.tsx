@@ -394,7 +394,7 @@ function EditListingView({ listing }: { listing: Listing }) {
             <Label htmlFor="cardName">Card Name *</Label>
             <Input
               id="cardName"
-              placeholder="e.g. Charizard VMAX"
+              placeholder="E.G. CHARIZARD VMAX"
               value={cardName}
               onChange={(e) => setCardName(e.target.value)}
               maxLength={100}
@@ -426,7 +426,7 @@ function EditListingView({ listing }: { listing: Listing }) {
             <Label htmlFor="setName">Set Name</Label>
             <Input
               id="setName"
-              placeholder="e.g. Darkness Ablaze"
+              placeholder="E.G. DARKNESS ABLAZE"
               value={setName}
               onChange={(e) => setSetNameValue(e.target.value)}
               maxLength={100}
@@ -437,7 +437,7 @@ function EditListingView({ listing }: { listing: Listing }) {
             <Label htmlFor="cardId">Card ID</Label>
             <Input
               id="cardId"
-              placeholder="e.g. 020/189"
+              placeholder="E.G. 020/189"
               value={cardId}
               onChange={(e) => setCardId(e.target.value)}
               maxLength={100}
@@ -448,7 +448,7 @@ function EditListingView({ listing }: { listing: Listing }) {
             <Label htmlFor="rarity">Rarity</Label>
             <Input
               id="rarity"
-              placeholder="e.g. Ultra Rare"
+              placeholder="E.G. ULTRA RARE"
               value={rarity}
               onChange={(e) => setRarity(e.target.value)}
               maxLength={100}
@@ -459,7 +459,7 @@ function EditListingView({ listing }: { listing: Listing }) {
             <Label htmlFor="pickup">Pickup Location</Label>
             <Input
               id="pickup"
-              placeholder="e.g. Jurong East MRT"
+              placeholder="E.G. JURONG EAST MRT"
               value={pickUp}
               onChange={(e) => setPickUp(e.target.value)}
               maxLength={100}

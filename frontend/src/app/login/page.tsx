@@ -158,7 +158,7 @@ function AuthForm() {
                       id="verify-code"
                       type="text"
                       inputMode="numeric"
-                      placeholder="Enter 6-digit code"
+                      placeholder="ENTER 6-DIGIT CODE"
                       value={verifyCode}
                       onChange={(e) => setVerifyCode(e.target.value)}
                       required

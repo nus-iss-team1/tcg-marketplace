@@ -200,7 +200,7 @@ export default function CreateListingPage() {
             <Label htmlFor="gameName">Game *</Label>
             <Select value={gameName} onValueChange={setGameName}>
               <SelectTrigger id="gameName" className="h-9">
-                <SelectValue placeholder="Select a game" />
+                <SelectValue placeholder="SELECT A GAME" />
               </SelectTrigger>
               <SelectContent>
                 {games.map((game) => (
@@ -215,7 +215,7 @@ export default function CreateListingPage() {
             <Label htmlFor="cardName">Card Name *</Label>
             <Input
               id="cardName"
-              placeholder="e.g. Charizard VMAX"
+              placeholder="E.G. CHARIZARD VMAX"
               value={cardName}
               onChange={(e) => setCardName(e.target.value)}
               maxLength={100}
@@ -247,7 +247,7 @@ export default function CreateListingPage() {
             <Label htmlFor="setName">Set Name</Label>
             <Input
               id="setName"
-              placeholder="e.g. Darkness Ablaze"
+              placeholder="E.G. DARKNESS ABLAZE"
               value={setName}
               onChange={(e) => setSetName(e.target.value)}
               maxLength={100}
@@ -258,7 +258,7 @@ export default function CreateListingPage() {
             <Label htmlFor="cardId">Card ID</Label>
             <Input
               id="cardId"
-              placeholder="e.g. 020/189"
+              placeholder="E.G. 020/189"
               value={cardId}
               onChange={(e) => setCardId(e.target.value)}
               maxLength={100}
@@ -269,7 +269,7 @@ export default function CreateListingPage() {
             <Label htmlFor="rarity">Rarity</Label>
             <Input
               id="rarity"
-              placeholder="e.g. Ultra Rare"
+              placeholder="E.G. ULTRA RARE"
               value={rarity}
               onChange={(e) => setRarity(e.target.value)}
               maxLength={100}
@@ -280,7 +280,7 @@ export default function CreateListingPage() {
             <Label htmlFor="pickup">Pickup Location</Label>
             <Input
               id="pickup"
-              placeholder="e.g. Jurong East MRT"
+              placeholder="E.G. JURONG EAST MRT"
               value={pickUp}
               onChange={(e) => setPickUp(e.target.value)}
               maxLength={100}
