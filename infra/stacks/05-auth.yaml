@@ -4,7 +4,7 @@ Description: Cognito User Pool Authentication Stack
 Parameters:
   ProjectNamespace:
     Type: String
-    Default: tcg-marketplace
+    Default: nusiss-team-1-voc
     Description: Project namespace used for naming resources
   Environment:
     Type: String

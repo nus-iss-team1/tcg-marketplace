@@ -4,7 +4,7 @@ Description: ECS Task Definitions, Services, IAM Roles, Log Groups
 Parameters:
   ProjectNamespace:
     Type: String
-    Default: tcg-marketplace
+    Default: nusiss-team-1-voc
   AppImageTag:
     Type: String
     Default: develop-latest
@@ -208,11 +208,11 @@ Resources:
       LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           Subnets: !Split
             - ","
             - !ImportValue
-                Fn::Sub: "${ProjectNamespace}-PublicSubnetIds"
+                Fn::Sub: "${ProjectNamespace}-PrivateSubnetIds"
           SecurityGroups:
             - !ImportValue
                 Fn::Sub: "${ProjectNamespace}-ECSSecurityGroupId"
@@ -233,11 +233,11 @@ Resources:
       LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           Subnets: !Split
             - ","
             - !ImportValue
-                Fn::Sub: "${ProjectNamespace}-PublicSubnetIds"
+                Fn::Sub: "${ProjectNamespace}-PrivateSubnetIds"
           SecurityGroups:
             - !ImportValue
                 Fn::Sub: "${ProjectNamespace}-ECSSecurityGroupId"
