@@ -26,7 +26,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageContainer, PageHeader } from "@/components/page-header";
+import { PageHeader } from "@/components/page-header";
 import { getCardTypes } from "@/lib/listings";
 
 export default function CreateListingPage() {
@@ -110,7 +110,7 @@ export default function CreateListingPage() {
   };
 
   return (
-    <PageContainer>
+    <>
       <PageHeader title="Sell a Card" description="Create a new listing" />
       <form onSubmit={handleSubmit} className="animate-[fade-up_0.4s_ease-out_both]">
         {/* Image upload banner */}
@@ -338,6 +338,6 @@ export default function CreateListingPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </PageContainer>
+    </>
   );
 }

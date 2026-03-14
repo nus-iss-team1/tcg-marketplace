@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { PageContainer, PageHeader } from "@/components/page-header";
+import { PageHeader } from "@/components/page-header";
 
 /* ── Nav sections ── */
 
@@ -143,7 +143,7 @@ export default function SettingsPage() {
 
   if (loadingAttrs) {
     return (
-      <PageContainer>
+      <>
         <PageHeader title="Settings" />
         <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full">
           {/* Content skeleton */}
@@ -162,12 +162,12 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-      </PageContainer>
+      </>
     );
   }
 
   return (
-    <PageContainer>
+    <>
       <PageHeader title="Settings" description="Manage your account" />
       <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full">
         {/* Content sections */}
@@ -326,6 +326,6 @@ export default function SettingsPage() {
           </ul>
         </nav>
       </div>
-    </PageContainer>
+    </>
   );
 }

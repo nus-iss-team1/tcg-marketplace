@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { ProfileContent, ProfileSkeleton, type ProfileData } from "@/components/profile-content";
-import { PageContainer } from "@/components/page-header";
+
 import { ProfileHeader } from "@/components/profile-header";
 import { Button } from "@/components/ui/button";
 import { fetchSellerProfile } from "@/lib/listings";
@@ -34,7 +34,7 @@ export default function SellerProfilePage() {
   const isOwnProfile = !!user && user.username === profile?.username;
 
   return (
-    <PageContainer>
+    <>
       <ProfileHeader
         title={profile?.displayName || "Seller"}
         username={profile?.username}
@@ -57,6 +57,6 @@ export default function SellerProfilePage() {
           <p className="text-muted-foreground">Seller not found.</p>
         </div>
       )}
-    </PageContainer>
+    </>
   );
 }

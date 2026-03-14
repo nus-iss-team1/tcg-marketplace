@@ -4,7 +4,6 @@ import { Suspense, useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { confirmSignUp, resendConfirmationCode } from "@/lib/cognito";
-import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -139,62 +138,57 @@ function AuthForm() {
 
   if (showVerify) {
     return (
-      <div className="flex min-h-screen flex-col bg-background">
-        <AppHeader />
-        <div className="flex flex-1 items-center justify-center px-4">
-          <div className="w-full max-w-lg lg:max-w-xl animate-[fade-up_0.4s_ease-out_both]">
-            <Card className="bg-background">
-              <CardHeader>
-                <CardTitle>Verify your email</CardTitle>
-                <CardDescription>
-                  We sent a verification code to your email. Enter it below to activate your account.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleVerify} className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="verify-code">Verification Code</Label>
-                    <Input
-                      id="verify-code"
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="ENTER 6-DIGIT CODE"
-                      value={verifyCode}
-                      onChange={(e) => setVerifyCode(e.target.value)}
-                      required
-                      autoFocus
-                    />
-                  </div>
-
-                  <Button type="submit" disabled={verifyLoading} className="w-full">
-                    {verifyLoading ? "Verifying..." : "Verify Email"}
-                  </Button>
-                </form>
-
-                <div className="mt-4 text-center text-sm text-muted-foreground">
-                  Didn&apos;t receive a code?{" "}
-                  <button
-                    type="button"
-                    onClick={handleResendCode}
-                    disabled={resending}
-                    className="text-primary underline-offset-4 hover:underline disabled:opacity-50"
-                  >
-                    {resending ? "Resending..." : "Resend code"}
-                  </button>
+      <div className="flex flex-1 items-center justify-center">
+        <div className="w-full max-w-xs mx-auto animate-[fade-up_0.4s_ease-out_both]">
+          <Card className="bg-background">
+            <CardHeader>
+              <CardTitle>Verify your email</CardTitle>
+              <CardDescription>
+                We sent a verification code to your email. Enter it below to activate your account.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleVerify} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="verify-code">Verification Code</Label>
+                  <Input
+                    id="verify-code"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="ENTER 6-DIGIT CODE"
+                    value={verifyCode}
+                    onChange={(e) => setVerifyCode(e.target.value)}
+                    required
+                    autoFocus
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+
+                <Button type="submit" disabled={verifyLoading} className="w-full">
+                  {verifyLoading ? "Verifying..." : "Verify Email"}
+                </Button>
+              </form>
+
+              <div className="mt-4 text-center text-sm text-muted-foreground">
+                Didn&apos;t receive a code?{" "}
+                <button
+                  type="button"
+                  onClick={handleResendCode}
+                  disabled={resending}
+                  className="text-primary underline-offset-4 hover:underline disabled:opacity-50"
+                >
+                  {resending ? "Resending..." : "Resend code"}
+                </button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <AppHeader />
-      <div className="flex flex-1 items-center justify-center px-4">
-      <div className="w-full max-w-lg lg:max-w-xl animate-[fade-up_0.4s_ease-out_both]">
+    <div className="flex flex-1 items-center justify-center">
+      <div className="w-xl animate-[fade-up_0.4s_ease-out_both]">
           <Card className="bg-background">
             <CardContent className="pt-4 pb-8">
 
@@ -363,7 +357,6 @@ function AuthForm() {
             )}
             </CardContent>
           </Card>
-      </div>
       </div>
     </div>
   );

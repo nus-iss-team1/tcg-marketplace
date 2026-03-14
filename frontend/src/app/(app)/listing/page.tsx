@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { EmptyState } from "@/components/empty-state";
-import { PageContainer, PageHeader } from "@/components/page-header";
+import { PageHeader } from "@/components/page-header";
 import { ListingCard } from "@/components/listing-card";
 import { PaginationControls } from "@/components/pagination-controls";
 import { fetchSellerListings, type Listing } from "@/lib/listings";
@@ -27,7 +27,7 @@ export default function MyListingsPage() {
   }, [user?.username]);
 
   return (
-    <PageContainer>
+    <>
       <PageHeader
         title="My Listings"
         description="Manage your cards"
@@ -62,6 +62,6 @@ export default function MyListingsPage() {
           />
         </>
       )}
-    </PageContainer>
+    </>
   );
 }
