@@ -7,26 +7,24 @@ import {
   UpdateCommand
 } from "@aws-sdk/lib-dynamodb";
 import { Inject, Injectable, LoggerService } from "@nestjs/common";
+import { instanceToPlain } from "class-transformer";
 import { DYNAMODB_CLIENT } from "../dynamodb/dynamodb.constants";
-import { buildProjection } from "../dynamodb/dynamodb.util";
-import { Listing, TCGMarketplaceSchema } from "./types/marketplace.schema";
+import { Listing } from "./types/marketplace.schema";
 import { QueryListing } from "./types/marketplace.type";
 import { handleDynamoError } from "../common/utils/common.utils";
 import { LoggingService } from "../logger/logging.service";
-import { instanceToPlain } from "class-transformer";
+import { ListingProjections } from "./types/marketplace.view";
 
 @Injectable()
 export class MarketplaceRepository {
   private logger: LoggerService;
   private readonly tableName = "TCGMarketplace";
-  private projection: ReturnType<typeof buildProjection>;
 
   constructor(
     loggingService: LoggingService,
     @Inject(DYNAMODB_CLIENT)
     private readonly docClient: DynamoDBDocumentClient
   ) {
-    this.projection = buildProjection(TCGMarketplaceSchema);
     this.logger = loggingService.getLogger();
   }
 
@@ -47,7 +45,7 @@ export class MarketplaceRepository {
             gameName: listing.gameName,
             listingId: listing.listingId
           },
-          ...this.projection
+          ...ListingProjections.specificListing
         })
       );
       return result.Item as Listing;
@@ -67,7 +65,7 @@ export class MarketplaceRepository {
         ":gameName": gameName,
         ":listingStatus": "ACTIVE"
       },
-      ...this.projection,
+      ...ListingProjections.overview,
       Limit: query.limit,
       ScanIndexForward: query.order
     };
@@ -122,7 +120,7 @@ export class MarketplaceRepository {
         ":sellerId": sellerId,
         ":listingStatus": "DELETED"
       },
-      ...this.projection,
+      ...ListingProjections.overview,
       Limit: query.limit,
       ScanIndexForward: query.order
     };
@@ -180,7 +178,7 @@ export class MarketplaceRepository {
             gameName: gameName,
             listingId: listingId
           },
-          ...this.projection
+          ...ListingProjections.specificListing
         })
       );
 
