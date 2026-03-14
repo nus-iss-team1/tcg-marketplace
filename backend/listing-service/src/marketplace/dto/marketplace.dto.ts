@@ -3,6 +3,7 @@ import {
   IsBoolean,
   IsDefined,
   IsEnum,
+  IsIn,
   IsNotEmpty,
   IsNumber,
   IsNumberString,
@@ -95,7 +96,7 @@ export class UpdateListingDto extends BaseListingDto {
   paymentMethod?: PaymentMethodDto;
 
   @IsNotEmpty()
-  @IsEnum(ImageAction)
+  @IsIn([ImageAction.KEEP, ImageAction.REPLACE])
   readonly frontImageAction!: ImageAction;
 
   @IsNotEmpty()
