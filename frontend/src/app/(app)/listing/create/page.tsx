@@ -111,7 +111,7 @@ export default function CreateListingPage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Sell a Card" description="Create a new listing" backHref="/listing" />
+      <PageHeader title="Sell a Card" description="Create a new listing" />
       <form onSubmit={handleSubmit} className="animate-[fade-up_0.4s_ease-out_both]">
         {/* Image upload banner */}
         <div className="flex justify-center gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">

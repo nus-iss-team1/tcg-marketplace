@@ -38,7 +38,6 @@ export default function SellerProfilePage() {
       <ProfileHeader
         title={profile?.displayName || "Seller"}
         username={profile?.username}
-        backHref="/marketplace"
         action={
           isOwnProfile ? (
             <Button variant="outline" size="sm" asChild>
