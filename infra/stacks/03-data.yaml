@@ -1,12 +1,35 @@
-AWSTemplateFormatVersion: "2010-09-09"
-Description: DynamoDB Tables (on-demand billing)
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "S3 Storage and DynamoDB Tables"
 
 Parameters:
   ProjectNamespace:
     Type: String
-    Default: tcg-marketplace
+    Default: nusiss-team-1-voc
 
 Resources:
+
+  # ════════════════════════════════════════════════════════════
+  # Storage
+  # ════════════════════════════════════════════════════════════
+
+  AssetsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectNamespace}-assets"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # ════════════════════════════════════════════════════════════
+  # Database
+  # ════════════════════════════════════════════════════════════
+
   GameCardLookup:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Delete
@@ -14,35 +37,23 @@ Resources:
     Properties:
       TableName: GameCardLookup
       BillingMode: PAY_PER_REQUEST
-
-      # primary table attributes
       AttributeDefinitions:
         - AttributeName: gameId
           AttributeType: S
         - AttributeName: meta
           AttributeType: S
-
-      # primary key of the table
       KeySchema:
         - AttributeName: gameId
           KeyType: HASH
         - AttributeName: meta
           KeyType: RANGE
-
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
-
-      # server side encryption
       SSESpecification:
         SSEEnabled: true
-
-      # dynamodb streams for triggers
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
 
-  # ──────────────────────────────────────────────
-  # Messaging Platform Table
-  # ──────────────────────────────────────────────
   MessagingPlatform:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Delete
@@ -50,8 +61,6 @@ Resources:
     Properties:
       TableName: MessagingPlatform
       BillingMode: PAY_PER_REQUEST
-
-      # primary table attributes
       AttributeDefinitions:
         - AttributeName: entityId
           AttributeType: S
@@ -61,28 +70,18 @@ Resources:
           AttributeType: N
         - AttributeName: createdAt
           AttributeType: N
-
-      # primary key of the table
       KeySchema:
         - AttributeName: entityId
           KeyType: HASH
         - AttributeName: entityType
           KeyType: RANGE
-
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
-
-      # server side encryption
       SSESpecification:
         SSEEnabled: true
-
-      # dynamodb streams for triggers
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
-
-      # gsi
       GlobalSecondaryIndexes:
-        # room sorted by lastMessageAt
         - IndexName: RoomIndex
           KeySchema:
             - AttributeName: entityId
@@ -91,8 +90,6 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
-
-        # messages sorted by createdAt
         - IndexName: MessageIndex
           KeySchema:
             - AttributeName: entityId
@@ -102,9 +99,6 @@ Resources:
           Projection:
             ProjectionType: ALL
 
-  # ──────────────────────────────────────────────
-  # TCG Marketplace Table
-  # ──────────────────────────────────────────────
   TCGMarketplace:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Delete
@@ -112,8 +106,6 @@ Resources:
     Properties:
       TableName: TCGMarketplace
       BillingMode: PAY_PER_REQUEST
-
-      # primary table attributes
       AttributeDefinitions:
         - AttributeName: gameName
           AttributeType: S
@@ -127,28 +119,18 @@ Resources:
           AttributeType: S
         - AttributeName: listingPrice
           AttributeType: S
-
-      # primary key of the table
       KeySchema:
         - AttributeName: gameName
           KeyType: HASH
         - AttributeName: listingId
           KeyType: RANGE
-
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
-
-      # server side encryption
       SSESpecification:
         SSEEnabled: true
-
-      # dynamodb streams for triggers
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
-
-      # gsi
       GlobalSecondaryIndexes:
-        # seller listing sorted by updatedAt
         - IndexName: SellerListingIndex
           KeySchema:
             - AttributeName: sellerId
@@ -157,8 +139,6 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
-
-        # listing sorted by updatedAt
         - IndexName: UpdatedListingIndex
           KeySchema:
             - AttributeName: gameName
@@ -167,8 +147,6 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
-
-        # listing sorted by cardName
         - IndexName: CardListingIndex
           KeySchema:
             - AttributeName: gameName
@@ -177,8 +155,6 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
-
-        # listing sorted by price
         - IndexName: PriceListingIndex
           KeySchema:
             - AttributeName: gameName
@@ -189,36 +165,44 @@ Resources:
             ProjectionType: ALL
 
 Outputs:
+  # Storage
+  AssetsBucketName:
+    Description: "The name of the S3 assets bucket"
+    Value: !Ref AssetsBucket
+    Export:
+      Name: !Sub "${ProjectNamespace}-AssetsBucketName"
+  AssetsBucketArn:
+    Description: "The ARN of the S3 assets bucket"
+    Value: !GetAtt AssetsBucket.Arn
+    Export:
+      Name: !Sub "${ProjectNamespace}-AssetsBucketArn"
+
+  # Database
   GameCardLookupTableName:
     Description: "The name of the DynamoDB table GameCardLookup"
     Value: !Ref GameCardLookup
     Export:
       Name: !Sub "${ProjectNamespace}-GameCardLookupTableName"
-
   GameCardLookupTableArn:
     Description: "The ARN of the DynamoDB table GameCardLookup"
     Value: !GetAtt GameCardLookup.Arn
     Export:
       Name: !Sub "${ProjectNamespace}-GameCardLookupTableArn"
-
   MessagingPlatformTableName:
     Description: "The name of the DynamoDB table MessagingPlatform"
     Value: !Ref MessagingPlatform
     Export:
       Name: !Sub "${ProjectNamespace}-MessagingPlatformTableName"
-
   MessagingPlatformTableArn:
     Description: "The ARN of the DynamoDB table MessagingPlatform"
     Value: !GetAtt MessagingPlatform.Arn
     Export:
       Name: !Sub "${ProjectNamespace}-MessagingPlatformTableArn"
-
   TCGMarketplaceTableName:
     Description: "The name of the DynamoDB table TCGMarketplace"
     Value: !Ref TCGMarketplace
     Export:
       Name: !Sub "${ProjectNamespace}-TCGMarketplaceTableName"
-
   TCGMarketplaceTableArn:
     Description: "The ARN of the DynamoDB table TCGMarketplace"
     Value: !GetAtt TCGMarketplace.Arn
