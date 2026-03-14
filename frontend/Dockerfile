@@ -15,6 +15,7 @@ COPY . .
 # Cognito config – inlined into the JS bundle at build time
 ARG NEXT_PUBLIC_COGNITO_USER_POOL_ID
 ARG NEXT_PUBLIC_COGNITO_CLIENT_ID
+ARG NEXT_PUBLIC_BACKEND_API
 ARG NEXT_PUBLIC_IMAGE_TAG
 
 # Disable telemetry during build for privacy/speed
