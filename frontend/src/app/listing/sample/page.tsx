@@ -19,19 +19,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  MapPinIcon,
-  CreditCardIcon,
   CalendarIcon,
-  LayersIcon,
-  SparklesIcon,
-  HashIcon,
   UploadIcon,
   Trash2Icon,
 } from "lucide-react";
-import { fetchMarketplaceListings, type Listing } from "@/lib/listings";
+import { fetchSampleListing, type Listing } from "@/lib/listings";
 import { toast } from "sonner";
-import { PageContainer, PageHeader } from "@/components/page-header";
-import { AppHeader } from "@/components/app-header";
+import { PageHeader } from "@/components/page-header";
 import { useAuth } from "@/context/AuthContext";
 import { ImagePlaceholder } from "@/components/image-placeholder";
 
@@ -52,10 +46,8 @@ function ViewListingContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Replace with single listing fetch when API is ready
-    fetchMarketplaceListings("Pokemon TCG", { limit: 1 })
-      .then((res) => setListing(res.listings[0] ?? null))
-      .finally(() => setLoading(false));
+    setListing(fetchSampleListing());
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -67,33 +59,21 @@ function ViewListingContent() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <AppHeader />
-        <main className="flex flex-1 flex-col items-center p-4 sm:p-5 md:p-6 lg:p-8">
-          <div className="flex flex-1 flex-col w-full max-w-352 mx-auto px-4 sm:px-0">
-            <div className="space-y-4">
-              <Skeleton className="h-8 w-8 rounded-md" />
-              <Skeleton className="w-48 sm:w-56 md:w-64 mx-auto aspect-3/4 rounded-none" />
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-24 w-full" />
-            </div>
-          </div>
-        </main>
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-8 rounded-md" />
+        <Skeleton className="w-48 sm:w-56 md:w-64 mx-auto aspect-3/4 rounded-none" />
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-24 w-full" />
       </div>
     );
   }
 
   if (!listing) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <AppHeader />
-        <main className="flex flex-1 flex-col items-center p-4 sm:p-5 md:p-6 lg:p-8">
-          <div className="flex flex-1 flex-col items-center justify-center w-full max-w-352 mx-auto px-4 sm:px-0">
-            <p className="text-lg">Listing Not Found</p>
-            <p className="text-muted-foreground text-xs">This listing doesn&apos;t exist or has been removed.</p>
-          </div>
-        </main>
+      <div className="flex flex-1 flex-col items-center justify-center">
+        <p className="text-lg">Listing Not Found</p>
+        <p className="text-muted-foreground text-xs">This listing doesn&apos;t exist or has been removed.</p>
       </div>
     );
   }
@@ -101,22 +81,12 @@ function ViewListingContent() {
   // Only allow edit mode for authenticated users
   if (isEdit && user) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <AppHeader />
-        <main className="flex flex-1 flex-col items-center p-4 sm:p-5 md:p-6 lg:p-8">
-          <EditListingView listing={listing} />
-        </main>
-      </div>
+      <EditListingView listing={listing} />
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <AppHeader />
-      <main className="flex flex-1 flex-col items-center p-4 sm:p-5 md:p-6 lg:p-8">
-        <ReadListingView listing={listing} isAuthenticated={!!user} />
-      </main>
-    </div>
+    <ReadListingView listing={listing} isAuthenticated={!!user} />
   );
 }
 
@@ -124,119 +94,119 @@ function ReadListingView({ listing, isAuthenticated }: { listing: Listing; isAut
   const sellerInitials = listing.sellerName.substring(0, 2).toUpperCase();
 
   return (
-    <div className="flex flex-1 flex-col w-full max-w-352 mx-auto px-4 sm:px-0 animate-[fade-up_0.4s_ease-out_both]">
-      <div className="flex items-center justify-end mb-4">
-        {isAuthenticated && (
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/listing/sample?edit=true">
-              Edit
-            </Link>
-          </Button>
-        )}
-      </div>
+    <div className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both]">
+      {/* Two-column: images left (scrollable), details right (sticky). Stacks on mobile. */}
+      <div className="flex flex-col md:flex-row gap-6 md:gap-16">
+        {/* Left — Images */}
+        <div className="w-full md:w-1/2 lg:w-5/12 shrink-0">
+          <ImageCarousel attachment={listing.attachment} />
+        </div>
 
-      {/* Card images banner */}
-      <ImageBanner attachment={listing.attachment} />
-
-      {/* Card name and game type */}
-      <div className="mt-4 mb-2">
-        <p className="text-xs text-muted-foreground">{listing.gameName}</p>
-        <h1 className="text-3xl sm:text-4xl font-heading">{listing.cardName}</h1>
-      </div>
-
-      {/* Price */}
-      <p className="text-lg sm:text-xl text-primary mb-4">
-        ${listing.price}
-      </p>
-
-      {/* Status */}
-      <div className="flex items-center gap-2 mb-4">
-        {listing.listingStatus && (
-          <Badge variant={listing.listingStatus === "ACTIVE" ? "default" : "secondary"}>
-            {listing.listingStatus}
-          </Badge>
-        )}
-        <span className="text-xs text-muted-foreground flex items-center gap-1">
-          <CalendarIcon className="h-3.5 w-3.5" />
-          Listed {new Date(listing.updatedAt).toLocaleDateString()}
-        </span>
-      </div>
-
-      <Separator />
-
-      {/* Card details */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 my-4">
-        {listing.setName && (
-          <div className="flex items-center gap-2 text-xs">
-            <LayersIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="text-muted-foreground">Set:</span>
-            <span>{listing.setName}</span>
+        {/* Right — Details (sticky on desktop) */}
+        <div className="flex-1 min-w-0 md:sticky md:top-16 md:self-start">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-muted-foreground">{listing.gameName}</p>
+            {isAuthenticated && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/listing/sample?edit=true">
+                  Edit
+                </Link>
+              </Button>
+            )}
           </div>
-        )}
-        {listing.cardId && (
-          <div className="flex items-center gap-2 text-xs">
-            <HashIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="text-muted-foreground">Card ID:</span>
-            <span>{listing.cardId}</span>
-          </div>
-        )}
-        {listing.rarity && (
-          <div className="flex items-center gap-2 text-xs">
-            <SparklesIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="text-muted-foreground">Rarity:</span>
-            <span>{listing.rarity}</span>
-          </div>
-        )}
-        {listing.pickUp && (
-          <div className="flex items-center gap-2 text-xs">
-            <MapPinIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="text-muted-foreground">Pickup:</span>
-            <span>{listing.pickUp}</span>
-          </div>
-        )}
-        {listing.paymentMethod && (
-          <div className="flex items-center gap-2 text-xs">
-            <CreditCardIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="text-muted-foreground">Payment:</span>
-            <span>
-              {[
-                listing.paymentMethod.cash && "Cash",
-                listing.paymentMethod.paynow && "PayNow",
-                listing.paymentMethod.bank && "Bank Transfer",
-              ]
-                .filter(Boolean)
-                .join(", ") || "—"}
+
+          <h1 className="text-3xl sm:text-4xl font-heading">{listing.cardName}</h1>
+
+          {/* Price */}
+          <p className="text-lg sm:text-xl text-primary mt-2 mb-4">
+            ${listing.price}
+          </p>
+
+          {/* Status */}
+          <div className="flex items-center gap-2 mb-4">
+            {listing.listingStatus && (
+              <Badge variant={listing.listingStatus === "ACTIVE" ? "default" : "secondary"}>
+                {listing.listingStatus}
+              </Badge>
+            )}
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <CalendarIcon className="h-3.5 w-3.5" />
+              Listed {new Date(listing.updatedAt).toLocaleDateString()}
             </span>
           </div>
-        )}
-      </div>
 
-      <Separator />
+          <Separator />
 
-      {/* Seller */}
-      <div className="my-4">
-        <p className="text-xs text-muted-foreground mb-2">Seller</p>
-        <div className="flex items-center gap-3 p-2 -m-2 min-w-0 overflow-hidden">
-          <Avatar className="h-9 w-9">
-            <AvatarFallback className="text-xs">{sellerInitials}</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col min-w-0">
-            <span className="text-xs truncate">{listing.sellerName}</span>
-            <span className="text-xs text-muted-foreground truncate">@{listing.sellerId}</span>
+          {/* Card details */}
+          <div className="grid grid-cols-1 gap-3 my-4">
+            {listing.setName && (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground">Set:</span>
+                <span>{listing.setName}</span>
+              </div>
+            )}
+            {listing.cardId && (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground">Card ID:</span>
+                <span>{listing.cardId}</span>
+              </div>
+            )}
+            {listing.rarity && (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground">Rarity:</span>
+                <span>{listing.rarity}</span>
+              </div>
+            )}
+            {listing.pickUp && (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground">Pickup:</span>
+                <span>{listing.pickUp}</span>
+              </div>
+            )}
+            {listing.paymentMethod && (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground">Payment:</span>
+                <span>
+                  {[
+                    listing.paymentMethod.cash && "Cash",
+                    listing.paymentMethod.paynow && "PayNow",
+                    listing.paymentMethod.bank && "Bank Transfer",
+                  ]
+                    .filter(Boolean)
+                    .join(", ") || "—"}
+                </span>
+              </div>
+            )}
           </div>
+
+          <Separator />
+
+          {/* Seller */}
+          <div className="my-4">
+            <p className="text-xs text-muted-foreground mb-2">Seller</p>
+            <div className="flex items-center gap-3 p-2 -m-2 min-w-0 overflow-hidden">
+              <Avatar className="h-9 w-9">
+                <AvatarFallback className="text-xs">{sellerInitials}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs truncate">{listing.sellerName}</span>
+                <span className="text-xs text-muted-foreground truncate">@{listing.sellerId}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action — only for authenticated users */}
+          {isAuthenticated && (
+            <div className="flex gap-3 pt-2">
+              <Button className="flex-1 sm:flex-none" asChild>
+                <Link href={`/seller/${listing.sellerId}`}>
+                  Contact Seller
+                </Link>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Action — only for authenticated users */}
-      {isAuthenticated && (
-        <div className="flex gap-3 pt-2">
-          <Button className="flex-1 sm:flex-none" asChild>
-            <Link href={`/seller/${listing.sellerId}`}>
-              Contact Seller
-            </Link>
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
@@ -303,7 +273,7 @@ function EditListingView({ listing }: { listing: Listing }) {
   };
 
   return (
-    <PageContainer>
+    <>
       <PageHeader title="Edit Listing" description="Update your listing details" />
       <form onSubmit={handleSubmit} className="animate-[fade-up_0.4s_ease-out_both]">
         {/* Image upload banner */}
@@ -517,37 +487,54 @@ function EditListingView({ listing }: { listing: Listing }) {
           </div>
         </DialogContent>
       </Dialog>
-    </PageContainer>
+    </>
   );
 }
 
-function ImageBanner({ attachment }: { attachment?: { front?: string; back?: string } }) {
-  const images = [attachment?.front, attachment?.back].filter(Boolean) as string[];
+function ImageCarousel({ attachment }: { attachment?: { front?: string; back?: string; images?: string[] } }) {
+  const images = attachment?.images?.length
+    ? attachment.images
+    : ([attachment?.front, attachment?.back].filter(Boolean) as string[]);
 
   if (images.length === 0) {
     return (
-      <div className="flex justify-center gap-3 overflow-x-auto pb-2">
-        <ImagePlaceholder className="w-48 sm:w-56 md:w-64 shrink-0 rounded-none" />
-      </div>
+      <ImagePlaceholder className="w-48 sm:w-56 md:w-full mx-auto md:mx-0 aspect-3/4 rounded-none" />
+    );
+  }
+
+  if (images.length === 1) {
+    return (
+      <>
+        {/* Mobile: smaller centered image */}
+        <div className="md:hidden w-48 sm:w-56 mx-auto aspect-3/4 rounded-none bg-muted overflow-hidden">
+          <Image src={images[0]} alt="Card image" width={512} height={683} className="w-full h-full object-cover" />
+        </div>
+        {/* Desktop: full width */}
+        <div className="hidden md:block w-full aspect-3/4 rounded-none bg-muted overflow-hidden">
+          <Image src={images[0]} alt="Card image" width={512} height={683} className="w-full h-full object-cover" />
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="flex justify-center gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
-      {images.map((src, i) => (
-        <div
-          key={i}
-          className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none bg-muted overflow-hidden snap-start"
-        >
-          <Image
-            src={src}
-            alt={`Card image ${i + 1}`}
-            width={256}
-            height={341}
-            className="w-full h-full object-cover"
-          />
-        </div>
-      ))}
-    </div>
+    <>
+      {/* Mobile: horizontal scroll carousel with smaller images */}
+      <div className="md:hidden flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory -mx-4 px-4">
+        {images.map((src, i) => (
+          <div key={i} className="w-48 sm:w-56 shrink-0 aspect-3/4 rounded-none bg-muted overflow-hidden snap-center">
+            <Image src={src} alt={`Card image ${i + 1}`} width={512} height={683} className="w-full h-full object-cover" />
+          </div>
+        ))}
+      </div>
+      {/* Desktop: vertical stack of images */}
+      <div className="hidden md:flex flex-col gap-3">
+        {images.map((src, i) => (
+          <div key={i} className="w-full aspect-3/4 rounded-none bg-muted overflow-hidden">
+            <Image src={src} alt={`Card image ${i + 1}`} width={512} height={683} className="w-full h-full object-cover" />
+          </div>
+        ))}
+      </div>
+    </>
   );
 }

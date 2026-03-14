@@ -1,5 +1,5 @@
 const BASE_URL = "";
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 /* ── Mock data ── */
 
@@ -73,6 +73,21 @@ function generateMockListings(gameName: string, count: number, sellerId?: string
   });
 }
 
+export function fetchSampleListing(): Listing {
+  const listing = generateMockListings("Pokemon TCG", 1)[0]!;
+  listing.attachment = {
+    ...listing.attachment,
+    images: [
+      "https://picsum.photos/seed/card1/512/683",
+      "https://picsum.photos/seed/card2/512/683",
+      "https://picsum.photos/seed/card3/512/683",
+      "https://picsum.photos/seed/card4/512/683",
+      "https://picsum.photos/seed/card5/512/683",
+    ],
+  };
+  return listing;
+}
+
 function mockFetchListings(gameName: string, params?: FetchListingsParams): FetchListingsResponse {
   const limit = params?.limit ?? 15;
   const listings = generateMockListings(gameName, limit);
@@ -125,6 +140,7 @@ export interface Listing {
 export interface ListingAttachment {
   front?: string;
   back?: string;
+  images?: string[];
 }
 
 export interface PaymentMethod {
@@ -186,7 +202,12 @@ export async function fetchSellerProfile(
 
   const res = await fetch(`${BASE_URL}/api/marketplace/profile/${encodeURIComponent(sellerId)}`);
   if (!res.ok) return null;
-  return res.json();
+  const json = await res.json();
+  const firstListing = json.data?.[0];
+  return {
+    username: sellerId,
+    displayName: firstListing?.sellerName ?? sellerId,
+  };
 }
 
 /* ── GET /api/marketplace/<gameName> ── */
@@ -197,15 +218,21 @@ export async function fetchMarketplaceListings(
 ): Promise<FetchListingsResponse> {
   if (USE_MOCK) return mockFetchListings(gameName, params);
 
-  const url = new URL(`${BASE_URL}/api/marketplace/${encodeURIComponent(gameName)}`);
-  if (params?.limit) url.searchParams.set("limit", String(params.limit));
-  if (params?.cursor) url.searchParams.set("cursor", params.cursor);
-  if (params?.sort) url.searchParams.set("sort", params.sort);
-  if (params?.order) url.searchParams.set("order", params.order);
+  const query = new URLSearchParams();
+  if (params?.limit) query.set("limit", String(params.limit));
+  if (params?.cursor) query.set("cursor", params.cursor);
+  if (params?.sort) query.set("sort", params.sort);
+  if (params?.order) query.set("order", params.order);
+  const qs = query.toString();
+  const url = `${BASE_URL}/api/marketplace/${encodeURIComponent(gameName)}${qs ? `?${qs}` : ""}`;
 
-  const res = await fetch(url.toString());
+  const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch listings");
-  return res.json();
+  const json = await res.json();
+  return {
+    listings: json.data ?? json.listings ?? [],
+    cursor: json.pagination?.nextCursor ?? json.cursor,
+  };
 }
 
 /* ── GET /api/marketplace/profile/<sellerId> ── */
@@ -216,15 +243,21 @@ export async function fetchSellerListings(
 ): Promise<FetchListingsResponse> {
   if (USE_MOCK) return mockFetchSellerListings(sellerId, params);
 
-  const url = new URL(`${BASE_URL}/api/marketplace/profile/${encodeURIComponent(sellerId)}`);
-  if (params?.limit) url.searchParams.set("limit", String(params.limit));
-  if (params?.cursor) url.searchParams.set("cursor", params.cursor);
-  if (params?.sort) url.searchParams.set("sort", params.sort);
-  if (params?.order) url.searchParams.set("order", params.order);
+  const query = new URLSearchParams();
+  if (params?.limit) query.set("limit", String(params.limit));
+  if (params?.cursor) query.set("cursor", params.cursor);
+  if (params?.sort) query.set("sort", params.sort);
+  if (params?.order) query.set("order", params.order);
+  const qs = query.toString();
+  const url = `${BASE_URL}/api/marketplace/profile/${encodeURIComponent(sellerId)}${qs ? `?${qs}` : ""}`;
 
-  const res = await fetch(url.toString());
+  const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch seller listings");
-  return res.json();
+  const json = await res.json();
+  return {
+    listings: json.data ?? json.listings ?? [],
+    cursor: json.pagination?.nextCursor ?? json.cursor,
+  };
 }
 
 /* ── POST /api/marketplace ── */

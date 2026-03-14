@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { ProfileContent, ProfileSkeleton } from "@/components/profile-content";
-import { PageContainer } from "@/components/page-header";
+
 import { ProfileHeader } from "@/components/profile-header";
 import { Badge } from "@/components/ui/badge";
 
@@ -25,7 +25,7 @@ export default function ProfilePage() {
   }, [user]);
 
   return (
-    <PageContainer>
+    <>
       <ProfileHeader
         title={profile?.displayName || "My Profile"}
         username={profile?.username}
@@ -40,6 +40,6 @@ export default function ProfilePage() {
           <p className="text-muted-foreground">Profile not found.</p>
         </div>
       )}
-    </PageContainer>
+    </>
   );
 }

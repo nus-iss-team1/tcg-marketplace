@@ -3,12 +3,14 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
-import { PageContainer, PageHeader } from "@/components/page-header";
+import { PageHeader } from "@/components/page-header";
 import { Input } from "@/components/ui/input";
-import { SearchIcon } from "lucide-react";
+import { SearchIcon, PlusIcon } from "lucide-react";
 import { ListingCard } from "@/components/listing-card";
 import { PaginationControls } from "@/components/pagination-controls";
+import { Button } from "@/components/ui/button";
 import { fetchMarketplaceListings, type Listing } from "@/lib/listings";
+import Link from "next/link";
 
 export default function MarketplacePage() {
   return (
@@ -32,7 +34,7 @@ function MarketplaceContent() {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    fetchMarketplaceListings(gameType).then((res) => setListings(res.listings));
+    fetchMarketplaceListings(gameType, { sort: "updatedAt", order: "DESC" }).then((res) => setListings(res.listings));
   }, [gameType]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -43,33 +45,46 @@ function MarketplaceContent() {
   };
 
   return (
-    <PageContainer>
+    <>
       {/* Fixed top: title + search */}
       <div className="shrink-0">
         <PageHeader title="Marketplace" description={gameType} />
-        <form onSubmit={handleSearch} className="mb-4 w-full">
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            <Input
-              type="search"
-              placeholder="SEARCH LISTINGS..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="pl-10 h-9 text-sm bg-muted border-0 shadow-none focus-visible:ring-0"
-            />
-          </div>
-        </form>
+        {listings.length > 0 && (
+          <form onSubmit={handleSearch} className="mb-4 w-full">
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <Input
+                type="search"
+                placeholder="SEARCH LISTINGS..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="pl-10 h-9 text-sm bg-muted border-0 shadow-none focus-visible:ring-0"
+              />
+            </div>
+          </form>
+        )}
       </div>
 
       {/* Scrollable listings */}
       {listings.length === 0 ? (
         <EmptyState
-          title="No listings available"
-          description="There are no listings in this category yet. Check back later!"
-        />
+          title="No listings yet"
+          description="This category is awaiting its first listing. Be the first to showcase your cards."
+        >
+          <Button asChild size="sm">
+            <Link href="/listing/create">
+              Create Listing
+            </Link>
+          </Button>
+        </EmptyState>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 sm:gap-6 md:gap-8">
+          <div
+            className="grid gap-5 sm:gap-6 md:gap-8"
+            style={{
+              gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, 160px), 1fr))`,
+            }}
+          >
             {listings.map((listing, i) => (
               <ListingCard key={listing.listingId} listing={listing} index={i} />
             ))}
@@ -85,6 +100,6 @@ function MarketplaceContent() {
           />
         </>
       )}
-    </PageContainer>
+    </>
   );
 }

@@ -183,6 +183,12 @@ Resources:
           Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectNamespace}/tcgm-web:${WebImageTag}"
           PortMappings:
             - ContainerPort: 3000
+          Environment:
+            - Name: NEXT_PUBLIC_BACKEND_API
+              Value: !Sub
+                - "http://${ALBDns}"
+                - ALBDns: !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-ALBDnsName"
           LogConfiguration:
             LogDriver: awslogs
             Options:

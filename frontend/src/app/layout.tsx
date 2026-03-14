@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Bebas_Neue } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
+import { AppShell } from "@/components/app-shell";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -36,9 +37,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body className={`${inter.variable} ${bebasNeue.variable} antialiased`}>
+      <body className={`${inter.variable} ${bebasNeue.variable} antialiased bg-card`}>
         <AuthProvider>
-          {children}
+          <AppShell>
+            {children}
+          </AppShell>
           <Toaster />
           {process.env.NEXT_PUBLIC_IMAGE_TAG && (
             <div className="fixed bottom-1 right-2 z-50">

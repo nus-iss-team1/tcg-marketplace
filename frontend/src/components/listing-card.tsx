@@ -18,7 +18,7 @@ export function ListingCard({ listing, index, animationDelayOffset = 0 }: Listin
     >
       <div className="overflow-hidden">
         <div className="transition-transform duration-500 ease-out group-hover:scale-105">
-          <ImagePlaceholder className="w-full" />
+          <ImagePlaceholder className="w-full" seed={listing.listingId} />
         </div>
       </div>
       <div className="mt-2 space-y-0.5">
@@ -27,6 +27,9 @@ export function ListingCard({ listing, index, animationDelayOffset = 0 }: Listin
         </p>
         <p className="text-[11px] sm:text-xs text-muted-foreground leading-tight">
           ${listing.price}
+        </p>
+        <p className="text-[10px] sm:text-[11px] text-muted-foreground/70 truncate leading-tight normal-case">
+          @{listing.sellerId}
         </p>
       </div>
     </Link>
