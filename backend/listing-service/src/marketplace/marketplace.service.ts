@@ -60,7 +60,7 @@ export class MarketplaceService {
       limit: limit,
       cursor: cursor,
       sort: query?.sort ? sortMap[query.sort] : SortListing.updatedAt,
-      order: query?.order ? orderMap[query.order] : true,
+      order: query?.order ? orderMap[query.order] : false,
       index: query?.sort ? indexMap[query.sort] : "UpdatedListingIndex"
     };
 
