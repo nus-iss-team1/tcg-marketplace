@@ -29,7 +29,6 @@ export default function ProfilePage() {
       <ProfileHeader
         title={profile?.displayName || "My Profile"}
         username={profile?.username}
-        backHref="/marketplace"
         badge={<Badge variant="secondary" className="text-xs">You</Badge>}
       />
       {loading ? (

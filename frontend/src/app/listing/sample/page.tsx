@@ -19,7 +19,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  ChevronLeftIcon,
   MapPinIcon,
   CreditCardIcon,
   CalendarIcon,
@@ -91,12 +90,6 @@ function ViewListingContent() {
         <AppHeader />
         <main className="flex flex-1 flex-col items-center p-4 sm:p-5 md:p-6 lg:p-8">
           <div className="flex flex-1 flex-col items-center justify-center w-full max-w-352 mx-auto px-4 sm:px-0">
-            <Button variant="outline" size="icon" className="h-8 w-8 sm:w-auto sm:px-3 self-start mb-4" asChild>
-              <Link href="/marketplace">
-                <ChevronLeftIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Back</span>
-              </Link>
-            </Button>
             <p className="text-lg">Listing Not Found</p>
             <p className="text-muted-foreground text-xs">This listing doesn&apos;t exist or has been removed.</p>
           </div>
@@ -132,13 +125,7 @@ function ReadListingView({ listing, isAuthenticated }: { listing: Listing; isAut
 
   return (
     <div className="flex flex-1 flex-col w-full max-w-352 mx-auto px-4 sm:px-0 animate-[fade-up_0.4s_ease-out_both]">
-      {/* Back & Edit buttons */}
-      <div className="flex items-center justify-between mb-4">
-        <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" asChild>
-          <Link href="/marketplace">
-            <ChevronLeftIcon className="h-4 w-4" />
-          </Link>
-        </Button>
+      <div className="flex items-center justify-end mb-4">
         {isAuthenticated && (
           <Button variant="outline" size="sm" asChild>
             <Link href="/listing/sample?edit=true">
@@ -317,7 +304,7 @@ function EditListingView({ listing }: { listing: Listing }) {
 
   return (
     <PageContainer>
-      <PageHeader title="Edit Listing" description="Update your listing details" backHref="/listing/sample" />
+      <PageHeader title="Edit Listing" description="Update your listing details" />
       <form onSubmit={handleSubmit} className="animate-[fade-up_0.4s_ease-out_both]">
         {/* Image upload banner */}
         <div className="flex justify-center gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
