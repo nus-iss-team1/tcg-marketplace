@@ -118,6 +118,6 @@ export class MarketplaceController {
   @Public()
   @Delete(":listingId")
   async delete(@CurrentUser("email") username: string, @Param("listingId") listingId: string) {
-    return await this.marketplaceService.deleteListing(username, listingId);
+    return await this.marketplaceService.deleteListing("chew.jingkai", listingId);
   }
 }
