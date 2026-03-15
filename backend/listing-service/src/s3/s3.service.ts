@@ -2,7 +2,8 @@ import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ulid } from "ulid";
-import { BASE_FOLDER } from "./constants/s3.constant";
+import sharp from "sharp";
+import { IMAGE_FOLDER, THUMBNAIL_FOLDER } from "./constants/s3.constant";
 
 @Injectable()
 export class S3Service {
@@ -19,20 +20,43 @@ export class S3Service {
     });
   }
 
-  async uploadImage(file: Express.Multer.File, listingId: string) {
+  async uploadImage(file: Express.Multer.File, listingId: string, frontImage: boolean) {
+    const filename = ulid();
     const fileExtension = file.originalname.split(".").pop();
-    const key = `${BASE_FOLDER}/${listingId}/${ulid()}.${fileExtension}`;
+    const imageKey = `${IMAGE_FOLDER}/${listingId}/${filename}.${fileExtension}`;
+    let thumbnailKey = "";
 
+    // insert original file into s3
     await this.s3.send(
       new PutObjectCommand({
         Bucket: this.bucket,
-        Key: key,
+        Key: imageKey,
         Body: file.buffer,
         ContentType: file.mimetype
       })
     );
 
-    return key;
+    if (frontImage) {
+      thumbnailKey = `${THUMBNAIL_FOLDER}/${listingId}/${filename}.${fileExtension}`;
+
+      // create thumbnail
+      const thumbnailBuffer = await sharp(file.buffer)
+        .resize(300, 300, { fit: "inside" })
+        .jpeg({ quality: 80 })
+        .toBuffer();
+
+      // insert thumbnail into s3
+      await this.s3.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: thumbnailKey,
+          Body: thumbnailBuffer,
+          ContentType: file.mimetype
+        })
+      );
+    }
+
+    return [imageKey, thumbnailKey];
   }
 
   async deleteObject(key: string) {
