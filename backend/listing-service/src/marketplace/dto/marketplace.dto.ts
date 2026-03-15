@@ -6,9 +6,9 @@ import {
   IsIn,
   IsNotEmpty,
   IsNumber,
-  IsNumberString,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
   Min,
   ValidateNested
@@ -106,7 +106,9 @@ export class UpdateListingDto extends BaseListingDto {
 
 export class QueryListingDto {
   @IsOptional()
-  @IsNumberString()
+  @IsNumber()
+  @Min(1)
+  @Max(500)
   readonly limit?: number;
 
   @IsOptional()
