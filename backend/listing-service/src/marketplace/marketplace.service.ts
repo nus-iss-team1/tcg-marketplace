@@ -20,7 +20,7 @@ import {
 import { Listing } from "./types/marketplace.schema";
 import { padPrice } from "../common/utils/common.utils";
 import { CreateListingDto, QueryListingDto, UpdateListingDto } from "./dto/marketplace.dto";
-import { BASE_FOLDER } from "../s3/constants/s3.constant";
+import { IMAGE_FOLDER, THUMBNAIL_FOLDER } from "../s3/constants/s3.constant";
 import { LoggingService } from "../logger/logging.service";
 
 @Injectable()
@@ -70,10 +70,10 @@ export class MarketplaceService {
   async createListing(
     sellerId: string,
     listing: CreateListingDto,
-    frontImage?: Express.Multer.File,
+    frontImage: Express.Multer.File,
     backImage?: Express.Multer.File
   ) {
-    const newUlid = ulid();
+    const listingId = ulid();
     const currentTs = DateTime.now().toMillis();
     const paddedPrice = padPrice(listing.price);
 
@@ -84,25 +84,30 @@ export class MarketplaceService {
 
     try {
       // upload image to s3
-      if (frontImage) {
-        attachment.front = await this.s3Service.uploadImage(frontImage, newUlid);
-      }
+      const [frontKey, thumbnailKey] = await this.s3Service.uploadImage(
+        frontImage,
+        listingId,
+        true
+      );
+      attachment.front = frontKey;
+
       if (backImage) {
-        attachment.back = await this.s3Service.uploadImage(backImage, newUlid);
+        const [backKey, _] = await this.s3Service.uploadImage(backImage, listingId, false);
+        attachment.back = backKey;
       }
 
       const newListing: Listing = {
         ...listing,
-        listingId: newUlid,
+        listingId: listingId,
         createdAt: currentTs,
         updatedAt: currentTs,
         sellerId: sellerId,
         attachment: attachment,
-        thumbnail: attachment.front,
+        thumbnail: thumbnailKey,
         listingStatus: ListingStatus.ACTIVE,
-        listingUpdatedAt: `${currentTs}#${newUlid}`.toLowerCase(),
-        listingCardName: `${listing.cardName}#${newUlid}`.toLowerCase(),
-        listingPrice: `${paddedPrice}#${newUlid}`.toLowerCase()
+        listingUpdatedAt: `${currentTs}#${listingId}`.toLowerCase(),
+        listingCardName: `${listing.cardName}#${listingId}`.toLowerCase(),
+        listingPrice: `${paddedPrice}#${listingId}`.toLowerCase()
       };
 
       // write into database
@@ -111,7 +116,8 @@ export class MarketplaceService {
       this.logger.error(err);
 
       try {
-        await this.s3Service.deleteObject(`${BASE_FOLDER}/${newUlid}/`);
+        await this.s3Service.deleteObject(`${IMAGE_FOLDER}/${listingId}/`);
+        await this.s3Service.deleteObject(`${THUMBNAIL_FOLDER}/${listingId}/`);
       } catch (err) {
         this.logger.error(err);
         throw new InternalServerErrorException("Failed to delete file");
@@ -170,24 +176,28 @@ export class MarketplaceService {
         front: oldRecord.attachment.front,
         back: oldRecord.attachment.back
       };
+      let thumbnail = oldRecord.thumbnail;
       let updatedListing: Listing;
 
       try {
         // replace image in s3
         if (frontImageAction === ImageAction.REPLACE && frontImage) {
-          attachment.front = await this.s3Service.uploadImage(frontImage, listingId);
-          oldRecord.thumbnail = attachment.front;
+          const [frontKey, thumbnailKey] = await this.s3Service.uploadImage(
+            frontImage,
+            listingId,
+            true
+          );
+          attachment.front = frontKey;
+          thumbnail = thumbnailKey;
           uploadedKeys.push(attachment.front);
+          uploadedKeys.push(thumbnail);
         }
         if (backImageAction === ImageAction.REPLACE && backImage) {
-          attachment.back = await this.s3Service.uploadImage(backImage, listingId);
+          const [backKey, _] = await this.s3Service.uploadImage(backImage, listingId, false);
+          attachment.back = backKey;
           uploadedKeys.push(attachment.back);
         }
 
-        if (frontImageAction === ImageAction.DELETE) {
-          attachment.front = "";
-          oldRecord.thumbnail = attachment.front;
-        }
         if (backImageAction === ImageAction.DELETE) {
           attachment.back = "";
         }
@@ -204,6 +214,7 @@ export class MarketplaceService {
           listingPrice: `${paddedPrice}#${listingId}`.toLowerCase(),
           cardName: cardName,
           attachment: attachment,
+          thumbnail: thumbnail,
           listingId: listingId,
           updatedAt: currentTs
         };
@@ -223,11 +234,9 @@ export class MarketplaceService {
       }
 
       // delete old images
-      if (
-        (frontImageAction === ImageAction.REPLACE || frontImageAction === ImageAction.DELETE) &&
-        oldRecord.attachment.front
-      ) {
+      if (frontImageAction === ImageAction.REPLACE && oldRecord.attachment.front) {
         await this.s3Service.deleteObject(oldRecord.attachment.front);
+        await this.s3Service.deleteObject(oldRecord.thumbnail);
       }
       if (
         (backImageAction === ImageAction.REPLACE || backImageAction === ImageAction.DELETE) &&

@@ -21,6 +21,7 @@ import { CreateListingDto, QueryListingDto, UpdateListingDto } from "./dto/marke
 import { ImageUploadPipe } from "./pipes/image-validation.pipe";
 import { MAX_SIZE } from "../s3/constants/s3.constant";
 import { MultipartJsonInterceptor } from "./interceptors/multipart-json.Interceptor";
+import { ImageAction } from "./types/marketplace.type";
 
 @UseGuards(CognitoAuthGuard)
 @Controller("marketplace")
@@ -54,14 +55,19 @@ export class MarketplaceController {
     },
     @Body() listing: CreateListingDto
   ) {
-    if (!files.frontImage) {
+    const frontImage = this.imagePipe.transform(files.frontImage?.[0]);
+    const backImage = this.imagePipe.transform(files.backImage?.[0]);
+
+    if (!frontImage) {
       throw new BadRequestException("frontImage is required");
     }
 
-    const frontImage = this.imagePipe.transform(files.frontImage[0]);
-    const backImage = this.imagePipe.transform(files.backImage?.[0]);
-
-    return await this.marketplaceService.createListing("jaryl.o", listing, frontImage, backImage);
+    return await this.marketplaceService.createListing(
+      "chew.jingkai",
+      listing,
+      frontImage,
+      backImage
+    );
   }
 
   @Public()
@@ -105,6 +111,13 @@ export class MarketplaceController {
   ) {
     const frontImage = this.imagePipe.transform(files.frontImage?.[0]);
     const backImage = this.imagePipe.transform(files.backImage?.[0]);
+
+    if (listing.frontImageAction === ImageAction.REPLACE && !frontImage) {
+      throw new BadRequestException("Missing frontImage");
+    }
+    if (listing.backImageAction === ImageAction.REPLACE && !backImage) {
+      throw new BadRequestException("Missing backImage");
+    }
 
     return await this.marketplaceService.updateListing(
       "chew.jingkai",
