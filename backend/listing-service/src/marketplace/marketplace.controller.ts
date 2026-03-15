@@ -54,14 +54,19 @@ export class MarketplaceController {
     },
     @Body() listing: CreateListingDto
   ) {
-    if (!files.frontImage) {
+    const frontImage = this.imagePipe.transform(files.frontImage?.[0]);
+    const backImage = this.imagePipe.transform(files.backImage?.[0]);
+
+    if (!frontImage) {
       throw new BadRequestException("frontImage is required");
     }
 
-    const frontImage = this.imagePipe.transform(files.frontImage[0]);
-    const backImage = this.imagePipe.transform(files.backImage?.[0]);
-
-    return await this.marketplaceService.createListing("jaryl.o", listing, frontImage, backImage);
+    return await this.marketplaceService.createListing(
+      "chew.jingkai",
+      listing,
+      frontImage,
+      backImage
+    );
   }
 
   @Public()

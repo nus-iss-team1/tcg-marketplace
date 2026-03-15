@@ -70,7 +70,7 @@ export class MarketplaceService {
   async createListing(
     sellerId: string,
     listing: CreateListingDto,
-    frontImage?: Express.Multer.File,
+    frontImage: Express.Multer.File,
     backImage?: Express.Multer.File
   ) {
     const listingId = ulid();
@@ -83,17 +83,13 @@ export class MarketplaceService {
     };
 
     try {
-      let thumbnail = "";
       // upload image to s3
-      if (frontImage) {
-        const [frontKey, thumbnailKey] = await this.s3Service.uploadImage(
-          frontImage,
-          listingId,
-          true
-        );
-        attachment.front = frontKey;
-        thumbnail = thumbnailKey;
-      }
+      const [frontKey, thumbnailKey] = await this.s3Service.uploadImage(
+        frontImage,
+        listingId,
+        true
+      );
+      attachment.front = frontKey;
 
       if (backImage) {
         const [backKey, _] = await this.s3Service.uploadImage(backImage, listingId, false);
@@ -107,7 +103,7 @@ export class MarketplaceService {
         updatedAt: currentTs,
         sellerId: sellerId,
         attachment: attachment,
-        thumbnail: thumbnail,
+        thumbnail: thumbnailKey,
         listingStatus: ListingStatus.ACTIVE,
         listingUpdatedAt: `${currentTs}#${listingId}`.toLowerCase(),
         listingCardName: `${listing.cardName}#${listingId}`.toLowerCase(),
@@ -202,10 +198,6 @@ export class MarketplaceService {
           uploadedKeys.push(attachment.back);
         }
 
-        if (frontImageAction === ImageAction.DELETE) {
-          attachment.front = "";
-          oldRecord.thumbnail = attachment.front;
-        }
         if (backImageAction === ImageAction.DELETE) {
           attachment.back = "";
         }
@@ -242,10 +234,7 @@ export class MarketplaceService {
       }
 
       // delete old images
-      if (
-        (frontImageAction === ImageAction.REPLACE || frontImageAction === ImageAction.DELETE) &&
-        oldRecord.attachment.front
-      ) {
+      if (frontImageAction === ImageAction.REPLACE && oldRecord.attachment.front) {
         await this.s3Service.deleteObject(oldRecord.attachment.front);
         await this.s3Service.deleteObject(oldRecord.thumbnail);
       }
