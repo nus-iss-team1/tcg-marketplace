@@ -195,6 +195,7 @@ export class MarketplaceRepository {
         new UpdateCommand({
           TableName: this.tableName,
           Key: {
+            gameName: listing.gameName,
             listingId: listing.listingId
           },
           UpdateExpression: "SET listingStatus = :listingStatus",
