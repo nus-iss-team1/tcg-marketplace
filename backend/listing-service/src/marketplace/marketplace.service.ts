@@ -187,6 +187,15 @@ export class MarketplaceService {
     };
   }
 
+  async specificListing(gameName: string, listingId: string) {
+    const result = await this.marketplaceRepo.retrieveSpecificListing(gameName, listingId);
+
+    // append cdn to attachment and thumbnail
+    this.buildCdnUrl([result]);
+
+    return result;
+  }
+
   async updateListing(
     sellerId: string,
     listingId: string,
@@ -195,7 +204,7 @@ export class MarketplaceService {
     backImage?: Express.Multer.File
   ) {
     // check if record exist and sellerId is owner of the record
-    const result = await this.marketplaceRepo.retrieveSpecificListing(sellerId, listingId);
+    const result = await this.marketplaceRepo.retrieveSpecificSellerListing(sellerId, listingId);
 
     if (result.length !== 0) {
       const { frontImageAction, backImageAction, ...updatedField } = listing;
@@ -282,7 +291,7 @@ export class MarketplaceService {
 
   async deleteListing(sellerId: string, listingId: string) {
     // check if sellerId is owner of the record
-    const result = await this.marketplaceRepo.retrieveSpecificListing(sellerId, listingId);
+    const result = await this.marketplaceRepo.retrieveSpecificSellerListing(sellerId, listingId);
 
     if (result.length !== 0) {
       const record = result[0];

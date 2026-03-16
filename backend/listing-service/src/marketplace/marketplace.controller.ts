@@ -82,6 +82,15 @@ export class MarketplaceController {
     return await this.marketplaceService.sellerListing(sellerId, query);
   }
 
+  @Public()
+  @Get(":gameName/:listingId")
+  async specificListing(
+    @Param("gameName") gameName: string,
+    @Param("listingId") listingId: string
+  ) {
+    return await this.marketplaceService.specificListing(gameName, listingId);
+  }
+
   // @Roles("User")
   @Public()
   @Patch(":listingId")
