@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
   LoggerService
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { DateTime } from "luxon";
 import { ulid } from "ulid";
 import { S3Service } from "../s3/s3.service";
@@ -26,13 +27,16 @@ import { LoggingService } from "../logger/logging.service";
 @Injectable()
 export class MarketplaceService {
   private logger: LoggerService;
+  private CDN_URL: string;
 
   constructor(
     loggingService: LoggingService,
+    configService: ConfigService,
     private readonly s3Service: S3Service,
     private readonly marketplaceRepo: MarketplaceRepository
   ) {
     this.logger = loggingService.getLogger();
+    this.CDN_URL = configService.getOrThrow<string>("CDN_URL");
   }
 
   private configureQuery(query?: QueryListingDto) {
@@ -65,6 +69,23 @@ export class MarketplaceService {
     };
 
     return newQuery;
+  }
+
+  private buildCdnUrl(listings: Listing[]) {
+    for (const record of listings) {
+      if (record.attachment) {
+        record.attachment.front = record.attachment.front
+          ? `${this.CDN_URL}/${record.attachment.front}`
+          : record.attachment.front;
+        record.attachment.back = record.attachment.back
+          ? `${this.CDN_URL}/${record.attachment.back}`
+          : record.attachment.back;
+      }
+
+      record.thumbnail = record.thumbnail
+        ? `${this.CDN_URL}/${record.thumbnail}`
+        : record.thumbnail;
+    }
   }
 
   async createListing(
@@ -111,7 +132,12 @@ export class MarketplaceService {
       };
 
       // write into database
-      return await this.marketplaceRepo.createListing(newListing);
+      const result = await this.marketplaceRepo.createListing(newListing);
+
+      // append cdn to attachment and thumbnail
+      this.buildCdnUrl([result]);
+
+      return result;
     } catch (err) {
       this.logger.error(err);
 
@@ -129,6 +155,9 @@ export class MarketplaceService {
     const newQuery = this.configureQuery(query);
     const result = await this.marketplaceRepo.retrieveListing(gameName, newQuery);
 
+    // append cdn to attachment and thumbnail
+    this.buildCdnUrl(result.items);
+
     return {
       data: result.items,
       pagination: {
@@ -144,6 +173,9 @@ export class MarketplaceService {
     const newQuery = this.configureQuery(query);
     const result = await this.marketplaceRepo.retrieveSellerListing(sellerId, newQuery);
 
+    // append cdn to attachment and thumbnail
+    this.buildCdnUrl(result.items);
+
     return {
       data: result.items,
       pagination: {
@@ -155,6 +187,15 @@ export class MarketplaceService {
     };
   }
 
+  async specificListing(gameName: string, listingId: string) {
+    const result = await this.marketplaceRepo.retrieveSpecificListing(gameName, listingId);
+
+    // append cdn to attachment and thumbnail
+    this.buildCdnUrl([result]);
+
+    return result;
+  }
+
   async updateListing(
     sellerId: string,
     listingId: string,
@@ -163,10 +204,7 @@ export class MarketplaceService {
     backImage?: Express.Multer.File
   ) {
     // check if record exist and sellerId is owner of the record
-    const result = (await this.marketplaceRepo.retrieveSpecificListing(
-      sellerId,
-      listingId
-    )) as Listing[];
+    const result = await this.marketplaceRepo.retrieveSpecificSellerListing(sellerId, listingId);
 
     if (result.length !== 0) {
       const { frontImageAction, backImageAction, ...updatedField } = listing;
@@ -253,10 +291,7 @@ export class MarketplaceService {
 
   async deleteListing(sellerId: string, listingId: string) {
     // check if sellerId is owner of the record
-    const result = (await this.marketplaceRepo.retrieveSpecificListing(
-      sellerId,
-      listingId
-    )) as Listing[];
+    const result = await this.marketplaceRepo.retrieveSpecificSellerListing(sellerId, listingId);
 
     if (result.length !== 0) {
       const record = result[0];
