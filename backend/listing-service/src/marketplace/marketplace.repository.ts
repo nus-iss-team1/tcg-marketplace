@@ -78,7 +78,7 @@ export class MarketplaceRepository {
       const result = await this.docClient.send(new QueryCommand(param));
 
       return {
-        items: result.Items ?? [],
+        items: (result.Items as Listing[]) ?? [],
         nextCursor: result.LastEvaluatedKey ?? null
       };
     } catch (err) {
@@ -103,7 +103,7 @@ export class MarketplaceRepository {
         })
       );
 
-      return result.Items ?? [];
+      return (result.Items as Listing[]) ?? [];
     } catch (err) {
       this.logger.error(err);
       handleDynamoError(err);
@@ -133,7 +133,7 @@ export class MarketplaceRepository {
       const result = await this.docClient.send(new QueryCommand(param));
 
       return {
-        items: result.Items ?? [],
+        items: (result.Items as Listing[]) ?? [],
         nextCursor: result.LastEvaluatedKey ?? null
       };
     } catch (err) {
