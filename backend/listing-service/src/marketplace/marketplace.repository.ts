@@ -60,10 +60,10 @@ export class MarketplaceRepository {
       TableName: this.tableName,
       IndexName: query.index,
       KeyConditionExpression: "gameName = :gameName",
-      FilterExpression: "listingStatus = :listingStatus",
+      FilterExpression: "listingStatus <> :listingStatus",
       ExpressionAttributeValues: {
         ":gameName": gameName,
-        ":listingStatus": "ACTIVE"
+        ":listingStatus": "DELETED"
       },
       ...ListingProjections.overview,
       Limit: query.limit,
@@ -87,7 +87,31 @@ export class MarketplaceRepository {
     }
   }
 
-  async retrieveSpecificListing(sellerId: string, listingId: string) {
+  async retrieveSpecificListing(gameName: string, listingId: string) {
+    try {
+      const result = await this.docClient.send(
+        new QueryCommand({
+          TableName: this.tableName,
+          KeyConditionExpression: "gameName = :gameName AND listingId = :listingId",
+          FilterExpression: "listingStatus <> :listingStatus",
+          ExpressionAttributeValues: {
+            ":gameName": gameName,
+            ":listingId": listingId,
+            ":listingStatus": "DELETED"
+          },
+          ...ListingProjections.specificListing
+        })
+      );
+
+      const records = result.Items as Listing[];
+      return records[0] ?? {};
+    } catch (err) {
+      this.logger.error(err);
+      handleDynamoError(err);
+    }
+  }
+
+  async retrieveSpecificSellerListing(sellerId: string, listingId: string) {
     try {
       const result = await this.docClient.send(
         new QueryCommand({
@@ -99,7 +123,8 @@ export class MarketplaceRepository {
             ":sellerId": sellerId,
             ":listingId": listingId,
             ":listingStatus": "DELETED"
-          }
+          },
+          ...ListingProjections.overview
         })
       );
 
