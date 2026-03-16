@@ -115,7 +115,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_COGNITO_USER_POOL_ID=${{ secrets.NEXT_PUBLIC_COGNITO_USER_POOL_ID }}
             NEXT_PUBLIC_COGNITO_CLIENT_ID=${{ secrets.NEXT_PUBLIC_COGNITO_CLIENT_ID }}
-            NEXT_PUBLIC_BACKEND_API=http://tcg-marketplace-alb-1244485602.ap-southeast-1.elb.amazonaws.com
+            NEXT_PUBLIC_BACKEND_API=https://vaultofcards.io
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/nusiss-team-1-voc/tcgm-web:develop-latest
             ${{ steps.login-ecr.outputs.registry }}/nusiss-team-1-voc/tcgm-web:develop-${{ steps.vars.outputs.sha_short }}
@@ -140,7 +140,7 @@ jobs:
       - name: Download current task definition
         run: |
           aws ecs describe-task-definition \
-            --task-definition tcg-marketplace-web \
+            --task-definition nusiss-team-1-voc-web \
             --query taskDefinition \
             > task-def.json
 
@@ -156,6 +156,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.render.outputs.task-definition }}
-          service: tcg-marketplace-web-service
-          cluster: tcg-marketplace-cluster
+          service: nusiss-team-1-voc-web-service
+          cluster: nusiss-team-1-voc-cluster
           wait-for-service-stability: true
