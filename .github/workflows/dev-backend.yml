@@ -92,6 +92,9 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    concurrency:
+      group: app-deploy-${{ matrix.service }}
+      cancel-in-progress: false
     strategy:
       matrix:
         service: [listing, messaging]
