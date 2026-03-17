@@ -126,7 +126,7 @@ jobs:
       - name: Download current task definition
         run: |
           aws ecs describe-task-definition \
-            --task-definition tcg-marketplace-${{ matrix.service }}-service \
+            --task-definition nusiss-team-1-voc-${{ matrix.service }}-service \
             --query taskDefinition \
             > task-def.json
 
@@ -142,6 +142,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.render.outputs.task-definition }}
-          service: tcg-marketplace-${{ matrix.service }}-service
-          cluster: tcg-marketplace-cluster
+          service: nusiss-team-1-voc-${{ matrix.service }}-service
+          cluster: nusiss-team-1-voc-cluster
           wait-for-service-stability: true
