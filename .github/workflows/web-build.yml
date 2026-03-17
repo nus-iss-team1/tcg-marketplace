@@ -74,7 +74,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high # Fails only on High/Critical issues
+          args: --severity-threshold=high --file=frontend/package-lock.json
 
   build-and-push:
     needs: security-scan
