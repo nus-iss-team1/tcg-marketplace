@@ -8,11 +8,7 @@ Parameters:
 
 Resources:
 
-  # ════════════════════════════════════════════════════════════
-  # Storage
-  # ════════════════════════════════════════════════════════════
-
-  AssetsBucket:
+ AssetsBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "${ProjectNamespace}-assets"
@@ -26,9 +22,59 @@ Resources:
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
 
-  # ════════════════════════════════════════════════════════════
-  # Database
-  # ════════════════════════════════════════════════════════════
+  AssetsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AssetsBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowCloudFrontServicePrincipal
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub "${AssetsBucket.Arn}/*"
+            Condition:
+              StringEquals:
+                "AWS:SourceArn": !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${AssetsCDN}"
+
+
+  AssetsCDNOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub "${ProjectNamespace}-assets-oac"
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  AssetsCDN:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub "${ProjectNamespace} - S3 Assets CDN"
+        DefaultCacheBehavior:
+          TargetOriginId: S3AssetsOrigin
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # CachingOptimized
+          Compress: true
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+        Origins:
+          - Id: S3AssetsOrigin
+            DomainName: !GetAtt AssetsBucket.RegionalDomainName
+            OriginAccessControlId: !Ref AssetsCDNOriginAccessControl
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+        HttpVersion: http2
+        PriceClass: PriceClass_200
+
 
   GameCardLookup:
     Type: AWS::DynamoDB::Table
@@ -176,6 +222,16 @@ Outputs:
     Value: !GetAtt AssetsBucket.Arn
     Export:
       Name: !Sub "${ProjectNamespace}-AssetsBucketArn"
+  AssetsCDNDomainName:
+    Description: "CloudFront distribution domain for S3 assets"
+    Value: !GetAtt AssetsCDN.DomainName
+    Export:
+      Name: !Sub "${ProjectNamespace}-AssetsCDNDomainName"
+  AssetsCDNUrl:
+    Description: "CloudFront URL for S3 assets"
+    Value: !Sub "https://${AssetsCDN.DomainName}"
+    Export:
+      Name: !Sub "${ProjectNamespace}-AssetsCDNUrl"
 
   # Database
   GameCardLookupTableName:
