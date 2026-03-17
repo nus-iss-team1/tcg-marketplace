@@ -2,6 +2,7 @@ import requests
 import json
 import time
 import os
+import ulid
 
 games = {
   "Pokemon TCG": "https://api.opentcg.org/cards?game=pokemon",
@@ -58,7 +59,7 @@ for game_name, base_url in games.items():
 
     data_list.append({
       "gameId": "carddata",
-      "meta": f"CARD#{card_name}#{rarity}".lower(),
+      "meta": f"CARD#{card_name}#{rarity}#{ulid.new()}".lower(),
       "gameName": game_name,
       "cardName": card_name,
       "cardId": card_id,
