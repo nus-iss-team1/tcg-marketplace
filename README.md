@@ -8,8 +8,14 @@
 
 
 
-<!-- PROJECT LOGO -->
+<!-- PROJECT BANNER -->
+<div align="center">
+  <img src="images/banner.png" alt="TCG Marketplace Banner" width="100%" />
+</div>
+
 <br />
+
+<!-- PROJECT LOGO -->
 <div align="center">
   <h3 align="center">TCG Marketplace</h3>
 
