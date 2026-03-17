@@ -85,40 +85,73 @@ Resources:
       SubnetId: !Ref PublicSubnetB
       RouteTableId: !Ref PublicRouteTable
 
-  # ── NAT Gateway ────────────────────────────────────────────
-  NATGatewayEIP:
+  # ── NAT Gateways (one per AZ) ──────────────────────────────
+  NATGatewayEIPA:
     Type: AWS::EC2::EIP
     DependsOn: VPCGatewayAttachment
     Properties:
       Domain: vpc
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-nat-eip"
+          Value: !Sub "${ProjectNamespace}-nat-eip-a"
 
-  NATGateway:
+  NATGatewayA:
     Type: AWS::EC2::NatGateway
     Properties:
-      AllocationId: !GetAtt NATGatewayEIP.AllocationId
+      AllocationId: !GetAtt NATGatewayEIPA.AllocationId
       SubnetId: !Ref PublicSubnetA
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-nat"
+          Value: !Sub "${ProjectNamespace}-nat-a"
+
+  NATGatewayEIPB:
+    Type: AWS::EC2::EIP
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectNamespace}-nat-eip-b"
+
+  NATGatewayB:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NATGatewayEIPB.AllocationId
+      SubnetId: !Ref PublicSubnetB
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectNamespace}-nat-b"
 
   # ── Private Subnets ────────────────────────────────────────
-  PrivateRouteTable:
+  PrivateRouteTableA:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-private-rt"
+          Value: !Sub "${ProjectNamespace}-private-rt-a"
 
-  PrivateRoute:
+  PrivateRouteA:
     Type: AWS::EC2::Route
     Properties:
-      RouteTableId: !Ref PrivateRouteTable
+      RouteTableId: !Ref PrivateRouteTableA
       DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NATGateway
+      NatGatewayId: !Ref NATGatewayA
+
+  PrivateRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectNamespace}-private-rt-b"
+
+  PrivateRouteB:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableB
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGatewayB
 
   PrivateSubnetA:
     Type: AWS::EC2::Subnet
@@ -144,13 +177,13 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnetA
-      RouteTableId: !Ref PrivateRouteTable
+      RouteTableId: !Ref PrivateRouteTableA
 
   PrivateSubnetBRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnetB
-      RouteTableId: !Ref PrivateRouteTable
+      RouteTableId: !Ref PrivateRouteTableB
 
   # ════════════════════════════════════════════════════════════
   # Cluster, ALB, API Gateway

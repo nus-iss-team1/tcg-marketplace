@@ -9,7 +9,7 @@ on:
       - "frontend/**"
 
 concurrency:
-  group: web-build-${{ github.ref }}
+  group: web-ci-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -129,6 +129,9 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    concurrency:
+      group: web-deploy
+      cancel-in-progress: false
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4

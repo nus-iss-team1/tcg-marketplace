@@ -9,7 +9,7 @@ on:
       - "backend/**"
 
 concurrency:
-  group: app-build-${{ github.ref }}
+  group: app-ci-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -112,6 +112,9 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    concurrency:
+      group: app-deploy-${{ matrix.service }}
+      cancel-in-progress: false
     strategy:
       matrix:
         service: [listing] # Add future services here
