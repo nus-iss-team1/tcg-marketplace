@@ -319,4 +319,3 @@ Project Link: [https://github.com/nus-iss-team1/tcg-marketplace](https://github.
 [Docker-url]: https://www.docker.com/
 [GitHubActions]: https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white
 [GitHubActions-url]: https://github.com/features/actions
-]]>
