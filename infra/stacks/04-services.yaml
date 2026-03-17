@@ -167,6 +167,9 @@ Resources:
             - Name: TCG_MARKETPLACE_TABLE
               Value: !ImportValue
                 Fn::Sub: "${ProjectNamespace}-TCGMarketplaceTableName"
+            - Name: CDN_URL
+              Value: !ImportValue
+                Fn::Sub: "${ProjectNamespace}-AssetsCDNUrl"
 
   WebTaskDefinition:
     Type: AWS::ECS::TaskDefinition
