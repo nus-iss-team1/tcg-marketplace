@@ -80,10 +80,7 @@ function MarketplaceContent() {
       ) : (
         <>
           <div
-            className="grid gap-5 sm:gap-6 md:gap-8"
-            style={{
-              gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, 160px), 1fr))`,
-            }}
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 sm:gap-6 md:gap-8"
           >
             {listings.map((listing, i) => (
               <ListingCard key={listing.listingId} listing={listing} index={i} />

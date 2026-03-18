@@ -161,6 +161,11 @@ export function getCurrentUser() {
   return getUserPool().getCurrentUser();
 }
 
+export async function getAccessToken(): Promise<string | null> {
+  const session = await getCurrentSession();
+  return session?.getIdToken().getJwtToken() ?? null;
+}
+
 export function getUserAttributes(): Promise<Record<string, string>> {
   const currentUser = getUserPool().getCurrentUser();
   if (!currentUser) return Promise.reject(new Error("No user"));
