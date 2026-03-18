@@ -21,13 +21,14 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   UploadIcon,
   Trash2Icon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
-import { getCardTypes } from "@/lib/listings";
+import { getCardTypes, createListing } from "@/lib/listings";
 
 export default function CreateListingPage() {
   const router = useRouter();
@@ -39,21 +40,25 @@ export default function CreateListingPage() {
   }, []);
 
   const [gameName, setGameName] = useState("");
+  const [title, setTitle] = useState("");
   const [cardName, setCardName] = useState("");
   const [setName, setSetName] = useState("");
   const [cardId, setCardId] = useState("");
   const [rarity, setRarity] = useState("");
   const [price, setPrice] = useState("");
+  const [description, setDescription] = useState("");
   const [pickUp, setPickUp] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState({ cash: false, paynow: false, bank: false });
   const [frontImage, setFrontImage] = useState<File | null>(null);
   const [backImage, setBackImage] = useState<File | null>(null);
   const [frontPreview, setFrontPreview] = useState<string | null>(null);
   const [backPreview, setBackPreview] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploadTarget, setUploadTarget] = useState<"front" | "back">("front");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const canSubmit = gameName && cardName && price && Number(price) > 0;
+  const canSubmit = gameName && cardName && title && price && Number(price) > 0 && frontImage && (paymentMethod.cash || paymentMethod.paynow || paymentMethod.bank) && !submitting;
 
   const handleOpenUpload = (target: "front" | "back") => {
     setUploadTarget(target);
@@ -91,22 +96,31 @@ export default function CreateListingPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Call backend API to create listing
-    console.log({
-      gameName,
-      cardName,
-      setName: setName || undefined,
-      cardId: cardId || undefined,
-      rarity: rarity || undefined,
-      price: Number(Number(price).toFixed(2)),
-      pickUp: pickUp || undefined,
-      frontImage,
-      backImage,
-    });
-    toast.success("Listing created successfully.");
-    router.push("/listing/sample");
+    setSubmitting(true);
+    try {
+      await createListing({
+        gameName,
+        cardName,
+        title,
+        description: description || undefined,
+        setName: setName || undefined,
+        cardId: cardId || undefined,
+        rarity: rarity || undefined,
+        price: Number(Number(price).toFixed(2)),
+        pickup: pickUp || undefined,
+        paymentMethod,
+        frontImage: frontImage ?? undefined,
+        backImage: backImage ?? undefined,
+      });
+      toast.success("Listing created successfully.");
+      router.push("/listing");
+    } catch {
+      toast.error("Failed to create listing. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -222,6 +236,28 @@ export default function CreateListingPage() {
               className="h-9"
             />
           </div>
+          <div className="space-y-2 mt-3">
+            <Label htmlFor="title">Listing Title *</Label>
+            <Input
+              id="title"
+              placeholder="E.G. MINT CONDITION CHARIZARD VMAX"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={150}
+              className="h-9"
+            />
+          </div>
+          <div className="space-y-2 mt-3">
+            <Label htmlFor="description">Description</Label>
+            <Input
+              id="description"
+              placeholder="DESCRIBE CONDITION, DETAILS, ETC."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={500}
+              className="h-9"
+            />
+          </div>
         </div>
 
         {/* Price */}
@@ -291,10 +327,40 @@ export default function CreateListingPage() {
 
         <Separator />
 
+        {/* Payment Method */}
+        <div className="space-y-3 my-4">
+          <Label>Payment Method *</Label>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={paymentMethod.cash}
+                onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, cash: v === true }))}
+              />
+              Cash
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={paymentMethod.paynow}
+                onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, paynow: v === true }))}
+              />
+              PayNow
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={paymentMethod.bank}
+                onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, bank: v === true }))}
+              />
+              Bank Transfer
+            </label>
+          </div>
+        </div>
+
+        <Separator />
+
         {/* Submit */}
         <div className="flex gap-3 my-4">
           <Button type="submit" disabled={!canSubmit} className="flex-1 sm:flex-none">
-            Create Listing
+            {submitting ? "Creating..." : "Create Listing"}
           </Button>
           <Button
             type="button"

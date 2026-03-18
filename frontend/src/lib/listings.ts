@@ -1,5 +1,14 @@
-const BASE_URL = "";
+import { getAccessToken } from "@/lib/cognito";
+
+const BASE_URL = typeof window === "undefined"
+  ? (process.env.NEXT_PUBLIC_BACKEND_API ?? "")
+  : "";
 const USE_MOCK = process.env.NODE_ENV === "test";
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const token = await getAccessToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 /* ── Mock data ── */
 
@@ -108,21 +117,72 @@ export interface CardType {
   value: string;
 }
 
+const MOCK_CARD_TYPES: CardType[] = [
+  { label: "Pokemon TCG", value: "Pokemon TCG" },
+  { label: "Yu-Gi-Oh!", value: "Yu-Gi-Oh!" },
+  { label: "Magic: The Gathering", value: "Magic: The Gathering" },
+  { label: "Digimon", value: "Digimon Card Game" },
+  { label: "One Piece", value: "One Piece Card Game" },
+  { label: "Star Wars", value: "Star Wars Unlimited" },
+];
+
 export async function getCardTypes(): Promise<CardType[]> {
-  return [
-    { label: "Pokemon TCG", value: "Pokemon TCG" },
-    { label: "Yu-Gi-Oh!", value: "Yu-Gi-Oh!" },
-    { label: "Magic: The Gathering", value: "Magic: The Gathering" },
-    { label: "Digimon", value: "Digimon Card Game" },
-    { label: "One Piece", value: "One Piece Card Game" },
-    { label: "Star Wars", value: "Star Wars Unlimited" },
-  ];
+  if (USE_MOCK) return MOCK_CARD_TYPES;
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/reference/game`);
+    if (!res.ok) {
+      console.error(`Failed to fetch card types: ${res.status} ${res.statusText}`);
+      return [];
+    }
+    const json = await res.json();
+    return (json.data ?? json ?? []).map((g: { gameName: string }) => ({
+      label: g.gameName,
+      value: g.gameName,
+    }));
+  } catch (err) {
+    console.error("Failed to fetch card types:", err);
+    return [];
+  }
+}
+
+/* ── GET /api/reference/card ── */
+
+export interface CardNameResult {
+  cardName: string;
+  gameName: string;
+}
+
+export async function fetchCardNames(
+  gameName: string,
+  cardName?: string
+): Promise<CardNameResult[]> {
+  const query = new URLSearchParams({ gameName });
+  if (cardName) query.set("cardName", cardName);
+  const res = await fetch(`${BASE_URL}/api/reference/card?${query.toString()}`);
+  if (!res.ok) throw new Error("Failed to fetch card names");
+  const json = await res.json();
+  return json.data ?? json ?? [];
+}
+
+/* ── GET /api/marketplace/{gameName}/{listingId} ── */
+
+export async function fetchSpecificListing(
+  gameName: string,
+  listingId: string
+): Promise<Listing> {
+  const res = await fetch(
+    `${BASE_URL}/api/marketplace/${encodeURIComponent(gameName)}/${encodeURIComponent(listingId)}`
+  );
+  if (!res.ok) throw new Error("Failed to fetch listing");
+  const json = await res.json();
+  return json.data ?? json;
 }
 
 export interface Listing {
   listingId: string;
-  sellerId: string;
-  sellerName: string;
+  sellerId?: string;
+  sellerName?: string;
   gameName: string;
   cardId?: string;
   cardName: string;
@@ -132,6 +192,7 @@ export interface Listing {
   paymentMethod?: PaymentMethod;
   pickUp?: string;
   listingStatus?: "ACTIVE" | "SOLD" | "DELETED";
+  thumbnail?: string;
   attachment?: ListingAttachment;
   createdAt: number;
   updatedAt: number;
@@ -164,16 +225,37 @@ export interface FetchListingsResponse {
 export interface CreateListingBody {
   gameName: string;
   cardName: string;
+  title: string;
+  description?: string;
   setName?: string;
   cardId?: string;
   rarity?: string;
   price: number;
   paymentMethod?: PaymentMethod;
+  pickup?: string;
   pickUp?: string;
   listingStatus?: "ACTIVE" | "SOLD" | "DELETED";
+  frontImage?: File;
+  backImage?: File;
 }
 
-export type UpdateListingBody = Omit<CreateListingBody, "gameName">;
+export interface UpdateListingBody {
+  cardName?: string;
+  title?: string;
+  description?: string;
+  setName?: string;
+  cardId?: string;
+  rarity?: string;
+  price?: number;
+  paymentMethod?: PaymentMethod;
+  pickup?: string;
+  pickUp?: string;
+  listingStatus?: "ACTIVE" | "SOLD" | "DELETED";
+  frontImage?: File;
+  backImage?: File;
+  frontImageAction?: "REPLACE" | "REMOVE" | "KEEP";
+  backImageAction?: "REPLACE" | "REMOVE" | "KEEP";
+}
 
 export interface SellerProfile {
   username: string;
@@ -262,28 +344,67 @@ export async function fetchSellerListings(
   };
 }
 
-/* ── POST /api/marketplace ── */
+/* ── POST /api/marketplace (multipart/form-data) ── */
 
 export async function createListing(body: CreateListingBody): Promise<Listing> {
+  const formData = new FormData();
+  formData.append("gameName", body.gameName);
+  formData.append("cardName", body.cardName);
+  formData.append("title", body.title);
+  formData.append("price", String(body.price));
+  if (body.description) formData.append("description", body.description);
+  if (body.setName) formData.append("setName", body.setName);
+  if (body.cardId) formData.append("cardId", body.cardId);
+  if (body.rarity) formData.append("rarity", body.rarity);
+  if (body.pickup) formData.append("pickup", body.pickup);
+  if (body.pickUp) formData.append("pickUp", body.pickUp);
+  if (body.listingStatus) formData.append("listingStatus", body.listingStatus);
+  formData.append("paymentMethod", JSON.stringify(body.paymentMethod ?? { cash: true, paynow: false, bank: false }));
+  if (body.frontImage) formData.append("frontImage", body.frontImage);
+  if (body.backImage) formData.append("backImage", body.backImage);
+
+  const headers = await authHeaders();
   const res = await fetch(`${BASE_URL}/api/marketplace`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    headers,
+    body: formData,
   });
-  if (!res.ok) throw new Error("Failed to create listing");
+  if (!res.ok) {
+    const err = await res.text();
+    console.error("Create listing failed:", res.status, err);
+    throw new Error("Failed to create listing");
+  }
   return res.json();
 }
 
-/* ── POST /api/marketplace/<listingId> ── */
+/* ── PATCH /api/marketplace/<listingId> (multipart/form-data) ── */
 
 export async function updateListing(
   listingId: string,
   body: UpdateListingBody
 ): Promise<Listing> {
+  const formData = new FormData();
+  if (body.cardName) formData.append("cardName", body.cardName);
+  if (body.title) formData.append("title", body.title);
+  if (body.description) formData.append("description", body.description);
+  if (body.setName) formData.append("setName", body.setName);
+  if (body.cardId) formData.append("cardId", body.cardId);
+  if (body.rarity) formData.append("rarity", body.rarity);
+  if (body.price != null) formData.append("price", String(body.price));
+  if (body.pickup) formData.append("pickup", body.pickup);
+  if (body.pickUp) formData.append("pickUp", body.pickUp);
+  if (body.listingStatus) formData.append("listingStatus", body.listingStatus);
+  if (body.paymentMethod) formData.append("paymentMethod", JSON.stringify(body.paymentMethod));
+  if (body.frontImage) formData.append("frontImage", body.frontImage);
+  if (body.backImage) formData.append("backImage", body.backImage);
+  if (body.frontImageAction) formData.append("frontImageAction", body.frontImageAction);
+  if (body.backImageAction) formData.append("backImageAction", body.backImageAction);
+
+  const headers = await authHeaders();
   const res = await fetch(`${BASE_URL}/api/marketplace/${encodeURIComponent(listingId)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    method: "PATCH",
+    headers,
+    body: formData,
   });
   if (!res.ok) throw new Error("Failed to update listing");
   return res.json();
@@ -292,8 +413,10 @@ export async function updateListing(
 /* ── DELETE /api/marketplace/<listingId> ── */
 
 export async function deleteListing(listingId: string): Promise<void> {
+  const headers = await authHeaders();
   const res = await fetch(`${BASE_URL}/api/marketplace/${encodeURIComponent(listingId)}`, {
     method: "DELETE",
+    headers,
   });
   if (!res.ok) throw new Error("Failed to delete listing");
 }
