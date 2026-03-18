@@ -200,6 +200,9 @@ Resources:
                 Fn::Sub: "${ProjectNamespace}-dev-UserPoolClientId"
             - Name: IMAGE_TAG
               Value: !Ref WebImageTag
+            - Name: CDN_HOSTNAME
+              Value: !ImportValue
+                Fn::Sub: "${ProjectNamespace}-AssetsCDNDomainName"
           LogConfiguration:
             LogDriver: awslogs
             Options:
