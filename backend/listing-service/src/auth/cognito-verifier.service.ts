@@ -21,13 +21,14 @@ export class CognitoVerifierService {
     this.verifier = CognitoJwtVerifier.create({
       userPoolId: userPoolId,
       clientId: clientId,
-      tokenUse: "access"
+      tokenUse: "id"
     });
   }
 
   async verifyToken(token: string): Promise<CognitoJwtPayload> {
     try {
       const payload = await this.verifier.verify(token);
+      this.logger.log(`JWT payload: ${JSON.stringify(payload)}`);
       return payload;
     } catch (err) {
       this.logger.error(err);
