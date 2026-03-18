@@ -35,7 +35,6 @@ export class MarketplaceController {
 
   constructor(private readonly marketplaceService: MarketplaceService) {}
 
-  @Public()
   @Post()
   @UseInterceptors(
     FileFieldsInterceptor(
@@ -52,7 +51,7 @@ export class MarketplaceController {
     MultipartJsonInterceptor
   )
   async create(
-    @CurrentUser("email") username: string,
+    @CurrentUser("cognito:username") username: string,
     @UploadedFiles()
     files: {
       frontImage?: Express.Multer.File[];
@@ -68,7 +67,7 @@ export class MarketplaceController {
     }
 
     return await this.marketplaceService.createListing(
-      "chew.jingkai",
+      username,
       listing,
       frontImage,
       backImage
@@ -96,8 +95,6 @@ export class MarketplaceController {
     return await this.marketplaceService.specificListing(gameName, listingId);
   }
 
-  // @Roles("User")
-  @Public()
   @Patch(":listingId")
   @UseInterceptors(
     FileFieldsInterceptor(
@@ -114,7 +111,7 @@ export class MarketplaceController {
     MultipartJsonInterceptor
   )
   async update(
-    @CurrentUser("email") username: string,
+    @CurrentUser("cognito:username") username: string,
     @UploadedFiles()
     files: {
       frontImage?: Express.Multer.File[];
@@ -134,7 +131,7 @@ export class MarketplaceController {
     }
 
     return await this.marketplaceService.updateListing(
-      "chew.jingkai",
+      username,
       listingId,
       listing,
       frontImage,
@@ -142,9 +139,8 @@ export class MarketplaceController {
     );
   }
 
-  @Public()
   @Delete(":listingId")
-  async delete(@CurrentUser("email") username: string, @Param("listingId") listingId: string) {
-    return await this.marketplaceService.deleteListing("chew.jingkai", listingId);
+  async delete(@CurrentUser("cognito:username") username: string, @Param("listingId") listingId: string) {
+    return await this.marketplaceService.deleteListing(username, listingId);
   }
 }
