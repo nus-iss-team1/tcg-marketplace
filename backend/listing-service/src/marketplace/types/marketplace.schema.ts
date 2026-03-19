@@ -35,6 +35,14 @@ export const TCGMarketplaceSchema = {
     gsi: { PriceListingIndex: "sk" },
     hidden: true
   }), // value: <paddedPrice>#<listingId>
+  filterSellerId: field({
+    type: "string",
+    hidden: true
+  }), // value: <sellerId>#<listingId>
+  filterTitle: field({
+    type: "string",
+    hidden: true
+  }), // value: <title>#<listingId>
   title: field({
     type: "string"
   }),
@@ -102,6 +110,8 @@ export type Listing = {
   listingUpdatedAt: string;
   listingCardName: string;
   listingPrice: string;
+  filterSellerId: string;
+  filterTitle: string;
   title: string;
   description?: string;
   cardName: string;
