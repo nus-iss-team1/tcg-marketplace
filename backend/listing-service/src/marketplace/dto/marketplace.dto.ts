@@ -13,7 +13,7 @@ import {
   Min,
   ValidateNested
 } from "class-validator";
-import { ImageAction, OrderListing, SortListing } from "../types/marketplace.type";
+import { FilterListing, ImageAction, OrderListing, SortListing } from "../types/marketplace.type";
 
 class PaymentMethodDto {
   @IsDefined()
@@ -122,4 +122,18 @@ export class QueryListingDto {
   @IsOptional()
   @IsEnum(OrderListing)
   readonly order?: OrderListing;
+
+  @IsOptional()
+  @IsEnum(FilterListing)
+  readonly filter?: FilterListing;
+
+  @IsOptional()
+  @IsString()
+  readonly filterValue?: string;
+}
+
+export class QuerySellerListingDto extends QueryListingDto {
+  @IsOptional()
+  @IsIn([FilterListing.cardName, FilterListing.title])
+  declare readonly filter?: FilterListing;
 }

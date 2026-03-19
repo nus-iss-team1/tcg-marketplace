@@ -14,12 +14,20 @@ export enum OrderListing {
   DESC = "DESC"
 }
 
+export enum FilterListing {
+  title = "title",
+  sellerId = "sellerId",
+  cardName = "cardName"
+}
+
 export type QueryListing = {
   limit: number;
   cursor?: QueryListingCursor;
   sort: SortListing;
   order: boolean;
   index: string;
+  filter?: string;
+  filterValue?: string;
 };
 
 export type ListingAttachment = {

@@ -17,7 +17,12 @@ import { CognitoAuthGuard } from "../auth/cognito-auth.guard";
 import { Public } from "../auth/public.decorator";
 import { CurrentUser } from "../auth/current-user.decorator";
 import { MarketplaceService } from "./marketplace.service";
-import { CreateListingDto, QueryListingDto, UpdateListingDto } from "./dto/marketplace.dto";
+import {
+  CreateListingDto,
+  QueryListingDto,
+  QuerySellerListingDto,
+  UpdateListingDto
+} from "./dto/marketplace.dto";
 import { ImageUploadPipe } from "./pipes/image-validation.pipe";
 import { MAX_SIZE } from "../s3/constants/s3.constant";
 import { MultipartJsonInterceptor } from "./interceptors/multipart-json.Interceptor";
@@ -78,7 +83,7 @@ export class MarketplaceController {
 
   @Public()
   @Get("profile/:sellerId")
-  async sellerListing(@Param("sellerId") sellerId: string, @Query() query?: QueryListingDto) {
+  async sellerListing(@Param("sellerId") sellerId: string, @Query() query?: QuerySellerListingDto) {
     return await this.marketplaceService.sellerListing(sellerId, query);
   }
 
