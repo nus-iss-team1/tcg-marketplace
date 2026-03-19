@@ -56,15 +56,23 @@ export class MarketplaceRepository {
   }
 
   async retrieveListing(gameName: string, query: QueryListing) {
+    let filterExpression = "listingStatus <> :listingStatus";
+    const expressionAttributeValues = {
+      ":gameName": gameName,
+      ":listingStatus": "DELETED"
+    };
+
+    if (query.filter && query.filterValue) {
+      filterExpression += ` AND contains(${query.filter}, :${query.filter})`;
+      expressionAttributeValues[`:${query.filter}`] = query.filterValue;
+    }
+
     const param: QueryCommandInput = {
       TableName: this.tableName,
       IndexName: query.index,
       KeyConditionExpression: "gameName = :gameName",
-      FilterExpression: "listingStatus <> :listingStatus",
-      ExpressionAttributeValues: {
-        ":gameName": gameName,
-        ":listingStatus": "DELETED"
-      },
+      FilterExpression: filterExpression,
+      ExpressionAttributeValues: expressionAttributeValues,
       ...ListingProjections.overview,
       Limit: query.limit,
       ScanIndexForward: query.order
@@ -136,15 +144,23 @@ export class MarketplaceRepository {
   }
 
   async retrieveSellerListing(sellerId: string, query: QueryListing) {
+    let filterExpression = "listingStatus <> :listingStatus";
+    const expressionAttributeValues = {
+      ":sellerId": sellerId,
+      ":listingStatus": "DELETED"
+    };
+
+    if (query.filter && query.filterValue) {
+      filterExpression += ` AND contains(${query.filter}, :${query.filter})`;
+      expressionAttributeValues[`:${query.filter}`] = query.filterValue;
+    }
+
     const param: QueryCommandInput = {
       TableName: this.tableName,
       IndexName: "SellerListingIndex",
       KeyConditionExpression: "sellerId = :sellerId",
-      FilterExpression: "listingStatus <> :listingStatus",
-      ExpressionAttributeValues: {
-        ":sellerId": sellerId,
-        ":listingStatus": "DELETED"
-      },
+      FilterExpression: filterExpression,
+      ExpressionAttributeValues: expressionAttributeValues,
       ...ListingProjections.overview,
       Limit: query.limit,
       ScanIndexForward: query.order

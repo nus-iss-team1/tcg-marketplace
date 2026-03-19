@@ -10,6 +10,7 @@ import { ulid } from "ulid";
 import { S3Service } from "../s3/s3.service";
 import { MarketplaceRepository } from "./marketplace.repository";
 import {
+  FilterListing,
   ImageAction,
   ListingAttachment,
   ListingStatus,
@@ -59,13 +60,20 @@ export class MarketplaceService {
       [SortListing.price]: "CardListingIndex",
       [SortListing.updatedAt]: "PriceListingIndex"
     };
+    const filterMap: Record<FilterListing, string> = {
+      [FilterListing.title]: "filterTitle",
+      [FilterListing.cardName]: "listingCardName",
+      [FilterListing.sellerId]: "filterSellerId"
+    };
 
     const newQuery: QueryListing = {
       limit: limit,
       cursor: cursor,
       sort: query?.sort ? sortMap[query.sort] : SortListing.updatedAt,
       order: query?.order ? orderMap[query.order] : false,
-      index: query?.sort ? indexMap[query.sort] : "UpdatedListingIndex"
+      index: query?.sort ? indexMap[query.sort] : "UpdatedListingIndex",
+      filter: query?.filter ? filterMap[query.filter] : undefined,
+      filterValue: query?.filterValue ? query.filterValue : undefined
     };
 
     return newQuery;
@@ -128,7 +136,9 @@ export class MarketplaceService {
         listingStatus: ListingStatus.ACTIVE,
         listingUpdatedAt: `${currentTs}#${listingId}`.toLowerCase(),
         listingCardName: `${listing.cardName}#${listingId}`.toLowerCase(),
-        listingPrice: `${paddedPrice}#${listingId}`.toLowerCase()
+        listingPrice: `${paddedPrice}#${listingId}`.toLowerCase(),
+        filterSellerId: `${sellerId}#${listingId}`.toLowerCase(),
+        filterTitle: `${listing.title}#${listingId}`.toLowerCase()
       };
 
       // write into database
@@ -242,6 +252,7 @@ export class MarketplaceService {
 
         // replace old record with new changes
         const cardName = updatedField.cardName ? updatedField.cardName : oldRecord.cardName;
+        const title = updatedField.title ? updatedField.title : oldRecord.title;
         const currentTs = DateTime.now().toMillis();
         const paddedPrice = padPrice(listing.price);
         const modifiedListing: Listing = {
@@ -250,10 +261,10 @@ export class MarketplaceService {
           listingUpdatedAt: `${currentTs}#${listingId}`.toLowerCase(),
           listingCardName: `${cardName}#${listingId}`.toLowerCase(),
           listingPrice: `${paddedPrice}#${listingId}`.toLowerCase(),
-          cardName: cardName,
+          filterSellerId: `${sellerId}#${listingId}`.toLowerCase(),
+          filterTitle: `${title}#${listingId}`.toLowerCase(),
           attachment: attachment,
           thumbnail: thumbnail,
-          listingId: listingId,
           updatedAt: currentTs
         };
 
