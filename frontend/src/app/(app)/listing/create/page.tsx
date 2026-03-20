@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
+import { ContentLayout } from "@/components/content-layout";
 import { getCardTypes, createListing } from "@/lib/listings";
 
 export default function CreateListingPage() {
@@ -124,7 +125,7 @@ export default function CreateListingPage() {
   };
 
   return (
-    <>
+    <ContentLayout>
       <PageHeader title="Sell a Card" description="Create a new listing" />
       <form onSubmit={handleSubmit} className="animate-[fade-up_0.4s_ease-out_both]">
         {/* Image upload banner */}
@@ -404,6 +405,6 @@ export default function CreateListingPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </ContentLayout>
   );
 }
