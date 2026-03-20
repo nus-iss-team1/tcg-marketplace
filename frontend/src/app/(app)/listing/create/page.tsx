@@ -130,7 +130,7 @@ export default function CreateListingPage() {
         {/* Image upload banner */}
         <div className="flex justify-center gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
           {frontPreview ? (
-            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none bg-muted overflow-hidden snap-start relative group">
+            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-5/7 rounded-none bg-muted overflow-hidden snap-start relative group">
               <Image
                 src={frontPreview}
                 alt="Card front"
@@ -161,7 +161,7 @@ export default function CreateListingPage() {
             <button
               type="button"
               onClick={() => handleOpenUpload("front")}
-              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none border-2 border-dashed border-muted-foreground/25 bg-muted/50 flex flex-col items-center justify-center gap-1.5 hover:border-muted-foreground/50 hover:bg-muted transition-colors cursor-pointer snap-start"
+              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-5/7 rounded-none border border-dashed border-muted-foreground/40 flex flex-col items-center justify-center gap-1 hover:border-muted-foreground/60 transition-colors cursor-pointer snap-start"
             >
               <UploadIcon className="h-6 w-6 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Front</span>
@@ -169,7 +169,7 @@ export default function CreateListingPage() {
           )}
 
           {backPreview ? (
-            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none bg-muted overflow-hidden snap-start relative group">
+            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-5/7 rounded-none bg-muted overflow-hidden snap-start relative group">
               <Image
                 src={backPreview}
                 alt="Card back"
@@ -200,7 +200,7 @@ export default function CreateListingPage() {
             <button
               type="button"
               onClick={() => handleOpenUpload("back")}
-              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none border-2 border-dashed border-muted-foreground/25 bg-muted/50 flex flex-col items-center justify-center gap-1.5 hover:border-muted-foreground/50 hover:bg-muted transition-colors cursor-pointer snap-start"
+              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-5/7 rounded-none border border-dashed border-muted-foreground/40 flex flex-col items-center justify-center gap-1 hover:border-muted-foreground/60 transition-colors cursor-pointer snap-start"
             >
               <UploadIcon className="h-6 w-6 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Back</span>
@@ -386,7 +386,7 @@ export default function CreateListingPage() {
           <div className="space-y-4">
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="flex flex-col items-center justify-center gap-3 p-8 rounded-md border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 hover:bg-muted/50 transition-colors cursor-pointer"
+              className="flex flex-col items-center justify-center gap-3 p-8 rounded-md border border-dashed border-muted-foreground/40 hover:border-muted-foreground/60 transition-colors cursor-pointer"
             >
               <UploadIcon className="h-8 w-8 text-muted-foreground" />
               <div className="text-center">

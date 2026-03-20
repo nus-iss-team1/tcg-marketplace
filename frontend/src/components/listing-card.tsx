@@ -27,7 +27,7 @@ export function ListingCard({ listing, index, animationDelayOffset = 0 }: Listin
               alt={listing.cardName}
               width={320}
               height={427}
-              className="w-full aspect-3/4 object-cover bg-muted"
+              className="w-full aspect-5/7 object-cover bg-muted"
             />
           ) : (
             <ImagePlaceholder className="w-full" seed={listing.listingId} />
@@ -36,10 +36,15 @@ export function ListingCard({ listing, index, animationDelayOffset = 0 }: Listin
       </div>
       <div className="mt-2 space-y-0.5">
         <p className="text-xs sm:text-sm truncate leading-tight">
-          {listing.cardName}
+          {listing.title || listing.cardName}
         </p>
+        {listing.title && (
+          <p className="text-[11px] sm:text-xs text-muted-foreground truncate leading-tight">
+            {listing.cardName}
+          </p>
+        )}
         <p className="text-[11px] sm:text-xs text-muted-foreground leading-tight">
-          ${listing.price}
+          ${Number(listing.price).toFixed(2)}
         </p>
         <p className="text-[10px] sm:text-[11px] text-muted-foreground/70 truncate leading-tight normal-case">
           @{listing.sellerId}

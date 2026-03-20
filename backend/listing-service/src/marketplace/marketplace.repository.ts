@@ -131,8 +131,7 @@ export class MarketplaceRepository {
             ":sellerId": sellerId,
             ":listingId": listingId,
             ":listingStatus": "DELETED"
-          },
-          ...ListingProjections.overview
+          }
         })
       );
 
