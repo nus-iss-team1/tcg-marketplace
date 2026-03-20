@@ -143,7 +143,7 @@ export default function SettingsPage() {
 
   if (loadingAttrs) {
     return (
-      <>
+      <div className="px-0 sm:px-4 md:px-12 lg:px-24 xl:px-48">
         <PageHeader title="Settings" />
         <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full">
           {/* Content skeleton */}
@@ -162,12 +162,12 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="px-0 sm:px-4 md:px-12 lg:px-24 xl:px-48">
       <PageHeader title="Settings" description="Manage your account" />
       <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full">
         {/* Content sections */}
@@ -326,6 +326,6 @@ export default function SettingsPage() {
           </ul>
         </nav>
       </div>
-    </>
+    </div>
   );
 }
