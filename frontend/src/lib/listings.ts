@@ -186,6 +186,8 @@ export interface Listing {
   gameName: string;
   cardId?: string;
   cardName: string;
+  title?: string;
+  description?: string;
   setName?: string;
   rarity?: string;
   price: string;
@@ -253,8 +255,8 @@ export interface UpdateListingBody {
   listingStatus?: "ACTIVE" | "SOLD" | "DELETED";
   frontImage?: File;
   backImage?: File;
-  frontImageAction?: "REPLACE" | "REMOVE" | "KEEP";
-  backImageAction?: "REPLACE" | "REMOVE" | "KEEP";
+  frontImageAction?: "REPLACE" | "KEEP";
+  backImageAction?: "REPLACE" | "DELETE" | "KEEP";
 }
 
 export interface SellerProfile {

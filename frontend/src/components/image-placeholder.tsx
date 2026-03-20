@@ -13,7 +13,7 @@ export function ImagePlaceholder({ className, seed }: ImagePlaceholderProps) {
   const id = useId();
   const s = seed ?? id;
   return (
-    <div className={cn("aspect-3/4 bg-muted overflow-hidden", className)}>
+    <div className={cn("aspect-5/7 bg-muted overflow-hidden", className)}>
       <Image
         src={`https://picsum.photos/seed/${s}/512/683`}
         alt="Placeholder"

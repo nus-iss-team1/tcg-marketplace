@@ -27,6 +27,7 @@ const ListingViews = {
     "rarity",
     "price",
     "attachment",
+    "paymentMethod",
     "pickUp",
     "listingStatus",
     "createdAt",

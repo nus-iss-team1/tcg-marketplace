@@ -221,8 +221,8 @@ export class MarketplaceService {
       const oldRecord = result[0];
       const uploadedKeys: string[] = [];
       const attachment: ListingAttachment = {
-        front: oldRecord.attachment.front,
-        back: oldRecord.attachment.back
+        front: oldRecord.attachment?.front,
+        back: oldRecord.attachment?.back
       };
       let thumbnail = oldRecord.thumbnail;
       let updatedListing: Listing;
@@ -283,13 +283,13 @@ export class MarketplaceService {
       }
 
       // delete old images
-      if (frontImageAction === ImageAction.REPLACE && oldRecord.attachment.front) {
+      if (frontImageAction === ImageAction.REPLACE && oldRecord.attachment?.front) {
         await this.s3Service.deleteObject(oldRecord.attachment.front);
         await this.s3Service.deleteObject(oldRecord.thumbnail);
       }
       if (
         (backImageAction === ImageAction.REPLACE || backImageAction === ImageAction.DELETE) &&
-        oldRecord.attachment.back
+        oldRecord.attachment?.back
       ) {
         await this.s3Service.deleteObject(oldRecord.attachment.back);
       }

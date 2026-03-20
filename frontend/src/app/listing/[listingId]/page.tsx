@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -11,6 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+} from "@/components/ui/carousel";
 import {
   Dialog,
   DialogContent,
@@ -21,9 +28,10 @@ import {
 import {
   CalendarIcon,
   UploadIcon,
+  RefreshCwIcon,
   Trash2Icon,
 } from "lucide-react";
-import { fetchSpecificListing, updateListing, deleteListing, type Listing } from "@/lib/listings";
+import { fetchSpecificListing, updateListing, deleteListing, type Listing, type PaymentMethod } from "@/lib/listings";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import { useAuth } from "@/context/AuthContext";
@@ -73,7 +81,7 @@ function ViewListingContent() {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-8 rounded-md" />
-        <Skeleton className="w-48 sm:w-56 md:w-64 mx-auto aspect-3/4 rounded-none" />
+        <Skeleton className="w-48 sm:w-56 md:w-64 mx-auto aspect-5/7 rounded-none" />
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-24 w-full" />
@@ -107,7 +115,7 @@ function ReadListingView({ listing, isOwner }: { listing: Listing; isOwner: bool
     <div className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both]">
       <div className="flex flex-col md:flex-row gap-6 md:gap-16">
         {/* Left — Images */}
-        <div className="w-full md:w-1/2 lg:w-5/12 shrink-0">
+        <div className="w-full md:w-2/5 lg:w-1/3 xl:w-1/4 shrink-0">
           <ImageCarousel attachment={listing.attachment} />
         </div>
 
@@ -124,10 +132,13 @@ function ReadListingView({ listing, isOwner }: { listing: Listing; isOwner: bool
             )}
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-heading">{listing.cardName}</h1>
+          <h1 className="text-3xl sm:text-4xl font-heading">{listing.title || listing.cardName}</h1>
+          {listing.title && (
+            <p className="text-sm text-muted-foreground mt-1">{listing.cardName}</p>
+          )}
 
           <p className="text-lg sm:text-xl text-primary mt-2 mb-4">
-            ${listing.price}
+            ${Number(listing.price).toFixed(2)}
           </p>
 
           <div className="flex items-center gap-2 mb-4">
@@ -220,11 +231,16 @@ function EditListingView({ listing }: { listing: Listing }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [cardName, setCardName] = useState(listing.cardName);
+  const [title, setTitle] = useState(listing.title || "");
+  const [description, setDescription] = useState(listing.description || "");
   const [setName, setSetNameValue] = useState(listing.setName || "");
   const [cardId, setCardId] = useState(listing.cardId || "");
   const [rarity, setRarity] = useState(listing.rarity || "");
   const [price, setPrice] = useState(listing.price);
   const [pickUp, setPickUp] = useState(listing.pickUp || "");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
+    listing.paymentMethod ?? { cash: false, paynow: false, bank: false }
+  );
   const [submitting, setSubmitting] = useState(false);
 
   const [frontImage, setFrontImage] = useState<File | null>(null);
@@ -239,7 +255,7 @@ function EditListingView({ listing }: { listing: Listing }) {
   const [uploadTarget, setUploadTarget] = useState<"front" | "back">("front");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const canSubmit = cardName && price && Number(price) > 0 && !submitting;
+  const canSubmit = cardName && title && price && Number(price) > 0 && (paymentMethod.cash || paymentMethod.paynow || paymentMethod.bank) && !submitting;
 
   const handleOpenUpload = (target: "front" | "back") => {
     setUploadTarget(target);
@@ -282,22 +298,29 @@ function EditListingView({ listing }: { listing: Listing }) {
     setSubmitting(true);
     try {
       const frontImageAction = frontImage ? "REPLACE" as const : "KEEP" as const;
-      const backImageAction = backImage ? "REPLACE" as const : "KEEP" as const;
+      const backImageAction = backImage
+        ? "REPLACE" as const
+        : !backPreview && listing.attachment?.back
+          ? "DELETE" as const
+          : "KEEP" as const;
 
       await updateListing(listing.listingId, {
         cardName,
+        title,
+        description: description || undefined,
         setName: setName || undefined,
         cardId: cardId || undefined,
         rarity: rarity || undefined,
         price: Number(Number(price).toFixed(2)),
         pickup: pickUp || undefined,
+        paymentMethod,
         frontImage: frontImage ?? undefined,
         backImage: backImage ?? undefined,
         frontImageAction,
         backImageAction,
       });
       toast.success("Listing updated successfully.");
-      router.push(`/listing/${listing.listingId}?game=${encodeURIComponent(listing.gameName)}`);
+      window.location.href = `/listing/${listing.listingId}?game=${encodeURIComponent(listing.gameName)}`;
     } catch {
       toast.error("Failed to update listing. Please try again.");
     } finally {
@@ -326,60 +349,57 @@ function EditListingView({ listing }: { listing: Listing }) {
         {/* Image upload banner */}
         <div className="flex justify-center gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
           {frontPreview ? (
-            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none bg-muted overflow-hidden snap-start relative group">
-              <Image
+            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-5/7 rounded-none bg-background overflow-hidden snap-start relative group">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={frontPreview}
                 alt="Card front"
-                width={256}
-                height={341}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-none flex items-center justify-center gap-2">
-                <Button type="button" size="sm" variant="secondary" onClick={() => handleOpenUpload("front")}>
-                  <UploadIcon className="h-3.5 w-3.5" />
-                </Button>
-                <Button type="button" size="sm" variant="destructive" onClick={() => handleRemoveImage("front")}>
-                  <Trash2Icon className="h-3.5 w-3.5" />
-                </Button>
+              <span className="absolute top-2 left-2 text-[10px] font-medium bg-black/60 text-white px-1.5 py-0.5 rounded">Front</span>
+              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button type="button" className="h-7 w-7 flex items-center justify-center rounded-full bg-white/90 hover:bg-white text-black shadow-sm transition-colors" onClick={() => handleOpenUpload("front")}>
+                  <RefreshCwIcon className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
           ) : (
             <button
               type="button"
               onClick={() => handleOpenUpload("front")}
-              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none border-2 border-dashed border-muted-foreground/25 bg-muted/50 flex flex-col items-center justify-center gap-1.5 hover:border-muted-foreground/50 hover:bg-muted transition-colors cursor-pointer snap-start"
+              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-5/7 rounded-none border border-dashed border-muted-foreground/40 flex flex-col items-center justify-center gap-1 hover:border-muted-foreground/60 transition-colors cursor-pointer snap-start"
             >
-              <UploadIcon className="h-6 w-6 text-muted-foreground" />
-              <span className="text-Signs text-muted-foreground">Front</span>
+              <UploadIcon className="h-5 w-5 text-muted-foreground/70" />
+              <span className="text-[11px] text-muted-foreground/70">Front</span>
             </button>
           )}
 
           {backPreview ? (
-            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none bg-muted overflow-hidden snap-start relative group">
-              <Image
+            <div className="w-48 sm:w-56 md:w-64 shrink-0 aspect-5/7 rounded-none bg-background overflow-hidden snap-start relative group">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={backPreview}
                 alt="Card back"
-                width={256}
-                height={341}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-none flex items-center justify-center gap-2">
-                <Button type="button" size="sm" variant="secondary" onClick={() => handleOpenUpload("back")}>
-                  <UploadIcon className="h-3.5 w-3.5" />
-                </Button>
-                <Button type="button" size="sm" variant="destructive" onClick={() => handleRemoveImage("back")}>
+              <span className="absolute top-2 left-2 text-[10px] font-medium bg-black/60 text-white px-1.5 py-0.5 rounded">Back</span>
+              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button type="button" className="h-7 w-7 flex items-center justify-center rounded-full bg-white/90 hover:bg-white text-black shadow-sm transition-colors" onClick={() => handleOpenUpload("back")}>
+                  <RefreshCwIcon className="h-3.5 w-3.5" />
+                </button>
+                <button type="button" className="h-7 w-7 flex items-center justify-center rounded-full bg-red-500/90 hover:bg-red-500 text-white shadow-sm transition-colors" onClick={() => handleRemoveImage("back")}>
                   <Trash2Icon className="h-3.5 w-3.5" />
-                </Button>
+                </button>
               </div>
             </div>
           ) : (
             <button
               type="button"
               onClick={() => handleOpenUpload("back")}
-              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none border-2 border-dashed border-muted-foreground/25 bg-muted/50 flex flex-col items-center justify-center gap-1.5 hover:border-muted-foreground/50 hover:bg-muted transition-colors cursor-pointer snap-start"
+              className="w-48 sm:w-56 md:w-64 shrink-0 aspect-5/7 rounded-none border border-dashed border-muted-foreground/40 flex flex-col items-center justify-center gap-1 hover:border-muted-foreground/60 transition-colors cursor-pointer snap-start"
             >
-              <UploadIcon className="h-6 w-6 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">Back</span>
+              <UploadIcon className="h-5 w-5 text-muted-foreground/70" />
+              <span className="text-[11px] text-muted-foreground/70">Back</span>
             </button>
           )}
         </div>
@@ -395,6 +415,28 @@ function EditListingView({ listing }: { listing: Listing }) {
               value={cardName}
               onChange={(e) => setCardName(e.target.value)}
               maxLength={100}
+              className="h-9"
+            />
+          </div>
+          <div className="space-y-2 mt-3">
+            <Label htmlFor="title">Listing Title *</Label>
+            <Input
+              id="title"
+              placeholder="E.G. MINT CONDITION CHARIZARD VMAX"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={150}
+              className="h-9"
+            />
+          </div>
+          <div className="space-y-2 mt-3">
+            <Label htmlFor="description">Description</Label>
+            <Input
+              id="description"
+              placeholder="DESCRIBE CONDITION, DETAILS, ETC."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={500}
               className="h-9"
             />
           </div>
@@ -467,6 +509,36 @@ function EditListingView({ listing }: { listing: Listing }) {
 
         <Separator />
 
+        {/* Payment Method */}
+        <div className="space-y-3 my-4">
+          <Label>Payment Method *</Label>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={paymentMethod.cash}
+                onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, cash: v === true }))}
+              />
+              Cash
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={paymentMethod.paynow}
+                onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, paynow: v === true }))}
+              />
+              PayNow
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={paymentMethod.bank}
+                onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, bank: v === true }))}
+              />
+              Bank Transfer
+            </label>
+          </div>
+        </div>
+
+        <Separator />
+
         {/* Submit */}
         <div className="flex gap-3 my-4">
           <Button type="submit" disabled={!canSubmit} className="flex-1 sm:flex-none">
@@ -523,12 +595,12 @@ function EditListingView({ listing }: { listing: Listing }) {
           <div className="space-y-4">
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="flex flex-col items-center justify-center gap-3 p-8 rounded-md border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 hover:bg-muted/50 transition-colors cursor-pointer"
+              className="flex flex-col items-center justify-center gap-3 p-8 rounded-md border border-dashed border-muted-foreground/40 hover:border-muted-foreground/60 transition-colors cursor-pointer"
             >
-              <UploadIcon className="h-8 w-8 text-muted-foreground" />
+              <UploadIcon className="h-6 w-6 text-muted-foreground/70" />
               <div className="text-center">
-                <p className="text-sm">Click to select a file</p>
-                <p className="text-xs text-muted-foreground mt-1">JPG, PNG or WebP up to 5MB</p>
+                <p className="text-sm text-muted-foreground/70">Click to select a file</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">JPG, PNG or WebP up to 5MB</p>
               </div>
             </div>
             <input
@@ -552,39 +624,33 @@ function ImageCarousel({ attachment }: { attachment?: { front?: string; back?: s
 
   if (images.length === 0) {
     return (
-      <ImagePlaceholder className="w-48 sm:w-56 md:w-full mx-auto md:mx-0 aspect-3/4 rounded-none" />
+      <ImagePlaceholder className="w-full aspect-5/7 rounded-none" />
     );
   }
 
   if (images.length === 1) {
     return (
-      <>
-        <div className="md:hidden w-48 sm:w-56 mx-auto aspect-3/4 rounded-none bg-muted overflow-hidden">
-          <Image src={images[0]} alt="Card image" width={512} height={683} className="w-full h-full object-cover" />
-        </div>
-        <div className="hidden md:block w-full aspect-3/4 rounded-none bg-muted overflow-hidden">
-          <Image src={images[0]} alt="Card image" width={512} height={683} className="w-full h-full object-cover" />
-        </div>
-      </>
+      <div className="w-full aspect-5/7 rounded-none bg-background overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={images[0]} alt="Card image" className="w-full h-full object-contain" />
+      </div>
     );
   }
 
   return (
-    <>
-      <div className="md:hidden flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory -mx-4 px-4">
+    <Carousel className="w-full">
+      <CarouselContent>
         {images.map((src, i) => (
-          <div key={i} className="w-48 sm:w-56 shrink-0 aspect-3/4 rounded-none bg-muted overflow-hidden snap-center">
-            <Image src={src} alt={`Card image ${i + 1}`} width={512} height={683} className="w-full h-full object-cover" />
-          </div>
+          <CarouselItem key={i}>
+            <div className="w-full aspect-5/7 rounded-none bg-background overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt={`Card image ${i + 1}`} className="w-full h-full object-contain" />
+            </div>
+          </CarouselItem>
         ))}
-      </div>
-      <div className="hidden md:flex flex-col gap-3">
-        {images.map((src, i) => (
-          <div key={i} className="w-full aspect-3/4 rounded-none bg-muted overflow-hidden">
-            <Image src={src} alt={`Card image ${i + 1}`} width={512} height={683} className="w-full h-full object-cover" />
-          </div>
-        ))}
-      </div>
-    </>
+      </CarouselContent>
+      <CarouselPrevious className="left-2" />
+      <CarouselNext className="right-2" />
+    </Carousel>
   );
 }
