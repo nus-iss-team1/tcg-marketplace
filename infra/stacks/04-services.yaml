@@ -192,9 +192,6 @@ Resources:
                 - "http://${ALBDns}"
                 - ALBDns: !ImportValue
                     Fn::Sub: "${ProjectNamespace}-ALBDnsName"
-            - Name: CDN_HOSTNAME
-              Value: !ImportValue
-                Fn::Sub: "${ProjectNamespace}-AssetsCDNDomainName"
           LogConfiguration:
             LogDriver: awslogs
             Options:
