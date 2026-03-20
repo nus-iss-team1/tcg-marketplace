@@ -27,8 +27,10 @@ export class CognitoVerifierService {
 
   async verifyToken(token: string): Promise<CognitoJwtPayload> {
     try {
-      const payload = await this.verifier.verify(token);
-      this.logger.log(`JWT payload: ${JSON.stringify(payload)}`);
+      const payload: CognitoJwtPayload = await this.verifier.verify(token);
+      this.logger.log(
+        `JWT verified for sub=${payload.sub} email=${payload.email ?? "unknown"} token_use=${payload.token_use}`
+      );
       return payload;
     } catch (err) {
       this.logger.error(err);
