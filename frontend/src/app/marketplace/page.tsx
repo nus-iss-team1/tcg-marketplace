@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
@@ -26,7 +26,13 @@ function MarketplaceContent() {
   const gameType = searchParams.get("game") || "Pokemon TCG";
   const [currentPage, setCurrentPage] = useState(1);
   const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [imagesLoaded, setImagesLoaded] = useState(0);
   const totalPages = Math.ceil(listings.length / 15) || 1;
+
+  const imageCount = listings.filter((l) => l.thumbnail || l.attachment?.front).length;
+  const allReady = !loading && (listings.length === 0 || imagesLoaded >= imageCount);
+
   useEffect(() => {
     document.title = `Marketplace - VAULT OF CARDS`;
   }, [gameType]);
@@ -34,8 +40,16 @@ function MarketplaceContent() {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    fetchMarketplaceListings(gameType, { sort: "updatedAt", order: "DESC" }).then((res) => setListings(res.listings));
+    setLoading(true);
+    setImagesLoaded(0);
+    fetchMarketplaceListings(gameType, { sort: "updatedAt", order: "DESC" })
+      .then((res) => setListings(res.listings))
+      .finally(() => setLoading(false));
   }, [gameType]);
+
+  const handleImageLoad = useCallback(() => {
+    setImagesLoaded((prev) => prev + 1);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +63,7 @@ function MarketplaceContent() {
       {/* Fixed top: title + search */}
       <div className="shrink-0">
         <PageHeader title="Marketplace" description={gameType} />
-        {listings.length > 0 && (
+        {allReady && listings.length > 0 && (
           <form onSubmit={handleSearch} className="mb-4 w-full">
             <div className="relative">
               <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -66,7 +80,7 @@ function MarketplaceContent() {
       </div>
 
       {/* Scrollable listings */}
-      {listings.length === 0 ? (
+      {allReady && listings.length === 0 ? (
         <EmptyState
           title="No listings yet"
           description="This category is awaiting its first listing. Be the first to showcase your cards."
@@ -78,12 +92,12 @@ function MarketplaceContent() {
           </Button>
         </EmptyState>
       ) : (
-        <>
+        <div className={allReady ? "animate-[fade-up_0.4s_ease-out_both]" : "opacity-0 h-0 overflow-hidden"}>
           <div
             className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 sm:gap-6 md:gap-8"
           >
             {listings.map((listing, i) => (
-              <ListingCard key={listing.listingId} listing={listing} index={i} />
+              <ListingCard key={listing.listingId} listing={listing} index={i} onImageLoad={handleImageLoad} />
             ))}
           </div>
 
@@ -95,7 +109,7 @@ function MarketplaceContent() {
             onPageChange={setCurrentPage}
             className="mt-8 sticky bottom-2 sm:static bg-background/40 backdrop-blur-md py-3 sm:py-0 sm:bg-transparent sm:backdrop-blur-none rounded-none mx-2 sm:mx-0"
           />
-        </>
+        </div>
       )}
     </>
   );
