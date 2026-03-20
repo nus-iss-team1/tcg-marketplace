@@ -112,15 +112,15 @@ function ReadListingView({ listing, isOwner }: { listing: Listing; isOwner: bool
   const sellerInitials = displayName.substring(0, 2).toUpperCase();
 
   return (
-    <div className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both]">
-      <div className="flex flex-col md:flex-row gap-6 md:gap-16">
+    <div className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both] px-0 sm:px-4 md:px-12 lg:px-24 xl:px-48">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-16">
         {/* Left — Images */}
-        <div className="w-full md:w-2/5 lg:w-1/3 xl:w-1/4 shrink-0">
+        <div className="w-3/5 sm:w-3/5 md:w-2/5 mx-auto lg:mx-0 lg:w-1/2 xl:w-2/5 shrink-0">
           <ImageCarousel attachment={listing.attachment} />
         </div>
 
         {/* Right — Details */}
-        <div className="flex-1 min-w-0 md:sticky md:top-16 md:self-start">
+        <div className="flex-1 min-w-0 lg:sticky lg:top-16 lg:self-start">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-muted-foreground">{listing.gameName}</p>
             {isOwner && (
