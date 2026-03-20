@@ -57,7 +57,6 @@ function ViewListingContent() {
     }
     fetchSpecificListing(gameName, listingId)
       .then((data) => {
-        console.log("Listing response:", JSON.stringify(data, null, 2));
         setListing(data);
       })
       .catch((err) => {
