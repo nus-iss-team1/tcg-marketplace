@@ -40,11 +40,18 @@ function MarketplaceContent() {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    setLoading(true);
-    setImagesLoaded(0);
+    let cancelled = false;
     fetchMarketplaceListings(gameType, { sort: "updatedAt", order: "DESC" })
-      .then((res) => setListings(res.listings))
-      .finally(() => setLoading(false));
+      .then((res) => {
+        if (!cancelled) {
+          setListings(res.listings);
+          setImagesLoaded(0);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
   }, [gameType]);
 
   const handleImageLoad = useCallback(() => {
