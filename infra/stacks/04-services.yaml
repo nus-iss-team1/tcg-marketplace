@@ -192,7 +192,7 @@ Resources:
                 - "http://${ALBDns}"
                 - ALBDns: !ImportValue
                     Fn::Sub: "${ProjectNamespace}-ALBDnsName"
-            - Name: NEXT_PUBLIC_CDN_HOSTNAME
+            - Name: CDN_HOSTNAME
               Value: !ImportValue
                 Fn::Sub: "${ProjectNamespace}-AssetsCDNDomainName"
           LogConfiguration:

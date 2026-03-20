@@ -10,8 +10,8 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { hostname: "picsum.photos" },
-      ...(process.env.NEXT_PUBLIC_CDN_HOSTNAME
-        ? [{ hostname: process.env.NEXT_PUBLIC_CDN_HOSTNAME }]
+      ...(process.env.CDN_HOSTNAME
+        ? [{ hostname: process.env.CDN_HOSTNAME }]
         : []),
     ],
   },
