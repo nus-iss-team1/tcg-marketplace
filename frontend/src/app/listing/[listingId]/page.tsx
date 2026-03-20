@@ -36,6 +36,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import { useAuth } from "@/context/AuthContext";
 import { ImagePlaceholder } from "@/components/image-placeholder";
+import { ContentLayout } from "@/components/content-layout";
 
 export default function ViewListingPage() {
   return (
@@ -112,7 +113,7 @@ function ReadListingView({ listing, isOwner }: { listing: Listing; isOwner: bool
   const sellerInitials = displayName.substring(0, 2).toUpperCase();
 
   return (
-    <div className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both] px-0 sm:px-4 md:px-12 lg:px-24 xl:px-48">
+    <ContentLayout className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both]">
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-16">
         {/* Left — Images */}
         <div className="w-3/5 sm:w-3/5 md:w-2/5 mx-auto lg:mx-0 lg:w-1/2 xl:w-2/5 shrink-0">
@@ -222,7 +223,7 @@ function ReadListingView({ listing, isOwner }: { listing: Listing; isOwner: bool
           )}
         </div>
       </div>
-    </div>
+    </ContentLayout>
   );
 }
 
@@ -343,7 +344,7 @@ function EditListingView({ listing }: { listing: Listing }) {
   const listingUrl = `/listing/${listing.listingId}?game=${encodeURIComponent(listing.gameName)}`;
 
   return (
-    <>
+    <ContentLayout>
       <PageHeader title="Edit Listing" description="Update your listing details" />
       <form onSubmit={handleSubmit} className="animate-[fade-up_0.4s_ease-out_both]">
         {/* Image upload banner */}
@@ -613,7 +614,7 @@ function EditListingView({ listing }: { listing: Listing }) {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </ContentLayout>
   );
 }
 
