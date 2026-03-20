@@ -46,15 +46,11 @@ function ViewListingContent() {
   const isEdit = searchParams.get("edit") === "true";
 
   const [listing, setListing] = useState<Listing | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(!!gameName && !!listingId);
+  const [error, setError] = useState(!gameName || !listingId);
 
   useEffect(() => {
-    if (!gameName || !listingId) {
-      setLoading(false);
-      setError(true);
-      return;
-    }
+    if (!gameName || !listingId) return;
     fetchSpecificListing(gameName, listingId)
       .then((data) => {
         setListing(data);

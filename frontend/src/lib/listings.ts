@@ -335,7 +335,7 @@ export async function fetchSellerListings(
   const qs = query.toString();
   const url = `${BASE_URL}/api/marketplace/profile/${encodeURIComponent(sellerId)}${qs ? `?${qs}` : ""}`;
 
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: await authHeaders() });
   if (!res.ok) throw new Error("Failed to fetch seller listings");
   const json = await res.json();
   return {
