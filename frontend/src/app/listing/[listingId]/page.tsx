@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef, startTransition, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ import {
   UploadIcon,
   Trash2Icon,
 } from "lucide-react";
-import { fetchSampleListing, type Listing } from "@/lib/listings";
+import { fetchSpecificListing, updateListing, deleteListing, type Listing } from "@/lib/listings";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import { useAuth } from "@/context/AuthContext";
@@ -39,19 +39,32 @@ export default function ViewListingPage() {
 
 function ViewListingContent() {
   const { user } = useAuth();
+  const params = useParams();
   const searchParams = useSearchParams();
+  const listingId = params.listingId as string;
+  const gameName = searchParams.get("game") || "";
   const isEdit = searchParams.get("edit") === "true";
 
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    const listing = fetchSampleListing();
-    startTransition(() => {
-      setListing(listing);
+    if (!gameName || !listingId) {
       setLoading(false);
-    });
-  }, []);
+      setError(true);
+      return;
+    }
+    fetchSpecificListing(gameName, listingId)
+      .then((data) => {
+        setListing(data);
+      })
+      .catch((err) => {
+        console.error("Fetch listing error:", err);
+        setError(true);
+      })
+      .finally(() => setLoading(false));
+  }, [gameName, listingId]);
 
   useEffect(() => {
     if (listing) {
@@ -72,7 +85,7 @@ function ViewListingContent() {
     );
   }
 
-  if (!listing) {
+  if (error || !listing) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center">
         <p className="text-lg">Listing Not Found</p>
@@ -81,37 +94,34 @@ function ViewListingContent() {
     );
   }
 
-  // Only allow edit mode for authenticated users
-  if (isEdit && user) {
-    return (
-      <EditListingView listing={listing} />
-    );
+  const isOwner = user?.username === listing.sellerId;
+
+  if (isEdit && isOwner) {
+    return <EditListingView listing={listing} />;
   }
 
-  return (
-    <ReadListingView listing={listing} isAuthenticated={!!user} />
-  );
+  return <ReadListingView listing={listing} isOwner={isOwner} />;
 }
 
-function ReadListingView({ listing, isAuthenticated }: { listing: Listing; isAuthenticated: boolean }) {
-  const sellerInitials = listing.sellerName.substring(0, 2).toUpperCase();
+function ReadListingView({ listing, isOwner }: { listing: Listing; isOwner: boolean }) {
+  const displayName = listing.sellerName || listing.sellerId || "Unknown";
+  const sellerInitials = displayName.substring(0, 2).toUpperCase();
 
   return (
     <div className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both]">
-      {/* Two-column: images left (scrollable), details right (sticky). Stacks on mobile. */}
       <div className="flex flex-col md:flex-row gap-6 md:gap-16">
         {/* Left — Images */}
         <div className="w-full md:w-1/2 lg:w-5/12 shrink-0">
           <ImageCarousel attachment={listing.attachment} />
         </div>
 
-        {/* Right — Details (sticky on desktop) */}
+        {/* Right — Details */}
         <div className="flex-1 min-w-0 md:sticky md:top-16 md:self-start">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-muted-foreground">{listing.gameName}</p>
-            {isAuthenticated && (
+            {isOwner && (
               <Button variant="outline" size="sm" asChild>
-                <Link href="/listing/sample?edit=true">
+                <Link href={`/listing/${listing.listingId}?game=${encodeURIComponent(listing.gameName)}&edit=true`}>
                   Edit
                 </Link>
               </Button>
@@ -120,12 +130,10 @@ function ReadListingView({ listing, isAuthenticated }: { listing: Listing; isAut
 
           <h1 className="text-3xl sm:text-4xl font-heading">{listing.cardName}</h1>
 
-          {/* Price */}
           <p className="text-lg sm:text-xl text-primary mt-2 mb-4">
             ${listing.price}
           </p>
 
-          {/* Status */}
           <div className="flex items-center gap-2 mb-4">
             {listing.listingStatus && (
               <Badge variant={listing.listingStatus === "ACTIVE" ? "default" : "secondary"}>
@@ -140,7 +148,6 @@ function ReadListingView({ listing, isAuthenticated }: { listing: Listing; isAut
 
           <Separator />
 
-          {/* Card details */}
           <div className="grid grid-cols-1 gap-3 my-4">
             {listing.setName && (
               <div className="flex items-center gap-2 text-xs">
@@ -176,7 +183,7 @@ function ReadListingView({ listing, isAuthenticated }: { listing: Listing; isAut
                     listing.paymentMethod.bank && "Bank Transfer",
                   ]
                     .filter(Boolean)
-                    .join(", ") || "—"}
+                    .join(", ") || "\u2014"}
                 </span>
               </div>
             )}
@@ -184,22 +191,20 @@ function ReadListingView({ listing, isAuthenticated }: { listing: Listing; isAut
 
           <Separator />
 
-          {/* Seller */}
           <div className="my-4">
             <p className="text-xs text-muted-foreground mb-2">Seller</p>
-            <div className="flex items-center gap-3 p-2 -m-2 min-w-0 overflow-hidden">
+            <Link href={`/seller/${listing.sellerId}`} className="flex items-center gap-3 p-2 -m-2 min-w-0 overflow-hidden hover:bg-muted/50 rounded-md transition-colors">
               <Avatar className="h-9 w-9">
                 <AvatarFallback className="text-xs">{sellerInitials}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col min-w-0">
-                <span className="text-xs truncate">{listing.sellerName}</span>
+                <span className="text-xs truncate">{displayName}</span>
                 <span className="text-xs text-muted-foreground truncate">@{listing.sellerId}</span>
               </div>
-            </div>
+            </Link>
           </div>
 
-          {/* Action — only for authenticated users */}
-          {isAuthenticated && (
+          {!isOwner && (
             <div className="flex gap-3 pt-2">
               <Button className="flex-1 sm:flex-none" asChild>
                 <Link href={`/seller/${listing.sellerId}`}>
@@ -224,7 +229,10 @@ function EditListingView({ listing }: { listing: Listing }) {
   const [rarity, setRarity] = useState(listing.rarity || "");
   const [price, setPrice] = useState(listing.price);
   const [pickUp, setPickUp] = useState(listing.pickUp || "");
+  const [submitting, setSubmitting] = useState(false);
 
+  const [frontImage, setFrontImage] = useState<File | null>(null);
+  const [backImage, setBackImage] = useState<File | null>(null);
   const [frontPreview, setFrontPreview] = useState<string | null>(
     listing.attachment?.front || null
   );
@@ -233,8 +241,9 @@ function EditListingView({ listing }: { listing: Listing }) {
   );
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploadTarget, setUploadTarget] = useState<"front" | "back">("front");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const canSubmit = cardName && price && Number(price) > 0;
+  const canSubmit = cardName && price && Number(price) > 0 && !submitting;
 
   const handleOpenUpload = (target: "front" | "back") => {
     setUploadTarget(target);
@@ -248,10 +257,12 @@ function EditListingView({ listing }: { listing: Listing }) {
     const previewUrl = URL.createObjectURL(file);
 
     if (uploadTarget === "front") {
-      if (frontPreview) URL.revokeObjectURL(frontPreview);
+      if (frontPreview && !frontPreview.startsWith("http")) URL.revokeObjectURL(frontPreview);
+      setFrontImage(file);
       setFrontPreview(previewUrl);
     } else {
-      if (backPreview) URL.revokeObjectURL(backPreview);
+      if (backPreview && !backPreview.startsWith("http")) URL.revokeObjectURL(backPreview);
+      setBackImage(file);
       setBackPreview(previewUrl);
     }
     setUploadDialogOpen(false);
@@ -260,20 +271,57 @@ function EditListingView({ listing }: { listing: Listing }) {
 
   const handleRemoveImage = (target: "front" | "back") => {
     if (target === "front") {
-      if (frontPreview) URL.revokeObjectURL(frontPreview);
+      if (frontPreview && !frontPreview.startsWith("http")) URL.revokeObjectURL(frontPreview);
+      setFrontImage(null);
       setFrontPreview(null);
     } else {
-      if (backPreview) URL.revokeObjectURL(backPreview);
+      if (backPreview && !backPreview.startsWith("http")) URL.revokeObjectURL(backPreview);
+      setBackImage(null);
       setBackPreview(null);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Call updateListing API
-    toast.success("Listing updated successfully.");
-    router.push("/listing/sample");
+    setSubmitting(true);
+    try {
+      const frontImageAction = frontImage ? "REPLACE" as const : "KEEP" as const;
+      const backImageAction = backImage ? "REPLACE" as const : "KEEP" as const;
+
+      await updateListing(listing.listingId, {
+        cardName,
+        setName: setName || undefined,
+        cardId: cardId || undefined,
+        rarity: rarity || undefined,
+        price: Number(Number(price).toFixed(2)),
+        pickup: pickUp || undefined,
+        frontImage: frontImage ?? undefined,
+        backImage: backImage ?? undefined,
+        frontImageAction,
+        backImageAction,
+      });
+      toast.success("Listing updated successfully.");
+      router.push(`/listing/${listing.listingId}?game=${encodeURIComponent(listing.gameName)}`);
+    } catch {
+      toast.error("Failed to update listing. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const handleDelete = async () => {
+    try {
+      await deleteListing(listing.listingId);
+      toast.success("Listing deleted.");
+      router.push("/listing");
+    } catch {
+      toast.error("Failed to delete listing.");
+    } finally {
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  const listingUrl = `/listing/${listing.listingId}?game=${encodeURIComponent(listing.gameName)}`;
 
   return (
     <>
@@ -291,20 +339,10 @@ function EditListingView({ listing }: { listing: Listing }) {
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-none flex items-center justify-center gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => handleOpenUpload("front")}
-                >
+                <Button type="button" size="sm" variant="secondary" onClick={() => handleOpenUpload("front")}>
                   <UploadIcon className="h-3.5 w-3.5" />
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => handleRemoveImage("front")}
-                >
+                <Button type="button" size="sm" variant="destructive" onClick={() => handleRemoveImage("front")}>
                   <Trash2Icon className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -316,7 +354,7 @@ function EditListingView({ listing }: { listing: Listing }) {
               className="w-48 sm:w-56 md:w-64 shrink-0 aspect-3/4 rounded-none border-2 border-dashed border-muted-foreground/25 bg-muted/50 flex flex-col items-center justify-center gap-1.5 hover:border-muted-foreground/50 hover:bg-muted transition-colors cursor-pointer snap-start"
             >
               <UploadIcon className="h-6 w-6 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">Front</span>
+              <span className="text-Signs text-muted-foreground">Front</span>
             </button>
           )}
 
@@ -330,20 +368,10 @@ function EditListingView({ listing }: { listing: Listing }) {
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-none flex items-center justify-center gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => handleOpenUpload("back")}
-                >
+                <Button type="button" size="sm" variant="secondary" onClick={() => handleOpenUpload("back")}>
                   <UploadIcon className="h-3.5 w-3.5" />
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => handleRemoveImage("back")}
-                >
+                <Button type="button" size="sm" variant="destructive" onClick={() => handleRemoveImage("back")}>
                   <Trash2Icon className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -446,17 +474,44 @@ function EditListingView({ listing }: { listing: Listing }) {
         {/* Submit */}
         <div className="flex gap-3 my-4">
           <Button type="submit" disabled={!canSubmit} className="flex-1 sm:flex-none">
-            Save Changes
+            {submitting ? "Saving..." : "Save Changes"}
           </Button>
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/listing/sample")}
+            onClick={() => router.push(listingUrl)}
           >
             Cancel
           </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => setDeleteDialogOpen(true)}
+          >
+            Delete
+          </Button>
         </div>
       </form>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Listing</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this listing? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-2">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Upload Dialog */}
       <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
@@ -508,11 +563,9 @@ function ImageCarousel({ attachment }: { attachment?: { front?: string; back?: s
   if (images.length === 1) {
     return (
       <>
-        {/* Mobile: smaller centered image */}
         <div className="md:hidden w-48 sm:w-56 mx-auto aspect-3/4 rounded-none bg-muted overflow-hidden">
           <Image src={images[0]} alt="Card image" width={512} height={683} className="w-full h-full object-cover" />
         </div>
-        {/* Desktop: full width */}
         <div className="hidden md:block w-full aspect-3/4 rounded-none bg-muted overflow-hidden">
           <Image src={images[0]} alt="Card image" width={512} height={683} className="w-full h-full object-cover" />
         </div>
@@ -522,7 +575,6 @@ function ImageCarousel({ attachment }: { attachment?: { front?: string; back?: s
 
   return (
     <>
-      {/* Mobile: horizontal scroll carousel with smaller images */}
       <div className="md:hidden flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory -mx-4 px-4">
         {images.map((src, i) => (
           <div key={i} className="w-48 sm:w-56 shrink-0 aspect-3/4 rounded-none bg-muted overflow-hidden snap-center">
@@ -530,7 +582,6 @@ function ImageCarousel({ attachment }: { attachment?: { front?: string; back?: s
           </div>
         ))}
       </div>
-      {/* Desktop: vertical stack of images */}
       <div className="hidden md:flex flex-col gap-3">
         {images.map((src, i) => (
           <div key={i} className="w-full aspect-3/4 rounded-none bg-muted overflow-hidden">
