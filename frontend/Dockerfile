@@ -34,7 +34,7 @@ RUN adduser --system --uid 1001 nextjs
 
 # Copy the standalone build output
 # Note: standalone includes a minimal node_modules
-COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./

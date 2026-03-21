@@ -1,4 +1,4 @@
-name: "Backend | Env: Develop"
+name: "CI: Backend (dev)"
 
 on:
   workflow_dispatch:
