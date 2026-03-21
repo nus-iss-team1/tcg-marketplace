@@ -5,13 +5,23 @@ Parameters:
   ProjectNamespace:
     Type: String
     Default: nusiss-team-1-voc
+  Environment:
+    Type: String
+    Default: ""
+    Description: "Environment prefix (e.g. prod). Leave empty for dev."
+
+Conditions:
+  HasEnvPrefix: !Not [!Equals [!Ref Environment, ""]]
 
 Resources:
 
- AssetsBucket:
+  AssetsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${ProjectNamespace}-assets"
+      BucketName: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-assets"
+        - !Sub "${ProjectNamespace}-assets"
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -44,7 +54,10 @@ Resources:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
       OriginAccessControlConfig:
-        Name: !Sub "${ProjectNamespace}-assets-oac"
+        Name: !If
+          - HasEnvPrefix
+          - !Sub "${ProjectNamespace}-${Environment}-assets-oac"
+          - !Sub "${ProjectNamespace}-assets-oac"
         OriginAccessControlOriginType: s3
         SigningBehavior: always
         SigningProtocol: sigv4
@@ -54,7 +67,10 @@ Resources:
     Properties:
       DistributionConfig:
         Enabled: true
-        Comment: !Sub "${ProjectNamespace} - S3 Assets CDN"
+        Comment: !If
+          - HasEnvPrefix
+          - !Sub "${ProjectNamespace}-${Environment} - S3 Assets CDN"
+          - !Sub "${ProjectNamespace} - S3 Assets CDN"
         DefaultCacheBehavior:
           TargetOriginId: S3AssetsOrigin
           ViewerProtocolPolicy: redirect-to-https
@@ -81,7 +97,10 @@ Resources:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
-      TableName: GameCardLookup
+      TableName: !If
+        - HasEnvPrefix
+        - !Sub "${Environment}-GameCardLookup"
+        - GameCardLookup
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: gameId
@@ -105,7 +124,10 @@ Resources:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
-      TableName: MessagingPlatform
+      TableName: !If
+        - HasEnvPrefix
+        - !Sub "${Environment}-MessagingPlatform"
+        - MessagingPlatform
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: entityId
@@ -150,7 +172,10 @@ Resources:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
-      TableName: TCGMarketplace
+      TableName: !If
+        - HasEnvPrefix
+        - !Sub "${Environment}-TCGMarketplace"
+        - TCGMarketplace
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: gameName
@@ -216,51 +241,81 @@ Outputs:
     Description: "The name of the S3 assets bucket"
     Value: !Ref AssetsBucket
     Export:
-      Name: !Sub "${ProjectNamespace}-AssetsBucketName"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-AssetsBucketName"
+        - !Sub "${ProjectNamespace}-AssetsBucketName"
   AssetsBucketArn:
     Description: "The ARN of the S3 assets bucket"
     Value: !GetAtt AssetsBucket.Arn
     Export:
-      Name: !Sub "${ProjectNamespace}-AssetsBucketArn"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-AssetsBucketArn"
+        - !Sub "${ProjectNamespace}-AssetsBucketArn"
   AssetsCDNDomainName:
     Description: "CloudFront distribution domain for S3 assets"
     Value: !GetAtt AssetsCDN.DomainName
     Export:
-      Name: !Sub "${ProjectNamespace}-AssetsCDNDomainName"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-AssetsCDNDomainName"
+        - !Sub "${ProjectNamespace}-AssetsCDNDomainName"
   AssetsCDNUrl:
     Description: "CloudFront URL for S3 assets"
     Value: !Sub "https://${AssetsCDN.DomainName}"
     Export:
-      Name: !Sub "${ProjectNamespace}-AssetsCDNUrl"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-AssetsCDNUrl"
+        - !Sub "${ProjectNamespace}-AssetsCDNUrl"
 
   # Database
   GameCardLookupTableName:
     Description: "The name of the DynamoDB table GameCardLookup"
     Value: !Ref GameCardLookup
     Export:
-      Name: !Sub "${ProjectNamespace}-GameCardLookupTableName"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-GameCardLookupTableName"
+        - !Sub "${ProjectNamespace}-GameCardLookupTableName"
   GameCardLookupTableArn:
     Description: "The ARN of the DynamoDB table GameCardLookup"
     Value: !GetAtt GameCardLookup.Arn
     Export:
-      Name: !Sub "${ProjectNamespace}-GameCardLookupTableArn"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-GameCardLookupTableArn"
+        - !Sub "${ProjectNamespace}-GameCardLookupTableArn"
   MessagingPlatformTableName:
     Description: "The name of the DynamoDB table MessagingPlatform"
     Value: !Ref MessagingPlatform
     Export:
-      Name: !Sub "${ProjectNamespace}-MessagingPlatformTableName"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-MessagingPlatformTableName"
+        - !Sub "${ProjectNamespace}-MessagingPlatformTableName"
   MessagingPlatformTableArn:
     Description: "The ARN of the DynamoDB table MessagingPlatform"
     Value: !GetAtt MessagingPlatform.Arn
     Export:
-      Name: !Sub "${ProjectNamespace}-MessagingPlatformTableArn"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-MessagingPlatformTableArn"
+        - !Sub "${ProjectNamespace}-MessagingPlatformTableArn"
   TCGMarketplaceTableName:
     Description: "The name of the DynamoDB table TCGMarketplace"
     Value: !Ref TCGMarketplace
     Export:
-      Name: !Sub "${ProjectNamespace}-TCGMarketplaceTableName"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-TCGMarketplaceTableName"
+        - !Sub "${ProjectNamespace}-TCGMarketplaceTableName"
   TCGMarketplaceTableArn:
     Description: "The ARN of the DynamoDB table TCGMarketplace"
     Value: !GetAtt TCGMarketplace.Arn
     Export:
-      Name: !Sub "${ProjectNamespace}-TCGMarketplaceTableArn"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-TCGMarketplaceTableArn"
+        - !Sub "${ProjectNamespace}-TCGMarketplaceTableArn"
