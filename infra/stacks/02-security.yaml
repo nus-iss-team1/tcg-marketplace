@@ -14,7 +14,7 @@ Resources:
       RepositoryName: !Sub "${ProjectNamespace}/tcgm-listing"
       LifecyclePolicy:
         LifecyclePolicyText: |
-          {"rules":[{"rulePriority":1,"description":"Keep last 10","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}}]}
+          {"rules":[{"rulePriority":1,"description":"Keep last 10","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":50},"action":{"type":"expire"}}]}
 
   WebRepository:
     Type: AWS::ECR::Repository
@@ -22,7 +22,7 @@ Resources:
       RepositoryName: !Sub "${ProjectNamespace}/tcgm-web"
       LifecyclePolicy:
         LifecyclePolicyText: |
-          {"rules":[{"rulePriority":1,"description":"Keep last 10","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}}]}
+          {"rules":[{"rulePriority":1,"description":"Keep last 10","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":50},"action":{"type":"expire"}}]}
 
 Outputs:
   ListingServiceRepoUri:

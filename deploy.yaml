@@ -1,0 +1,6 @@
+dev:
+  app_image_tag: develop-latest
+  web_image_tag: develop-latest
+prod:
+  app_image_tag: develop-latest
+  web_image_tag: develop-latest

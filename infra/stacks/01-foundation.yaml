@@ -5,6 +5,23 @@ Parameters:
   ProjectNamespace:
     Type: String
     Default: nusiss-team-1-voc
+  Environment:
+    Type: String
+    Default: ""
+    Description: "Environment prefix (e.g. prod). Leave empty for dev."
+  DomainName:
+    Type: String
+    Default: ""
+    Description: "Custom domain (e.g. vaultofcards.io or dev.vaultofcards.io). Leave empty to skip."
+  HostedZoneId:
+    Type: String
+    Default: ""
+    Description: "Existing Route 53 Hosted Zone ID. Required when DomainName is set."
+
+Conditions:
+  HasEnvPrefix: !Not [!Equals [!Ref Environment, ""]]
+  HasDomain: !Not [!Equals [!Ref DomainName, ""]]
+
 Resources:
 
   # ════════════════════════════════════════════════════════════
@@ -19,14 +36,20 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-vpc"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-vpc"
+            - !Sub "${ProjectNamespace}-vpc"
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-igw"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-igw"
+            - !Sub "${ProjectNamespace}-igw"
 
   VPCGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -41,7 +64,10 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-public-rt"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-public-rt"
+            - !Sub "${ProjectNamespace}-public-rt"
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -60,7 +86,10 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-public-a"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-public-a"
+            - !Sub "${ProjectNamespace}-public-a"
 
   PublicSubnetB:
     Type: AWS::EC2::Subnet
@@ -71,7 +100,10 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-public-b"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-public-b"
+            - !Sub "${ProjectNamespace}-public-b"
 
   SubnetARouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -93,7 +125,10 @@ Resources:
       Domain: vpc
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-nat-eip-a"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-nat-eip-a"
+            - !Sub "${ProjectNamespace}-nat-eip-a"
 
   NATGatewayA:
     Type: AWS::EC2::NatGateway
@@ -102,7 +137,10 @@ Resources:
       SubnetId: !Ref PublicSubnetA
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-nat-a"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-nat-a"
+            - !Sub "${ProjectNamespace}-nat-a"
 
   NATGatewayEIPB:
     Type: AWS::EC2::EIP
@@ -111,7 +149,10 @@ Resources:
       Domain: vpc
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-nat-eip-b"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-nat-eip-b"
+            - !Sub "${ProjectNamespace}-nat-eip-b"
 
   NATGatewayB:
     Type: AWS::EC2::NatGateway
@@ -120,7 +161,10 @@ Resources:
       SubnetId: !Ref PublicSubnetB
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-nat-b"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-nat-b"
+            - !Sub "${ProjectNamespace}-nat-b"
 
   # ── Private Subnets ────────────────────────────────────────
   PrivateRouteTableA:
@@ -129,7 +173,10 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-private-rt-a"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-private-rt-a"
+            - !Sub "${ProjectNamespace}-private-rt-a"
 
   PrivateRouteA:
     Type: AWS::EC2::Route
@@ -144,7 +191,10 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-private-rt-b"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-private-rt-b"
+            - !Sub "${ProjectNamespace}-private-rt-b"
 
   PrivateRouteB:
     Type: AWS::EC2::Route
@@ -161,7 +211,10 @@ Resources:
       AvailabilityZone: !Select [0, !GetAZs ""]
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-private-a"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-private-a"
+            - !Sub "${ProjectNamespace}-private-a"
 
   PrivateSubnetB:
     Type: AWS::EC2::Subnet
@@ -171,7 +224,10 @@ Resources:
       AvailabilityZone: !Select [1, !GetAZs ""]
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-private-b"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-private-b"
+            - !Sub "${ProjectNamespace}-private-b"
 
   PrivateSubnetARouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -192,7 +248,10 @@ Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Sub "${ProjectNamespace}-cluster"
+      ClusterName: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-cluster"
+        - !Sub "${ProjectNamespace}-cluster"
 
   ALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -206,7 +265,10 @@ Resources:
           CidrIp: 10.0.0.0/16
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-alb-sg"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-alb-sg"
+            - !Sub "${ProjectNamespace}-alb-sg"
 
   ECSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -220,12 +282,18 @@ Resources:
           SourceSecurityGroupId: !Ref ALBSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-ecs-sg"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-ecs-sg"
+            - !Sub "${ProjectNamespace}-ecs-sg"
 
   ALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Sub "${ProjectNamespace}-alb"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-alb"
+        - !Sub "${ProjectNamespace}-alb"
       Scheme: internal
       Type: application
       Subnets:
@@ -238,12 +306,18 @@ Resources:
           Value: "true"
       Tags:
         - Key: Name
-          Value: !Sub "${ProjectNamespace}-alb"
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-alb"
+            - !Sub "${ProjectNamespace}-alb"
 
   AppTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub "${ProjectNamespace}-app-tg"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-app-tg"
+        - !Sub "${ProjectNamespace}-app-tg"
       Port: 3001
       Protocol: HTTP
       VpcId: !Ref VPC
@@ -256,7 +330,10 @@ Resources:
   WebTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub "${ProjectNamespace}-web-tg"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-web-tg"
+        - !Sub "${ProjectNamespace}-web-tg"
       Port: 3000
       Protocol: HTTP
       VpcId: !Ref VPC
@@ -293,7 +370,10 @@ Resources:
   VpcLink:
     Type: AWS::ApiGatewayV2::VpcLink
     Properties:
-      Name: !Sub "${ProjectNamespace}-vpc-link"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-vpc-link"
+        - !Sub "${ProjectNamespace}-vpc-link"
       SubnetIds:
         - !Ref PrivateSubnetA
         - !Ref PrivateSubnetB
@@ -303,7 +383,10 @@ Resources:
   HttpApi:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: !Sub "${ProjectNamespace}-api"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-api"
+        - !Sub "${ProjectNamespace}-api"
       ProtocolType: HTTP
 
   HttpApiIntegration:
@@ -331,47 +414,116 @@ Resources:
       StageName: "$default"
       AutoDeploy: true
 
+  # ── Custom Domain (conditional) ────────────────────────────
+  ACMCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Condition: HasDomain
+    Properties:
+      DomainName: !Ref DomainName
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref HostedZoneId
+
+  ApiCustomDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Condition: HasDomain
+    Properties:
+      DomainName: !Ref DomainName
+      DomainNameConfigurations:
+        - EndpointType: REGIONAL
+          CertificateArn: !Ref ACMCertificate
+
+  ApiDomainMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Condition: HasDomain
+    Properties:
+      ApiId: !Ref HttpApi
+      DomainName: !Ref ApiCustomDomain
+      Stage: !Ref HttpApiStage
+
+  DnsRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: HasDomain
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt ApiCustomDomain.RegionalDomainName
+        HostedZoneId: !GetAtt ApiCustomDomain.RegionalHostedZoneId
+
 Outputs:
   # Networking
   VpcId:
     Value: !Ref VPC
     Export:
-      Name: !Sub "${ProjectNamespace}-VpcId"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-VpcId"
+        - !Sub "${ProjectNamespace}-VpcId"
   PublicSubnetIds:
     Value: !Join [",", [!Ref PublicSubnetA, !Ref PublicSubnetB]]
     Export:
-      Name: !Sub "${ProjectNamespace}-PublicSubnetIds"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-PublicSubnetIds"
+        - !Sub "${ProjectNamespace}-PublicSubnetIds"
   PrivateSubnetIds:
     Value: !Join [",", [!Ref PrivateSubnetA, !Ref PrivateSubnetB]]
     Export:
-      Name: !Sub "${ProjectNamespace}-PrivateSubnetIds"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-PrivateSubnetIds"
+        - !Sub "${ProjectNamespace}-PrivateSubnetIds"
 
   # Cluster & API Gateway
   ClusterArn:
     Value: !GetAtt ECSCluster.Arn
     Export:
-      Name: !Sub "${ProjectNamespace}-ClusterArn"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-ClusterArn"
+        - !Sub "${ProjectNamespace}-ClusterArn"
   ClusterName:
     Value: !Ref ECSCluster
     Export:
-      Name: !Sub "${ProjectNamespace}-ClusterName"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-ClusterName"
+        - !Sub "${ProjectNamespace}-ClusterName"
   ALBDnsName:
     Value: !GetAtt ALB.DNSName
     Export:
-      Name: !Sub "${ProjectNamespace}-ALBDnsName"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-ALBDnsName"
+        - !Sub "${ProjectNamespace}-ALBDnsName"
   ApiGatewayUrl:
     Value: !GetAtt HttpApi.ApiEndpoint
     Export:
-      Name: !Sub "${ProjectNamespace}-ApiGatewayUrl"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-ApiGatewayUrl"
+        - !Sub "${ProjectNamespace}-ApiGatewayUrl"
   AppTargetGroupArn:
     Value: !Ref AppTargetGroup
     Export:
-      Name: !Sub "${ProjectNamespace}-AppTargetGroupArn"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-AppTargetGroupArn"
+        - !Sub "${ProjectNamespace}-AppTargetGroupArn"
   WebTargetGroupArn:
     Value: !Ref WebTargetGroup
     Export:
-      Name: !Sub "${ProjectNamespace}-WebTargetGroupArn"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-WebTargetGroupArn"
+        - !Sub "${ProjectNamespace}-WebTargetGroupArn"
   ECSSecurityGroupId:
     Value: !Ref ECSSecurityGroup
     Export:
-      Name: !Sub "${ProjectNamespace}-ECSSecurityGroupId"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-ECSSecurityGroupId"
+        - !Sub "${ProjectNamespace}-ECSSecurityGroupId"

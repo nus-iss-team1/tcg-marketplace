@@ -5,6 +5,10 @@ Parameters:
   ProjectNamespace:
     Type: String
     Default: nusiss-team-1-voc
+  Environment:
+    Type: String
+    Default: ""
+    Description: "Environment prefix (e.g. prod). Leave empty for dev."
   AppImageTag:
     Type: String
     Default: develop-latest
@@ -12,12 +16,18 @@ Parameters:
     Type: String
     Default: develop-latest
 
+Conditions:
+  HasEnvPrefix: !Not [!Equals [!Ref Environment, ""]]
+
 Resources:
   # IAM Roles
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${ProjectNamespace}-ecs-execution-role"
+      RoleName: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-ecs-execution-role"
+        - !Sub "${ProjectNamespace}-ecs-execution-role"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -41,7 +51,10 @@ Resources:
   ECSTaskRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${ProjectNamespace}-ecs-task-role"
+      RoleName: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-ecs-task-role"
+        - !Sub "${ProjectNamespace}-ecs-task-role"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -62,14 +75,22 @@ Resources:
                 Resource:
                   - !Sub
                     - "${BucketArn}/*"
-                    - BucketArn: !ImportValue
-                        Fn::Sub: "${ProjectNamespace}-AssetsBucketArn"
+                    - BucketArn: !If
+                        - HasEnvPrefix
+                        - !ImportValue
+                            Fn::Sub: "${ProjectNamespace}-${Environment}-AssetsBucketArn"
+                        - !ImportValue
+                            Fn::Sub: "${ProjectNamespace}-AssetsBucketArn"
               - Effect: Allow
                 Action:
                   - s3:ListBucket
                 Resource:
-                  - !ImportValue
-                      Fn::Sub: "${ProjectNamespace}-AssetsBucketArn"
+                  - !If
+                    - HasEnvPrefix
+                    - !ImportValue
+                        Fn::Sub: "${ProjectNamespace}-${Environment}-AssetsBucketArn"
+                    - !ImportValue
+                        Fn::Sub: "${ProjectNamespace}-AssetsBucketArn"
         - PolicyName: DynamoDBAccess
           PolicyDocument:
             Version: "2012-10-17"
@@ -84,45 +105,78 @@ Resources:
                   - dynamodb:Scan
                 Resource:
                   # GameCardLookup table + indexes
-                  - !ImportValue
-                      Fn::Sub: "${ProjectNamespace}-GameCardLookupTableArn"
-                  - !Sub
-                    - "${TableArn}/index/*"
-                    - TableArn: !ImportValue
+                  - !If
+                    - HasEnvPrefix
+                    - !ImportValue
+                        Fn::Sub: "${ProjectNamespace}-${Environment}-GameCardLookupTableArn"
+                    - !ImportValue
                         Fn::Sub: "${ProjectNamespace}-GameCardLookupTableArn"
+                  - !Sub
+                    - "${TableArn}/index/*"
+                    - TableArn: !If
+                        - HasEnvPrefix
+                        - !ImportValue
+                            Fn::Sub: "${ProjectNamespace}-${Environment}-GameCardLookupTableArn"
+                        - !ImportValue
+                            Fn::Sub: "${ProjectNamespace}-GameCardLookupTableArn"
                   # MessagingPlatform table + indexes
-                  - !ImportValue
-                      Fn::Sub: "${ProjectNamespace}-MessagingPlatformTableArn"
-                  - !Sub
-                    - "${TableArn}/index/*"
-                    - TableArn: !ImportValue
+                  - !If
+                    - HasEnvPrefix
+                    - !ImportValue
+                        Fn::Sub: "${ProjectNamespace}-${Environment}-MessagingPlatformTableArn"
+                    - !ImportValue
                         Fn::Sub: "${ProjectNamespace}-MessagingPlatformTableArn"
-                  # TCGMarketplace table + indexes
-                  - !ImportValue
-                      Fn::Sub: "${ProjectNamespace}-TCGMarketplaceTableArn"
                   - !Sub
                     - "${TableArn}/index/*"
-                    - TableArn: !ImportValue
+                    - TableArn: !If
+                        - HasEnvPrefix
+                        - !ImportValue
+                            Fn::Sub: "${ProjectNamespace}-${Environment}-MessagingPlatformTableArn"
+                        - !ImportValue
+                            Fn::Sub: "${ProjectNamespace}-MessagingPlatformTableArn"
+                  # TCGMarketplace table + indexes
+                  - !If
+                    - HasEnvPrefix
+                    - !ImportValue
+                        Fn::Sub: "${ProjectNamespace}-${Environment}-TCGMarketplaceTableArn"
+                    - !ImportValue
                         Fn::Sub: "${ProjectNamespace}-TCGMarketplaceTableArn"
+                  - !Sub
+                    - "${TableArn}/index/*"
+                    - TableArn: !If
+                        - HasEnvPrefix
+                        - !ImportValue
+                            Fn::Sub: "${ProjectNamespace}-${Environment}-TCGMarketplaceTableArn"
+                        - !ImportValue
+                            Fn::Sub: "${ProjectNamespace}-TCGMarketplaceTableArn"
 
   # Log Groups
   ListingServiceLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/ecs/${ProjectNamespace}/listing-service"
+      LogGroupName: !If
+        - HasEnvPrefix
+        - !Sub "/ecs/${ProjectNamespace}-${Environment}/listing-service"
+        - !Sub "/ecs/${ProjectNamespace}/listing-service"
       RetentionInDays: 14
 
   WebLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/ecs/${ProjectNamespace}/web"
+      LogGroupName: !If
+        - HasEnvPrefix
+        - !Sub "/ecs/${ProjectNamespace}-${Environment}/web"
+        - !Sub "/ecs/${ProjectNamespace}/web"
       RetentionInDays: 14
 
   # Task Definitions
   ListingServiceTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub "${ProjectNamespace}-listing-service"
+      Family: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-listing-service"
+        - !Sub "${ProjectNamespace}-listing-service"
       Cpu: "256"
       Memory: "512"
       NetworkMode: awsvpc
@@ -150,31 +204,62 @@ Resources:
             - Name: AWS_REGION
               Value: !Ref AWS::Region
             - Name: AWS_S3_BUCKET
-              Value: !ImportValue
-                Fn::Sub: "${ProjectNamespace}-AssetsBucketName"
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-AssetsBucketName"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-AssetsBucketName"
             - Name: COGNITO_USER_POOL_ID
-              Value: !ImportValue
-                Fn::Sub: "${ProjectNamespace}-dev-UserPoolId"
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-UserPoolId"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-dev-UserPoolId"
             - Name: COGNITO_APP_CLIENT_ID
-              Value: !ImportValue
-                Fn::Sub: "${ProjectNamespace}-dev-UserPoolClientId"
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-UserPoolClientId"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-dev-UserPoolClientId"
             - Name: GAME_CARD_LOOKUP_TABLE
-              Value: !ImportValue
-                Fn::Sub: "${ProjectNamespace}-GameCardLookupTableName"
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-GameCardLookupTableName"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-GameCardLookupTableName"
             - Name: MESSAGING_PLATFORM_TABLE
-              Value: !ImportValue
-                Fn::Sub: "${ProjectNamespace}-MessagingPlatformTableName"
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-MessagingPlatformTableName"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-MessagingPlatformTableName"
             - Name: TCG_MARKETPLACE_TABLE
-              Value: !ImportValue
-                Fn::Sub: "${ProjectNamespace}-TCGMarketplaceTableName"
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-TCGMarketplaceTableName"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-TCGMarketplaceTableName"
             - Name: CDN_URL
-              Value: !ImportValue
-                Fn::Sub: "${ProjectNamespace}-AssetsCDNUrl"
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-AssetsCDNUrl"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-AssetsCDNUrl"
 
   WebTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub "${ProjectNamespace}-web"
+      Family: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-web"
+        - !Sub "${ProjectNamespace}-web"
       Cpu: "256"
       Memory: "512"
       NetworkMode: awsvpc
@@ -190,8 +275,26 @@ Resources:
             - Name: NEXT_PUBLIC_BACKEND_API
               Value: !Sub
                 - "http://${ALBDns}"
-                - ALBDns: !ImportValue
-                    Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+                - ALBDns: !If
+                    - HasEnvPrefix
+                    - !ImportValue
+                        Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
+                    - !ImportValue
+                        Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+            - Name: NEXT_PUBLIC_COGNITO_USER_POOL_ID
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-UserPoolId"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-dev-UserPoolId"
+            - Name: NEXT_PUBLIC_COGNITO_CLIENT_ID
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-UserPoolClientId"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-dev-UserPoolClientId"
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -203,60 +306,203 @@ Resources:
   ListingService:
     Type: AWS::ECS::Service
     Properties:
-      ServiceName: !Sub "${ProjectNamespace}-listing-service"
-      Cluster: !ImportValue
-        Fn::Sub: "${ProjectNamespace}-ClusterArn"
+      ServiceName: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-listing-service"
+        - !Sub "${ProjectNamespace}-listing-service"
+      Cluster: !If
+        - HasEnvPrefix
+        - !ImportValue
+            Fn::Sub: "${ProjectNamespace}-${Environment}-ClusterArn"
+        - !ImportValue
+            Fn::Sub: "${ProjectNamespace}-ClusterArn"
       TaskDefinition: !Ref ListingServiceTaskDefinition
-      DesiredCount: 1
+      DesiredCount: 2
       LaunchType: FARGATE
+      HealthCheckGracePeriodSeconds: 60
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           Subnets: !Split
             - ","
-            - !ImportValue
-                Fn::Sub: "${ProjectNamespace}-PrivateSubnetIds"
+            - !If
+              - HasEnvPrefix
+              - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-${Environment}-PrivateSubnetIds"
+              - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-PrivateSubnetIds"
           SecurityGroups:
-            - !ImportValue
-                Fn::Sub: "${ProjectNamespace}-ECSSecurityGroupId"
+            - !If
+              - HasEnvPrefix
+              - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-${Environment}-ECSSecurityGroupId"
+              - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-ECSSecurityGroupId"
       LoadBalancers:
         - ContainerName: app
           ContainerPort: 3001
-          TargetGroupArn: !ImportValue
-            Fn::Sub: "${ProjectNamespace}-AppTargetGroupArn"
+          TargetGroupArn: !If
+            - HasEnvPrefix
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-${Environment}-AppTargetGroupArn"
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-AppTargetGroupArn"
 
   WebService:
     Type: AWS::ECS::Service
     Properties:
-      ServiceName: !Sub "${ProjectNamespace}-web-service"
-      Cluster: !ImportValue
-        Fn::Sub: "${ProjectNamespace}-ClusterArn"
+      ServiceName: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-web-service"
+        - !Sub "${ProjectNamespace}-web-service"
+      Cluster: !If
+        - HasEnvPrefix
+        - !ImportValue
+            Fn::Sub: "${ProjectNamespace}-${Environment}-ClusterArn"
+        - !ImportValue
+            Fn::Sub: "${ProjectNamespace}-ClusterArn"
       TaskDefinition: !Ref WebTaskDefinition
-      DesiredCount: 1
+      DesiredCount: 2
       LaunchType: FARGATE
+      HealthCheckGracePeriodSeconds: 60
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           Subnets: !Split
             - ","
-            - !ImportValue
-                Fn::Sub: "${ProjectNamespace}-PrivateSubnetIds"
+            - !If
+              - HasEnvPrefix
+              - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-${Environment}-PrivateSubnetIds"
+              - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-PrivateSubnetIds"
           SecurityGroups:
-            - !ImportValue
-                Fn::Sub: "${ProjectNamespace}-ECSSecurityGroupId"
+            - !If
+              - HasEnvPrefix
+              - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-${Environment}-ECSSecurityGroupId"
+              - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-ECSSecurityGroupId"
       LoadBalancers:
         - ContainerName: web
           ContainerPort: 3000
-          TargetGroupArn: !ImportValue
-            Fn::Sub: "${ProjectNamespace}-WebTargetGroupArn"
+          TargetGroupArn: !If
+            - HasEnvPrefix
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-${Environment}-WebTargetGroupArn"
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-WebTargetGroupArn"
+
+  # ════════════════════════════════════════════════════════════
+  # Auto Scaling
+  # ════════════════════════════════════════════════════════════
+
+  AutoScalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-autoscaling-role"
+        - !Sub "${ProjectNamespace}-autoscaling-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: application-autoscaling.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole
+
+  # Listing Service Auto Scaling
+  ListingServiceScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 4
+      MinCapacity: 2
+      ResourceId: !Sub
+        - "service/${ClusterName}/${ServiceName}"
+        - ClusterName: !If
+            - HasEnvPrefix
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-${Environment}-ClusterName"
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-ClusterName"
+          ServiceName: !GetAtt ListingService.Name
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !GetAtt AutoScalingRole.Arn
+
+  ListingServiceScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-listing-cpu-scaling"
+        - !Sub "${ProjectNamespace}-listing-cpu-scaling"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ListingServiceScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        TargetValue: 70
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # Web Service Auto Scaling
+  WebServiceScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 4
+      MinCapacity: 2
+      ResourceId: !Sub
+        - "service/${ClusterName}/${ServiceName}"
+        - ClusterName: !If
+            - HasEnvPrefix
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-${Environment}-ClusterName"
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-ClusterName"
+          ServiceName: !GetAtt WebService.Name
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !GetAtt AutoScalingRole.Arn
+
+  WebServiceScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-web-cpu-scaling"
+        - !Sub "${ProjectNamespace}-web-cpu-scaling"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref WebServiceScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        TargetValue: 70
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
 
 Outputs:
   ListingServiceName:
     Value: !GetAtt ListingService.Name
     Export:
-      Name: !Sub "${ProjectNamespace}-ListingServiceName"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-ListingServiceName"
+        - !Sub "${ProjectNamespace}-ListingServiceName"
 
   WebServiceName:
     Value: !GetAtt WebService.Name
     Export:
-      Name: !Sub "${ProjectNamespace}-WebServiceName"
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-WebServiceName"
+        - !Sub "${ProjectNamespace}-WebServiceName"
