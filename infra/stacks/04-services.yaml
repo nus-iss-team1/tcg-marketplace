@@ -281,20 +281,6 @@ Resources:
                         Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
                     - !ImportValue
                         Fn::Sub: "${ProjectNamespace}-ALBDnsName"
-            - Name: NEXT_PUBLIC_COGNITO_USER_POOL_ID
-              Value: !If
-                - HasEnvPrefix
-                - !ImportValue
-                    Fn::Sub: "${ProjectNamespace}-${Environment}-UserPoolId"
-                - !ImportValue
-                    Fn::Sub: "${ProjectNamespace}-dev-UserPoolId"
-            - Name: NEXT_PUBLIC_COGNITO_CLIENT_ID
-              Value: !If
-                - HasEnvPrefix
-                - !ImportValue
-                    Fn::Sub: "${ProjectNamespace}-${Environment}-UserPoolClientId"
-                - !ImportValue
-                    Fn::Sub: "${ProjectNamespace}-dev-UserPoolClientId"
           LogConfiguration:
             LogDriver: awslogs
             Options:

@@ -12,10 +12,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build with placeholders – replaced at runtime by docker-entrypoint.sh
-ENV NEXT_PUBLIC_COGNITO_USER_POOL_ID=__COGNITO_USER_POOL_ID__
-ENV NEXT_PUBLIC_COGNITO_CLIENT_ID=__COGNITO_CLIENT_ID__
-ENV NEXT_PUBLIC_BACKEND_API=http://placeholder.local
+# Cognito config – inlined into the JS bundle at build time
+ARG NEXT_PUBLIC_COGNITO_USER_POOL_ID
+ARG NEXT_PUBLIC_COGNITO_CLIENT_ID
+ARG NEXT_PUBLIC_BACKEND_API
 
 # Disable telemetry during build for privacy/speed
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -34,15 +34,13 @@ RUN adduser --system --uid 1001 nextjs
 
 # Copy the standalone build output
 # Note: standalone includes a minimal node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
 
 USER nextjs
 
 EXPOSE 3000
 ENV PORT=3000
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "server.js"]
