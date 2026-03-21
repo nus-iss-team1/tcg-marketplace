@@ -16,5 +16,6 @@ jobs:
   build:
     uses: ./.github/workflows/web-deploy.yml
     with:
+      environment: prod
       image_tag_prefix: prod
     secrets: inherit

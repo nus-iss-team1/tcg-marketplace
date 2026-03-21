@@ -16,6 +16,7 @@ jobs:
   build-and-deploy:
     uses: ./.github/workflows/web-deploy.yml
     with:
+      environment: dev
       image_tag_prefix: develop
       auto_deploy: true
     secrets: inherit

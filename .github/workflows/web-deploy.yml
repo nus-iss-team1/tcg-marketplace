@@ -3,6 +3,10 @@ name: "CI: Frontend"
 on:
   workflow_call:
     inputs:
+      environment:
+        required: true
+        type: string
+        description: "GitHub environment (dev or prod)"
       image_tag_prefix:
         required: true
         type: string
@@ -79,6 +83,7 @@ jobs:
   build-and-push:
     needs: security-scan
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     outputs:
       image: ${{ steps.build-image.outputs.image }}
     steps:
