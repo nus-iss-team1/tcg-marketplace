@@ -13,8 +13,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
     uses: ./.github/workflows/app-deploy.yml
     with:
       image_tag_prefix: develop
+      auto_deploy: true
     secrets: inherit
