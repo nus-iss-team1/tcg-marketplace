@@ -1,0 +1,20 @@
+name: "Frontend | Env: Production"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+
+concurrency:
+  group: web-ci-prod-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/web-deploy.yml
+    with:
+      image_tag_prefix: prod
+    secrets: inherit

@@ -33,6 +33,9 @@ Conditions:
   IsHA: !Equals [!Ref HighAvailability, "true"]
   HasDomain: !Not [!Equals [!Ref BaseDomainName, ""]]
 
+Conditions:
+  HasEnvPrefix: !Not [!Equals [!Ref Environment, ""]]
+
 Resources:
   # IAM Roles
   ECSTaskExecutionRole:
