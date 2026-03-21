@@ -1,0 +1,20 @@
+name: "Backend | Env: Production"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+
+concurrency:
+  group: app-ci-prod-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/app-deploy.yml
+    with:
+      image_tag_prefix: prod
+    secrets: inherit

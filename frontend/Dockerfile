@@ -39,6 +39,6 @@ EXPOSE 3000
 ENV PORT=3000
 
 # Runtime env vars — set these when running the container:
-# COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID, BACKEND_API, IMAGE_TAG
+# COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID, BACKEND_API, IMAGE_TAG, CDN_HOSTNAME
 
 CMD ["node", "server.js"]
