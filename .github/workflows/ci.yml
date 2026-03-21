@@ -1,0 +1,91 @@
+
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint-backend:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [listing]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ./backend/${{ matrix.service }}-service/package-lock.json
+
+      - run: npm ci
+        working-directory: ./backend/${{ matrix.service }}-service
+
+      - run: npm run lint -- --max-warnings 0
+        working-directory: ./backend/${{ matrix.service }}-service
+
+  lint-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ./frontend/package-lock.json
+
+      - run: npm ci
+        working-directory: ./frontend
+
+      - run: npm run lint -- --max-warnings 0
+        working-directory: ./frontend
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ./frontend/package-lock.json
+
+      - run: npm ci
+        working-directory: ./frontend
+
+      - run: npm test
+        working-directory: ./frontend
+
+  security-scan-backend:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [listing]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Snyk
+        uses: snyk/actions/node@0.4.0
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=backend/${{ matrix.service }}-service/package-lock.json
+
+  security-scan-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Snyk
+        uses: snyk/actions/node@0.4.0
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=frontend/package-lock.json
