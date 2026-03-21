@@ -281,6 +281,7 @@ Resources:
                         Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
                     - !ImportValue
                         Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+<<<<<<< HEAD
             - Name: COGNITO_USER_POOL_ID
               Value: !If
                 - HasEnvPrefix
@@ -304,6 +305,8 @@ Resources:
                     Fn::Sub: "${ProjectNamespace}-${Environment}-AssetsCDNDomainName"
                 - !ImportValue
                     Fn::Sub: "${ProjectNamespace}-AssetsCDNDomainName"
+=======
+>>>>>>> cd51391 (revert: use build-arg approach for frontend env vars instead of entrypoint script)
           LogConfiguration:
             LogDriver: awslogs
             Options:
