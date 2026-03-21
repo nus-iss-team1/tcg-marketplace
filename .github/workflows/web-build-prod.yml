@@ -1,4 +1,4 @@
-name: "Frontend | Env: Production"
+name: "CI: Frontend (prod)"
 
 on:
   workflow_dispatch:

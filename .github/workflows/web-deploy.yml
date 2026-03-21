@@ -1,4 +1,4 @@
-name: "Frontend | Reusable CI"
+name: "CI: Frontend"
 
 on:
   workflow_call:
