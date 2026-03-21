@@ -100,6 +100,10 @@ export const TCGMarketplaceSchema = {
   }),
   updatedAt: field({
     type: "number"
+  }),
+  updatedBy: field({
+    type: "string",
+    hidden: true
   })
 };
 
@@ -126,4 +130,5 @@ export type Listing = {
   listingStatus: ListingStatus;
   createdAt: number;
   updatedAt: number;
+  updatedBy: string;
 };
