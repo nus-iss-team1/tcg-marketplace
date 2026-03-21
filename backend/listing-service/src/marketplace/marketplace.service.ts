@@ -97,7 +97,7 @@ export class MarketplaceService {
   }
 
   async createListing(
-    sellerId: string,
+    username: string,
     listing: CreateListingDto,
     frontImage: Express.Multer.File,
     backImage?: Express.Multer.File
@@ -130,14 +130,15 @@ export class MarketplaceService {
         listingId: listingId,
         createdAt: currentTs,
         updatedAt: currentTs,
-        sellerId: sellerId,
+        updatedBy: username,
+        sellerId: username,
         attachment: attachment,
         thumbnail: thumbnailKey,
         listingStatus: ListingStatus.ACTIVE,
         listingUpdatedAt: `${currentTs}#${listingId}`.toLowerCase(),
         listingCardName: `${listing.cardName}#${listingId}`.toLowerCase(),
         listingPrice: `${paddedPrice}#${listingId}`.toLowerCase(),
-        filterSellerId: `${sellerId}#${listingId}`.toLowerCase(),
+        filterSellerId: `${username}#${listingId}`.toLowerCase(),
         filterTitle: `${listing.title}#${listingId}`.toLowerCase()
       };
 
@@ -207,18 +208,28 @@ export class MarketplaceService {
   }
 
   async updateListing(
-    sellerId: string,
+    username: string,
+    role: string[],
+    gameName: string,
     listingId: string,
     listing: UpdateListingDto,
     frontImage?: Express.Multer.File,
     backImage?: Express.Multer.File
   ) {
-    // check if record exist and sellerId is owner of the record
-    const result = await this.marketplaceRepo.retrieveSpecificSellerListing(sellerId, listingId);
+    const isAdmin = role.includes("admin");
+    let record: Listing;
 
-    if (result.length !== 0) {
+    // check if role is admin or username is owner of the record
+    if (isAdmin) {
+      record = await this.marketplaceRepo.retrieveSpecificListing(gameName, listingId);
+    } else {
+      const result = await this.marketplaceRepo.retrieveSpecificSellerListing(username, listingId);
+      record = result[0];
+    }
+
+    if (record) {
       const { frontImageAction, backImageAction, ...updatedField } = listing;
-      const oldRecord = result[0];
+      const oldRecord = record;
       const uploadedKeys: string[] = [];
       const attachment: ListingAttachment = {
         front: oldRecord.attachment?.front,
@@ -261,11 +272,11 @@ export class MarketplaceService {
           listingUpdatedAt: `${currentTs}#${listingId}`.toLowerCase(),
           listingCardName: `${cardName}#${listingId}`.toLowerCase(),
           listingPrice: `${paddedPrice}#${listingId}`.toLowerCase(),
-          filterSellerId: `${sellerId}#${listingId}`.toLowerCase(),
           filterTitle: `${title}#${listingId}`.toLowerCase(),
           attachment: attachment,
           thumbnail: thumbnail,
-          updatedAt: currentTs
+          updatedAt: currentTs,
+          updatedBy: username
         };
 
         // update record in database table
@@ -300,15 +311,22 @@ export class MarketplaceService {
     }
   }
 
-  async deleteListing(sellerId: string, listingId: string) {
-    // check if sellerId is owner of the record
-    const result = await this.marketplaceRepo.retrieveSpecificSellerListing(sellerId, listingId);
+  async deleteListing(username: string, role: string[], gameName: string, listingId: string) {
+    const isAdmin = role.includes("admin");
+    let record: Listing;
 
-    if (result.length !== 0) {
-      const record = result[0];
+    // check if role is admin or username is owner of the record
+    if (isAdmin) {
+      record = await this.marketplaceRepo.retrieveSpecificListing(gameName, listingId);
+    } else {
+      const result = await this.marketplaceRepo.retrieveSpecificSellerListing(username, listingId);
+      record = result[0];
+    }
 
+    if (record) {
       // include timestamp
       record.updatedAt = DateTime.now().toMillis();
+      record.updatedBy = username;
 
       return await this.marketplaceRepo.deleteListing(record);
     } else {

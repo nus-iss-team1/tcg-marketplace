@@ -66,12 +66,7 @@ export class MarketplaceController {
       throw new BadRequestException("frontImage is required");
     }
 
-    return await this.marketplaceService.createListing(
-      username,
-      listing,
-      frontImage,
-      backImage
-    );
+    return await this.marketplaceService.createListing(username, listing, frontImage, backImage);
   }
 
   @Public()
@@ -95,7 +90,7 @@ export class MarketplaceController {
     return await this.marketplaceService.specificListing(gameName, listingId);
   }
 
-  @Patch(":listingId")
+  @Patch(":gameName/:listingId")
   @UseInterceptors(
     FileFieldsInterceptor(
       [
@@ -112,11 +107,13 @@ export class MarketplaceController {
   )
   async update(
     @CurrentUser("cognito:username") username: string,
+    @CurrentUser("cognito:groups") role: string[],
     @UploadedFiles()
     files: {
       frontImage?: Express.Multer.File[];
       backImage?: Express.Multer.File[];
     },
+    @Param("gameName") gameName: string,
     @Param("listingId") listingId: string,
     @Body() listing: UpdateListingDto
   ) {
@@ -132,6 +129,8 @@ export class MarketplaceController {
 
     return await this.marketplaceService.updateListing(
       username,
+      role,
+      gameName,
       listingId,
       listing,
       frontImage,
@@ -139,8 +138,13 @@ export class MarketplaceController {
     );
   }
 
-  @Delete(":listingId")
-  async delete(@CurrentUser("cognito:username") username: string, @Param("listingId") listingId: string) {
-    return await this.marketplaceService.deleteListing(username, listingId);
+  @Delete(":gameName/:listingId")
+  async delete(
+    @CurrentUser("cognito:username") username: string,
+    @CurrentUser("cognito:groups") role: string[],
+    @Param("gameName") gameName: string,
+    @Param("listingId") listingId: string
+  ) {
+    return await this.marketplaceService.deleteListing(username, role, gameName, listingId);
   }
 }
