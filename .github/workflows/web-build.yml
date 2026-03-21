@@ -1,21 +1,22 @@
-name: "CI: Frontend (prod)"
+name: "CI: Frontend (dev)"
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - develop
     paths:
       - "frontend/**"
 
 concurrency:
-  group: web-ci-prod-${{ github.ref }}
+  group: web-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
     uses: ./.github/workflows/web-deploy.yml
     with:
-      environment: prod
-      image_tag_prefix: prod
+      environment: dev
+      image_tag_prefix: develop
+      auto_deploy: true
     secrets: inherit
