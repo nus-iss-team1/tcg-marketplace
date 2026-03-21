@@ -119,6 +119,7 @@ jobs:
             NEXT_PUBLIC_COGNITO_USER_POOL_ID=${{ secrets.NEXT_PUBLIC_COGNITO_USER_POOL_ID }}
             NEXT_PUBLIC_COGNITO_CLIENT_ID=${{ secrets.NEXT_PUBLIC_COGNITO_CLIENT_ID }}
             NEXT_PUBLIC_BACKEND_API=${{ secrets.NEXT_PUBLIC_BACKEND_API }}
+            NEXT_PUBLIC_IMAGE_TAG=${{ inputs.image_tag_prefix }}-${{ steps.vars.outputs.sha_short }}
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/nusiss-team-1-voc/tcgm-web:${{ inputs.image_tag_prefix }}-latest
             ${{ steps.login-ecr.outputs.registry }}/nusiss-team-1-voc/tcgm-web:${{ inputs.image_tag_prefix }}-${{ steps.vars.outputs.sha_short }}

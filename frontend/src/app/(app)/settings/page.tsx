@@ -304,6 +304,22 @@ export default function SettingsPage() {
       
       </div>
 
+        {/* App Info */}
+        {process.env.NEXT_PUBLIC_IMAGE_TAG && (
+          <section className="animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0.2s" }}>
+            <Card className="bg-background">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Build</span>
+                  <Badge variant="outline" className="font-mono text-xs">
+                    {process.env.NEXT_PUBLIC_IMAGE_TAG}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+        )}
+
         {/* Table of contents nav — hidden on mobile, right side on md+ */}
         <nav className="hidden md:block w-44 shrink-0 sticky top-20 self-start order-2">
           <p className="text-xs text-muted-foreground mb-3">On this page</p>
