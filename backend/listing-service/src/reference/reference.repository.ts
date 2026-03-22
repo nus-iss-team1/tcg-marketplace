@@ -1,36 +1,29 @@
-import { DynamoDBDocumentClient, QueryCommand, QueryCommandInput } from "@aws-sdk/lib-dynamodb";
-import { Inject, Injectable, LoggerService } from "@nestjs/common";
-import { DYNAMODB_CLIENT } from "../dynamodb/dynamodb.constants";
+import { Injectable } from "@nestjs/common";
 import { handleDynamoError } from "../common/utils/common.utils";
-import { LoggingService } from "../logger/logging.service";
+import { AppLoggerService } from "../logger/logger.service";
 import { GameCardProjections } from "./types/reference.view";
+import { DynamoDbService } from "../dynamodb/dynamodb.service";
 
 @Injectable()
 export class ReferenceRepository {
-  private logger: LoggerService;
   private readonly tableName = "GameCardLookup";
 
   constructor(
-    loggingService: LoggingService,
-    @Inject(DYNAMODB_CLIENT)
-    private readonly docClient: DynamoDBDocumentClient
-  ) {
-    this.logger = loggingService.getLogger();
-  }
+    private readonly logger: AppLoggerService,
+    private readonly dynamoDbService: DynamoDbService
+  ) {}
 
   async retrieveGameName() {
-    const param: QueryCommandInput = {
-      TableName: this.tableName,
-      KeyConditionExpression: "gameId = :gameId",
-      ExpressionAttributeValues: {
-        ":gameId": "gamedata"
-      },
-      ...GameCardProjections.gameLookup,
-      ScanIndexForward: true
-    };
-
     try {
-      const result = await this.docClient.send(new QueryCommand(param));
+      const result = await this.dynamoDbService.query({
+        TableName: this.tableName,
+        KeyConditionExpression: "gameId = :gameId",
+        ExpressionAttributeValues: {
+          ":gameId": "gamedata"
+        },
+        ...GameCardProjections.gameLookup,
+        ScanIndexForward: true
+      });
 
       return result.Items ?? [];
     } catch (err) {
@@ -51,17 +44,15 @@ export class ReferenceRepository {
       value[":meta"] = `card#${cardName}`;
     }
 
-    const param: QueryCommandInput = {
-      TableName: this.tableName,
-      KeyConditionExpression: expression,
-      FilterExpression: "gameName = :gameName",
-      ExpressionAttributeValues: value,
-      ...GameCardProjections.cardLookup,
-      ScanIndexForward: true
-    };
-
     try {
-      const result = await this.docClient.send(new QueryCommand(param));
+      const result = await this.dynamoDbService.query({
+        TableName: this.tableName,
+        KeyConditionExpression: expression,
+        FilterExpression: "gameName = :gameName",
+        ExpressionAttributeValues: value,
+        ...GameCardProjections.cardLookup,
+        ScanIndexForward: true
+      });
 
       return result.Items ?? [];
     } catch (err) {

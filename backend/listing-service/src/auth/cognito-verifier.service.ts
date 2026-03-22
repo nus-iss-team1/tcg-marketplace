@@ -1,20 +1,17 @@
-import { Injectable, LoggerService, UnauthorizedException } from "@nestjs/common";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 import { ConfigService } from "@nestjs/config";
 import { CognitoJwtPayload } from "./types/cognito-jwt-payload";
-import { LoggingService } from "../logger/logging.service";
+import { AppLoggerService } from "../logger/logger.service";
 
 @Injectable()
 export class CognitoVerifierService {
-  private logger: LoggerService;
   private readonly verifier: ReturnType<typeof CognitoJwtVerifier.create>;
 
   constructor(
-    loggingService: LoggingService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly logger: AppLoggerService
   ) {
-    this.logger = loggingService.getLogger();
-
     const userPoolId = this.configService.getOrThrow<string>("COGNITO_USER_POOL_ID");
     const clientId = this.configService.getOrThrow<string>("COGNITO_APP_CLIENT_ID");
 
