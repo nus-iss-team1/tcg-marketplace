@@ -42,6 +42,9 @@ export class DynamoDbService {
     const table = input.TableName ?? "UnknownTable";
     const details: string[] = [];
 
+    if ("IndexName" in input) {
+      details.push(`Index=${JSON.stringify(input.IndexName)}`);
+    }
     if ("Item" in input) {
       details.push(`Item=${JSON.stringify(input.Item)}`);
     }
@@ -59,9 +62,6 @@ export class DynamoDbService {
     }
     if ("ExpressionAttributeValues" in input) {
       details.push(`Values=${JSON.stringify(input.ExpressionAttributeValues)}`);
-    }
-    if ("IndexName" in input) {
-      details.push(`Index=${JSON.stringify(input.IndexName)}`);
     }
 
     return `${table} ${details.join(" ")}`;
@@ -88,10 +88,7 @@ export class DynamoDbService {
   }
 
   async put(params: PutCommandInput) {
-    this.logger.log(
-      `PUT ${params.TableName ?? "UnknownTable"} ${this.extractCommandDetails(params) ?? ""}`,
-      "DynamoRequest"
-    );
+    this.logger.log(`PUT ${this.extractCommandDetails(params) ?? ""}`, "DynamoRequest");
 
     const startTime = DateTime.now().toMillis();
     const command = new PutCommand(params);
@@ -104,10 +101,7 @@ export class DynamoDbService {
   }
 
   async get(params: GetCommandInput) {
-    this.logger.log(
-      `GET ${params.TableName ?? "UnknownTable"} ${this.extractCommandDetails(params) ?? ""}`,
-      "DynamoRequest"
-    );
+    this.logger.log(`GET ${this.extractCommandDetails(params) ?? ""}`, "DynamoRequest");
 
     const startTime = DateTime.now().toMillis();
     const command = new GetCommand(params);
@@ -120,10 +114,7 @@ export class DynamoDbService {
   }
 
   async query(params: QueryCommandInput) {
-    this.logger.log(
-      `QUERY ${params.TableName ?? "UnknownTable"} ${this.extractCommandDetails(params) ?? ""}`,
-      "DynamoRequest"
-    );
+    this.logger.log(`QUERY ${this.extractCommandDetails(params) ?? ""}`, "DynamoRequest");
 
     const startTime = DateTime.now().toMillis();
     const command = new QueryCommand(params);
@@ -136,10 +127,7 @@ export class DynamoDbService {
   }
 
   async scan(params: ScanCommandInput) {
-    this.logger.log(
-      `SCAN ${params.TableName ?? "UnknownTable"} ${this.extractCommandDetails(params) ?? ""}`,
-      "DynamoRequest"
-    );
+    this.logger.log(`SCAN ${this.extractCommandDetails(params) ?? ""}`, "DynamoRequest");
 
     const startTime = DateTime.now().toMillis();
     const command = new ScanCommand(params);
@@ -152,10 +140,7 @@ export class DynamoDbService {
   }
 
   async update(params: UpdateCommandInput) {
-    this.logger.log(
-      `UPDATE ${params.TableName ?? "UnknownTable"} ${this.extractCommandDetails(params) ?? ""}`,
-      "DynamoRequest"
-    );
+    this.logger.log(`UPDATE ${this.extractCommandDetails(params) ?? ""}`, "DynamoRequest");
 
     const startTime = DateTime.now().toMillis();
     const command = new UpdateCommand(params);
@@ -168,10 +153,7 @@ export class DynamoDbService {
   }
 
   async delete(params: DeleteCommandInput) {
-    this.logger.log(
-      `DELETE ${params.TableName ?? "UnknownTable"} ${this.extractCommandDetails(params) ?? ""}`,
-      "DynamoRequest"
-    );
+    this.logger.log(`DELETE ${this.extractCommandDetails(params) ?? ""}`, "DynamoRequest");
 
     const startTime = DateTime.now().toMillis();
     const command = new DeleteCommand(params);
