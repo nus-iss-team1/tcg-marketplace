@@ -1,23 +1,4 @@
-type DynamoType =
-  | "string"
-  | "number"
-  | "boolean"
-  | "binary"
-  | "list"
-  | "map"
-  | "stringSet"
-  | "numberSet"
-  | "binarySet";
-
-type FieldOptions = {
-  type: DynamoType;
-  attribute?: Record<string, string>;
-  pk?: boolean;
-  sk?: boolean;
-  gsi?: Record<string, "pk" | "sk">;
-  optional?: boolean;
-  hidden?: boolean;
-};
+import { FieldOptions } from "./dynamodb.type";
 
 export function field(options: FieldOptions) {
   return options;

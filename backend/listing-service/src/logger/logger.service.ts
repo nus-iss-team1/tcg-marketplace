@@ -14,8 +14,13 @@ export class AppLoggerService implements LoggerService {
     const consoleFormat = winston.format.combine(
       winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
       winston.format.printf((info) => {
-        const ctx = info.context ? `[${info.context}]` : "";
-        return `${info.timestamp} [${info.level.toUpperCase()}] ${ctx}: ${info.message}`;
+        const timestamp = typeof info.timestamp === "string" ? info.timestamp : "";
+        const message =
+          typeof info.message === "string" ? info.message : JSON.stringify(info.message);
+        const context = typeof info.context === "string" ? `[${info.context}]` : "";
+        const level = typeof info.level === "string" ? `[${info.level}]` : "";
+
+        return `${timestamp} ${level.toUpperCase()} ${context}: ${message}`;
       }),
       winston.format.colorize({ all: true })
     );
@@ -66,22 +71,22 @@ export class AppLoggerService implements LoggerService {
   }
 
   log(message: any, context?: string) {
-    this.logger.info(this.stringify(message), { context });
+    this.logger.info(this.stringify(message), { context: context });
   }
 
   debug(message: any, context?: string) {
-    this.logger.debug(this.stringify(message), { context });
+    this.logger.debug(this.stringify(message), { context: context });
   }
 
   warn(message: any, context?: string) {
-    this.logger.warn(this.stringify(message), { context });
+    this.logger.warn(this.stringify(message), { context: context });
   }
 
   verbose(message: any, context?: string) {
-    this.logger.verbose(this.stringify(message), { context });
+    this.logger.verbose(this.stringify(message), { context: context });
   }
 
   error(message: any, trace?: string, context?: string) {
-    this.logger.error(this.stringify(message), { context, trace });
+    this.logger.error(this.stringify(message), { context: context, trace: trace });
   }
 }
