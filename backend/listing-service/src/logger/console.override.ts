@@ -30,6 +30,11 @@ export const overrideConsole = (logger: LoggerService): void => {
   };
 
   console.error = (...args: unknown[]): void => {
-    logger.error(format(args), undefined, "Console");
+    const [first] = args;
+    if (first instanceof Error) {
+      logger.error(first.message, first.stack, "Console");
+    } else {
+      logger.error(format(args), undefined, "Console");
+    }
   };
 };
