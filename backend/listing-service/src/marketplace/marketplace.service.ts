@@ -1,9 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  InternalServerErrorException,
-  LoggerService
-} from "@nestjs/common";
+import { ForbiddenException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { DateTime } from "luxon";
 import { ulid } from "ulid";
@@ -23,20 +18,18 @@ import { Listing } from "./types/marketplace.schema";
 import { padPrice } from "../common/utils/common.utils";
 import { CreateListingDto, QueryListingDto, UpdateListingDto } from "./dto/marketplace.dto";
 import { IMAGE_FOLDER, THUMBNAIL_FOLDER } from "../s3/constants/s3.constant";
-import { LoggingService } from "../logger/logging.service";
+import { AppLoggerService } from "../logger/logger.service";
 
 @Injectable()
 export class MarketplaceService {
-  private logger: LoggerService;
   private CDN_URL: string;
 
   constructor(
-    loggingService: LoggingService,
-    configService: ConfigService,
+    private readonly configService: ConfigService,
+    private readonly logger: AppLoggerService,
     private readonly s3Service: S3Service,
     private readonly marketplaceRepo: MarketplaceRepository
   ) {
-    this.logger = loggingService.getLogger();
     this.CDN_URL = configService.getOrThrow<string>("CDN_URL");
   }
 

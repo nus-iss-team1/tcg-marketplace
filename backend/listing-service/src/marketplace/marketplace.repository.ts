@@ -1,53 +1,38 @@
-import {
-  DynamoDBDocumentClient,
-  GetCommand,
-  PutCommand,
-  QueryCommand,
-  QueryCommandInput,
-  UpdateCommand
-} from "@aws-sdk/lib-dynamodb";
-import { Inject, Injectable, LoggerService } from "@nestjs/common";
+import { QueryCommandInput } from "@aws-sdk/lib-dynamodb";
+import { Injectable } from "@nestjs/common";
 import { instanceToPlain } from "class-transformer";
-import { DYNAMODB_CLIENT } from "../dynamodb/dynamodb.constants";
 import { Listing } from "./types/marketplace.schema";
 import { QueryListing } from "./types/marketplace.type";
 import { handleDynamoError } from "../common/utils/common.utils";
-import { LoggingService } from "../logger/logging.service";
+import { AppLoggerService } from "../logger/logger.service";
 import { ListingProjections } from "./types/marketplace.view";
+import { DynamoDbService } from "../dynamodb/dynamodb.service";
 
 @Injectable()
 export class MarketplaceRepository {
-  private logger: LoggerService;
   private readonly tableName = "TCGMarketplace";
 
   constructor(
-    loggingService: LoggingService,
-    @Inject(DYNAMODB_CLIENT)
-    private readonly docClient: DynamoDBDocumentClient
-  ) {
-    this.logger = loggingService.getLogger();
-  }
+    private readonly logger: AppLoggerService,
+    private readonly dynamoDbService: DynamoDbService
+  ) {}
 
   async createListing(listing: Listing) {
     try {
-      await this.docClient.send(
-        new PutCommand({
-          TableName: this.tableName,
-          Item: instanceToPlain(listing)
-        })
-      );
+      await this.dynamoDbService.put({
+        TableName: this.tableName,
+        Item: instanceToPlain(listing)
+      });
 
       // retrieve created result
-      const result = await this.docClient.send(
-        new GetCommand({
-          TableName: this.tableName,
-          Key: {
-            gameName: listing.gameName,
-            listingId: listing.listingId
-          },
-          ...ListingProjections.specificListing
-        })
-      );
+      const result = await this.dynamoDbService.get({
+        TableName: this.tableName,
+        Key: {
+          gameName: listing.gameName,
+          listingId: listing.listingId
+        },
+        ...ListingProjections.specificListing
+      });
       return result.Item as Listing;
     } catch (err) {
       this.logger.error(err);
@@ -83,7 +68,7 @@ export class MarketplaceRepository {
     }
 
     try {
-      const result = await this.docClient.send(new QueryCommand(param));
+      const result = await this.dynamoDbService.query(param);
 
       return {
         items: (result.Items as Listing[]) ?? [],
@@ -97,19 +82,17 @@ export class MarketplaceRepository {
 
   async retrieveSpecificListing(gameName: string, listingId: string) {
     try {
-      const result = await this.docClient.send(
-        new QueryCommand({
-          TableName: this.tableName,
-          KeyConditionExpression: "gameName = :gameName AND listingId = :listingId",
-          FilterExpression: "listingStatus <> :listingStatus",
-          ExpressionAttributeValues: {
-            ":gameName": gameName,
-            ":listingId": listingId,
-            ":listingStatus": "DELETED"
-          },
-          ...ListingProjections.specificListing
-        })
-      );
+      const result = await this.dynamoDbService.query({
+        TableName: this.tableName,
+        KeyConditionExpression: "gameName = :gameName AND listingId = :listingId",
+        FilterExpression: "listingStatus <> :listingStatus",
+        ExpressionAttributeValues: {
+          ":gameName": gameName,
+          ":listingId": listingId,
+          ":listingStatus": "DELETED"
+        },
+        ...ListingProjections.specificListing
+      });
 
       const records = result.Items as Listing[];
       return records[0] ?? {};
@@ -121,19 +104,17 @@ export class MarketplaceRepository {
 
   async retrieveSpecificSellerListing(sellerId: string, listingId: string) {
     try {
-      const result = await this.docClient.send(
-        new QueryCommand({
-          TableName: this.tableName,
-          IndexName: "SellerListingIndex",
-          KeyConditionExpression: "sellerId = :sellerId",
-          FilterExpression: "listingId = :listingId AND listingStatus <> :listingStatus",
-          ExpressionAttributeValues: {
-            ":sellerId": sellerId,
-            ":listingId": listingId,
-            ":listingStatus": "DELETED"
-          }
-        })
-      );
+      const result = await this.dynamoDbService.query({
+        TableName: this.tableName,
+        IndexName: "SellerListingIndex",
+        KeyConditionExpression: "sellerId = :sellerId",
+        FilterExpression: "listingId = :listingId AND listingStatus <> :listingStatus",
+        ExpressionAttributeValues: {
+          ":sellerId": sellerId,
+          ":listingId": listingId,
+          ":listingStatus": "DELETED"
+        }
+      });
 
       return (result.Items as Listing[]) ?? [];
     } catch (err) {
@@ -170,7 +151,7 @@ export class MarketplaceRepository {
     }
 
     try {
-      const result = await this.docClient.send(new QueryCommand(param));
+      const result = await this.dynamoDbService.query(param);
 
       return {
         items: (result.Items as Listing[]) ?? [],
@@ -196,31 +177,27 @@ export class MarketplaceRepository {
     const attributeValues = Object.fromEntries(keys.map((k) => [`:${k}`, filteredListing[k]]));
 
     try {
-      await this.docClient.send(
-        new UpdateCommand({
-          TableName: this.tableName,
-          Key: {
-            gameName: gameName,
-            listingId: listingId
-          },
-          UpdateExpression: updateStatement,
-          ExpressionAttributeNames: attributeNames,
-          ExpressionAttributeValues: attributeValues,
-          ConditionExpression: "attribute_exists(listingId)"
-        })
-      );
+      await this.dynamoDbService.update({
+        TableName: this.tableName,
+        Key: {
+          gameName: gameName,
+          listingId: listingId
+        },
+        UpdateExpression: updateStatement,
+        ExpressionAttributeNames: attributeNames,
+        ExpressionAttributeValues: attributeValues,
+        ConditionExpression: "attribute_exists(listingId)"
+      });
 
       // retrieve updated result
-      const result = await this.docClient.send(
-        new GetCommand({
-          TableName: this.tableName,
-          Key: {
-            gameName: gameName,
-            listingId: listingId
-          },
-          ...ListingProjections.specificListing
-        })
-      );
+      const result = await this.dynamoDbService.get({
+        TableName: this.tableName,
+        Key: {
+          gameName: gameName,
+          listingId: listingId
+        },
+        ...ListingProjections.specificListing
+      });
 
       return result.Item as Listing;
     } catch (err) {
@@ -231,20 +208,18 @@ export class MarketplaceRepository {
 
   async deleteListing(listing: Listing) {
     try {
-      await this.docClient.send(
-        new UpdateCommand({
-          TableName: this.tableName,
-          Key: {
-            gameName: listing.gameName,
-            listingId: listing.listingId
-          },
-          UpdateExpression: "SET listingStatus = :listingStatus",
-          ExpressionAttributeValues: {
-            ":listingStatus": "DELETED"
-          },
-          ConditionExpression: "attribute_exists(listingId)"
-        })
-      );
+      await this.dynamoDbService.update({
+        TableName: this.tableName,
+        Key: {
+          gameName: listing.gameName,
+          listingId: listing.listingId
+        },
+        UpdateExpression: "SET listingStatus = :listingStatus",
+        ExpressionAttributeValues: {
+          ":listingStatus": "DELETED"
+        },
+        ConditionExpression: "attribute_exists(listingId)"
+      });
 
       return { message: "Deleted successfully" };
     } catch (err) {

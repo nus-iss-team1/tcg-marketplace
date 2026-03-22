@@ -3,7 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import Joi from "joi";
 import { AppController } from "./app.controller";
 import { AuthModule } from "./auth/auth.module";
-import { LoggingModule } from "./logger/logging.module";
+import { LoggerModule } from "./logger/logger.module";
 import { MarketplaceModule } from "./marketplace/marketplace.module";
 import { DynamoDbModule } from "./dynamodb/dynamodb.module";
 import { ReferenceModule } from "./reference/reference.module";
@@ -31,7 +31,7 @@ import { S3Module } from "./s3/s3.module";
       }
     }),
     AuthModule,
-    LoggingModule,
+    LoggerModule,
     DynamoDbModule,
     MarketplaceModule,
     ReferenceModule,

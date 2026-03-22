@@ -1,36 +1,38 @@
 import { Injectable, LoggerService } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { WinstonModule } from "nest-winston";
 import * as winston from "winston";
 import "winston-daily-rotate-file";
 
 @Injectable()
-export class LoggingService {
-  private readonly logger: LoggerService;
+export class AppLoggerService implements LoggerService {
+  private readonly logger: winston.Logger;
 
   constructor(private readonly configService: ConfigService) {
     const logDir = this.configService.getOrThrow<string>("LOG_DIR");
     const logLevel = this.configService.getOrThrow<string>("LOG_LEVEL");
 
-    const baseFormat = winston.format.combine(
+    const consoleFormat = winston.format.combine(
       winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
       winston.format.printf((info) => {
-        const timestamp = typeof info.timestamp === "string" ? info.timestamp : "";
-        const message =
-          typeof info.message === "string" ? info.message : JSON.stringify(info.message);
-        const context = typeof info.context === "string" ? `[${info.context}]` : "";
-        const level = typeof info.level === "string" ? `[${info.level}]` : "";
-
-        return `${timestamp} ${level.toUpperCase()} ${context}: ${message}`;
-      })
+        const ctx = info.context ? `[${info.context}]` : "";
+        return `${info.timestamp} [${info.level.toUpperCase()}] ${ctx}: ${info.message}`;
+      }),
+      winston.format.colorize({ all: true })
     );
 
-    this.logger = WinstonModule.createLogger({
+    const jsonFormat = winston.format.combine(
+      winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+      winston.format.errors({ stack: true }),
+      winston.format.json()
+    );
+
+    this.logger = winston.createLogger({
       level: logLevel,
+      levels: winston.config.npm.levels,
       transports: [
         new winston.transports.Console({
           level: logLevel,
-          format: winston.format.combine(baseFormat, winston.format.colorize({ all: true }))
+          format: consoleFormat
         }),
         new winston.transports.DailyRotateFile({
           dirname: `${logDir}/app`,
@@ -42,7 +44,7 @@ export class LoggingService {
           level: logLevel,
           format: winston.format.combine(
             winston.format((info) => (info.level === "error" ? false : info))(),
-            baseFormat
+            jsonFormat
           )
         }),
         new winston.transports.DailyRotateFile({
@@ -53,13 +55,33 @@ export class LoggingService {
           maxSize: "10m",
           maxFiles: "14d",
           level: "error",
-          format: baseFormat
+          format: jsonFormat
         })
       ]
     });
   }
 
-  public getLogger(): LoggerService {
-    return this.logger;
+  private stringify(message: any) {
+    return typeof message === "string" ? message : JSON.stringify(message);
+  }
+
+  log(message: any, context?: string) {
+    this.logger.info(this.stringify(message), { context });
+  }
+
+  debug(message: any, context?: string) {
+    this.logger.debug(this.stringify(message), { context });
+  }
+
+  warn(message: any, context?: string) {
+    this.logger.warn(this.stringify(message), { context });
+  }
+
+  verbose(message: any, context?: string) {
+    this.logger.verbose(this.stringify(message), { context });
+  }
+
+  error(message: any, trace?: string, context?: string) {
+    this.logger.error(this.stringify(message), { context, trace });
   }
 }

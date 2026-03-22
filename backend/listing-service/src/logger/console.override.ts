@@ -1,23 +1,33 @@
 import { LoggerService } from "@nestjs/common";
 
 export const overrideConsole = (logger: LoggerService): void => {
+  const format = (args: any[]) => {
+    if (args.length === 1) {
+      return args[0];
+    }
+
+    return args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ");
+  };
+
   console.log = (...args: any[]): void => {
-    logger.log(args.join(" "), "Console");
+    logger.log(format(args), "Console");
   };
 
   console.info = (...args: any[]): void => {
-    logger.log(args.join(" "), "Console");
+    logger.log(format(args), "Console");
   };
 
   console.warn = (...args: any[]): void => {
-    logger.warn(args.join(" "), "Console");
+    logger.warn(format(args), "Console");
   };
 
   console.debug = (...args: any[]): void => {
-    logger.debug?.(args.join(" "), "Console");
+    (logger.debug ?? logger.log)(format(args), "Console");
   };
 
   console.error = (...args: any[]): void => {
-    logger.error(args.join(" "), undefined, "Console");
+    const msg = format(args);
+
+    logger.error(typeof msg === "string" ? msg : JSON.stringify(msg), undefined, "Console");
   };
 };

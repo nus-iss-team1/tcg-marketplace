@@ -3,7 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import { MarketplaceService } from "./marketplace.service";
 import { MarketplaceRepository } from "./marketplace.repository";
 import { S3Service } from "../s3/s3.service";
-import { LoggingModule } from "../logger/logging.module";
+import { LoggerModule } from "../logger/logger.module";
 
 describe("MarketplaceService", () => {
   let listingService: MarketplaceService;
@@ -14,7 +14,7 @@ describe("MarketplaceService", () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      imports: [LoggingModule, ConfigModule.forRoot({ isGlobal: true })],
+      imports: [LoggerModule, ConfigModule.forRoot({ isGlobal: true })],
       providers: [
         MarketplaceService,
         {

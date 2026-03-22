@@ -1,7 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
-import { LoggingService } from "./logger/logging.service";
+import { AppLoggerService } from "./logger/logger.service";
 import { overrideConsole } from "./logger/console.override";
 
 async function bootstrap() {
@@ -10,8 +10,7 @@ async function bootstrap() {
     bufferLogs: true
   });
 
-  const loggingService = app.get(LoggingService);
-  const logger = loggingService.getLogger();
+  const logger = app.get(AppLoggerService);
 
   app.setGlobalPrefix("api");
   app.useLogger(logger);
@@ -29,7 +28,7 @@ async function bootstrap() {
   );
 
   await app.listen(port);
-  console.log(`Application started on port ${port}`);
+  logger.log(`Application started on port ${port}`, "Startup");
 }
 bootstrap().catch((err) => {
   console.error("Error starting server:", err);
