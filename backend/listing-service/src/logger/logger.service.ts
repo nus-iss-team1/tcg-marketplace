@@ -13,14 +13,21 @@ export class AppLoggerService implements LoggerService {
 
     const consoleFormat = winston.format.combine(
       winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+      winston.format.errors({ stack: true }),
       winston.format.printf((info) => {
         const timestamp = typeof info.timestamp === "string" ? info.timestamp : "";
         const message =
           typeof info.message === "string" ? info.message : JSON.stringify(info.message);
         const context = typeof info.context === "string" ? `[${info.context}]` : "";
         const level = typeof info.level === "string" ? `[${info.level}]` : "";
+        const stack =
+          typeof info.stack === "string"
+            ? `\n${info.stack}`
+            : info.stack
+              ? `\n${JSON.stringify(info.stack)}`
+              : "";
 
-        return `${timestamp} ${level.toUpperCase()} ${context}: ${message}`;
+        return `${timestamp} ${level.toUpperCase()} ${context}: ${message}${stack}`;
       }),
       winston.format.colorize({ all: true })
     );
@@ -87,6 +94,13 @@ export class AppLoggerService implements LoggerService {
   }
 
   error(message: any, trace?: string, context?: string) {
-    this.logger.error(this.stringify(message), { context: context, trace: trace });
+    if (message instanceof Error) {
+      this.logger.error(message.message, {
+        context: context,
+        stack: message.stack
+      });
+    } else {
+      this.logger.error(this.stringify(message), { context: context, stack: trace });
+    }
   }
 }
