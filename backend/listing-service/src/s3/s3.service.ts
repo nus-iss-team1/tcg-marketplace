@@ -11,7 +11,7 @@ export class S3Service {
   private region: string;
   private bucket: string;
 
-  constructor(configService: ConfigService) {
+  constructor(private readonly configService: ConfigService) {
     this.region = configService.getOrThrow<string>("AWS_REGION");
     this.bucket = configService.getOrThrow<string>("AWS_S3_BUCKET");
 
