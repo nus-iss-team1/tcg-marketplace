@@ -12,7 +12,7 @@ async function bootstrap() {
 
   const logger = app.get(AppLoggerService);
 
-  app.setGlobalPrefix("api");
+  app.setGlobalPrefix("listing");
   app.useLogger(logger);
   overrideConsole(logger);
 

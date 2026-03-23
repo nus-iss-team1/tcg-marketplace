@@ -9,18 +9,18 @@ Parameters:
     Type: String
     Default: ""
     Description: "Environment prefix (e.g. prod). Leave empty for dev."
-  DomainName:
+  BaseDomainName:
     Type: String
     Default: ""
-    Description: "Custom domain (e.g. vaultofcards.io or dev.vaultofcards.io). Leave empty to skip."
+    Description: "Base domain (e.g. vaultofcards.io). Subdomains voc-listing.<base> and voc-messaging.<base> will be created. Leave empty to skip."
   HostedZoneId:
     Type: String
     Default: ""
-    Description: "Existing Route 53 Hosted Zone ID. Required when DomainName is set."
+    Description: "Existing Route 53 Hosted Zone ID. Required when BaseDomainName is set."
 
 Conditions:
   HasEnvPrefix: !Not [!Equals [!Ref Environment, ""]]
-  HasDomain: !Not [!Equals [!Ref DomainName, ""]]
+  HasDomain: !Not [!Equals [!Ref BaseDomainName, ""]]
 
 Resources:
 
@@ -322,7 +322,7 @@ Resources:
       Protocol: HTTP
       VpcId: !Ref VPC
       TargetType: ip
-      HealthCheckPath: /api/health
+      HealthCheckPath: /listing/health
       HealthCheckIntervalSeconds: 30
       HealthyThresholdCount: 2
       UnhealthyThresholdCount: 3
@@ -343,6 +343,22 @@ Resources:
       HealthyThresholdCount: 2
       UnhealthyThresholdCount: 3
 
+  MessagingTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-msg-tg"
+        - !Sub "${ProjectNamespace}-msg-tg"
+      Port: 3002
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      TargetType: ip
+      HealthCheckPath: /messaging/health
+      HealthCheckIntervalSeconds: 30
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+
   ALBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
@@ -353,15 +369,28 @@ Resources:
         - Type: forward
           TargetGroupArn: !Ref WebTargetGroup
 
+  MessagingAPIListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref ALBListener
+      Priority: 10
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - "/messaging/*"
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref MessagingTargetGroup
+
   APIListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
       ListenerArn: !Ref ALBListener
-      Priority: 1
+      Priority: 20
       Conditions:
         - Field: path-pattern
           Values:
-            - "/api/*"
+            - "/listing/*"
       Actions:
         - Type: forward
           TargetGroupArn: !Ref AppTargetGroup
@@ -414,22 +443,35 @@ Resources:
       StageName: "$default"
       AutoDeploy: true
 
-  # ── Custom Domain (conditional) ────────────────────────────
+  # ── Custom Domains (conditional) ───────────────────────────
+  # Existing certificate for base domain (dev.vaultofcards.io / vaultofcards.io)
   ACMCertificate:
     Type: AWS::CertificateManager::Certificate
     Condition: HasDomain
     Properties:
-      DomainName: !Ref DomainName
+      DomainName: !Ref BaseDomainName
       ValidationMethod: DNS
       DomainValidationOptions:
-        - DomainName: !Ref DomainName
+        - DomainName: !Ref BaseDomainName
           HostedZoneId: !Ref HostedZoneId
 
+  # Wildcard certificate for service subdomains (voc-*.dev.vaultofcards.io)
+  WildcardACMCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Condition: HasDomain
+    Properties:
+      DomainName: !Sub "*.${BaseDomainName}"
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Sub "*.${BaseDomainName}"
+          HostedZoneId: !Ref HostedZoneId
+
+  # ── Base domain (<base>) ──────────────────────────────────
   ApiCustomDomain:
     Type: AWS::ApiGatewayV2::DomainName
     Condition: HasDomain
     Properties:
-      DomainName: !Ref DomainName
+      DomainName: !Ref BaseDomainName
       DomainNameConfigurations:
         - EndpointType: REGIONAL
           CertificateArn: !Ref ACMCertificate
@@ -447,11 +489,69 @@ Resources:
     Condition: HasDomain
     Properties:
       HostedZoneId: !Ref HostedZoneId
-      Name: !Ref DomainName
+      Name: !Ref BaseDomainName
       Type: A
       AliasTarget:
         DNSName: !GetAtt ApiCustomDomain.RegionalDomainName
         HostedZoneId: !GetAtt ApiCustomDomain.RegionalHostedZoneId
+
+  # ── Listing subdomain (voc-listing.<base>) ────────────────
+  ListingCustomDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Condition: HasDomain
+    Properties:
+      DomainName: !Sub "voc-listing.${BaseDomainName}"
+      DomainNameConfigurations:
+        - EndpointType: REGIONAL
+          CertificateArn: !Ref WildcardACMCertificate
+
+  ListingDomainMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Condition: HasDomain
+    Properties:
+      ApiId: !Ref HttpApi
+      DomainName: !Ref ListingCustomDomain
+      Stage: !Ref HttpApiStage
+
+  ListingDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: HasDomain
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Sub "voc-listing.${BaseDomainName}"
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt ListingCustomDomain.RegionalDomainName
+        HostedZoneId: !GetAtt ListingCustomDomain.RegionalHostedZoneId
+
+  # ── Messaging subdomain (voc-messaging.<base>) ────────────
+  MessagingCustomDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Condition: HasDomain
+    Properties:
+      DomainName: !Sub "voc-messaging.${BaseDomainName}"
+      DomainNameConfigurations:
+        - EndpointType: REGIONAL
+          CertificateArn: !Ref WildcardACMCertificate
+
+  MessagingDomainMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Condition: HasDomain
+    Properties:
+      ApiId: !Ref HttpApi
+      DomainName: !Ref MessagingCustomDomain
+      Stage: !Ref HttpApiStage
+
+  MessagingDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: HasDomain
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Sub "voc-messaging.${BaseDomainName}"
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt MessagingCustomDomain.RegionalDomainName
+        HostedZoneId: !GetAtt MessagingCustomDomain.RegionalHostedZoneId
 
 Outputs:
   # Networking
@@ -513,6 +613,13 @@ Outputs:
         - HasEnvPrefix
         - !Sub "${ProjectNamespace}-${Environment}-AppTargetGroupArn"
         - !Sub "${ProjectNamespace}-AppTargetGroupArn"
+  MessagingTargetGroupArn:
+    Value: !Ref MessagingTargetGroup
+    Export:
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-MessagingTargetGroupArn"
+        - !Sub "${ProjectNamespace}-MessagingTargetGroupArn"
   WebTargetGroupArn:
     Value: !Ref WebTargetGroup
     Export:

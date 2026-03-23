@@ -12,6 +12,9 @@ Parameters:
   AppImageTag:
     Type: String
     Default: develop-latest
+  MessagingImageTag:
+    Type: String
+    Default: develop-latest
   WebImageTag:
     Type: String
     Default: develop-latest
@@ -160,6 +163,15 @@ Resources:
         - !Sub "/ecs/${ProjectNamespace}/listing-service"
       RetentionInDays: 14
 
+  MessagingServiceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !If
+        - HasEnvPrefix
+        - !Sub "/ecs/${ProjectNamespace}-${Environment}/messaging-service"
+        - !Sub "/ecs/${ProjectNamespace}/messaging-service"
+      RetentionInDays: 14
+
   WebLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -252,6 +264,61 @@ Resources:
                     Fn::Sub: "${ProjectNamespace}-${Environment}-AssetsCDNUrl"
                 - !ImportValue
                     Fn::Sub: "${ProjectNamespace}-AssetsCDNUrl"
+
+  MessagingServiceTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-messaging-service"
+        - !Sub "${ProjectNamespace}-messaging-service"
+      Cpu: "256"
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt ECSTaskRole.Arn
+      ContainerDefinitions:
+        - Name: app
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectNamespace}/tcgm-messaging:${MessagingImageTag}"
+          PortMappings:
+            - ContainerPort: 3002
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref MessagingServiceLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: messaging-service
+          Environment:
+            - Name: TZ
+              Value: Asia/Singapore
+            - Name: LOG_DIR
+              Value: /tmp/logs
+            - Name: LOG_LEVEL
+              Value: info
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: COGNITO_USER_POOL_ID
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-UserPoolId"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-dev-UserPoolId"
+            - Name: COGNITO_APP_CLIENT_ID
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-UserPoolClientId"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-dev-UserPoolClientId"
+            - Name: MESSAGING_PLATFORM_TABLE
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-MessagingPlatformTableName"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-MessagingPlatformTableName"
 
   WebTaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -385,6 +452,54 @@ Resources:
             - !ImportValue
                 Fn::Sub: "${ProjectNamespace}-WebTargetGroupArn"
 
+  MessagingService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-messaging-service"
+        - !Sub "${ProjectNamespace}-messaging-service"
+      Cluster: !If
+        - HasEnvPrefix
+        - !ImportValue
+            Fn::Sub: "${ProjectNamespace}-${Environment}-ClusterArn"
+        - !ImportValue
+            Fn::Sub: "${ProjectNamespace}-ClusterArn"
+      TaskDefinition: !Ref MessagingServiceTaskDefinition
+      DesiredCount: 2
+      LaunchType: FARGATE
+      HealthCheckGracePeriodSeconds: 60
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets: !Split
+            - ","
+            - !If
+              - HasEnvPrefix
+              - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-${Environment}-PrivateSubnetIds"
+              - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-PrivateSubnetIds"
+          SecurityGroups:
+            - !If
+              - HasEnvPrefix
+              - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-${Environment}-ECSSecurityGroupId"
+              - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-ECSSecurityGroupId"
+      LoadBalancers:
+        - ContainerName: app
+          ContainerPort: 3002
+          TargetGroupArn: !If
+            - HasEnvPrefix
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-${Environment}-MessagingTargetGroupArn"
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-MessagingTargetGroupArn"
+
   # ════════════════════════════════════════════════════════════
   # Auto Scaling
   # ════════════════════════════════════════════════════════════
@@ -441,6 +556,41 @@ Resources:
         ScaleInCooldown: 300
         ScaleOutCooldown: 60
 
+  # Messaging Service Auto Scaling
+  MessagingServiceScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 4
+      MinCapacity: 2
+      ResourceId: !Sub
+        - "service/${ClusterName}/${ServiceName}"
+        - ClusterName: !If
+            - HasEnvPrefix
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-${Environment}-ClusterName"
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-ClusterName"
+          ServiceName: !GetAtt MessagingService.Name
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !GetAtt AutoScalingRole.Arn
+
+  MessagingServiceScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-messaging-cpu-scaling"
+        - !Sub "${ProjectNamespace}-messaging-cpu-scaling"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref MessagingServiceScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        TargetValue: 70
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
   # Web Service Auto Scaling
   WebServiceScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
@@ -484,6 +634,14 @@ Outputs:
         - HasEnvPrefix
         - !Sub "${ProjectNamespace}-${Environment}-ListingServiceName"
         - !Sub "${ProjectNamespace}-ListingServiceName"
+
+  MessagingServiceName:
+    Value: !GetAtt MessagingService.Name
+    Export:
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-MessagingServiceName"
+        - !Sub "${ProjectNamespace}-MessagingServiceName"
 
   WebServiceName:
     Value: !GetAtt WebService.Name
