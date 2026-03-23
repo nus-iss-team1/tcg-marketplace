@@ -27,12 +27,12 @@ describe("request", () => {
 
     await request({
       baseUrl: "http://localhost:3001",
-      path: "/api/marketplace",
+      path: "/listing/marketplace",
       method: "GET",
     });
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "http://localhost:3001/api/marketplace",
+      "http://localhost:3001/listing/marketplace",
       expect.objectContaining({ method: "GET" })
     );
   });
@@ -95,7 +95,7 @@ describe("request", () => {
     const body = { gameName: "Pokemon TCG", cardName: "Pikachu" };
     await request({
       baseUrl: "http://localhost:3001",
-      path: "/api/marketplace",
+      path: "/listing/marketplace",
       method: "POST",
       body,
     });
@@ -160,7 +160,7 @@ describe("request", () => {
     await expect(
       request({
         baseUrl: "http://localhost:3001",
-        path: "/api/marketplace/xyz",
+        path: "/listing/marketplace/xyz",
         method: "GET",
       })
     ).rejects.toThrow(RequestError);
@@ -179,7 +179,7 @@ describe("request", () => {
     try {
       await request({
         baseUrl: "http://localhost:3001",
-        path: "/api/marketplace",
+        path: "/listing/marketplace",
         method: "POST",
         body: {},
       });
@@ -242,7 +242,7 @@ describe("request", () => {
 
     await request({
       baseUrl: "http://localhost:3001",
-      path: "/api/marketplace/123",
+      path: "/listing/marketplace/123",
       method: "PATCH",
       body: { price: 10 },
     });
@@ -263,7 +263,7 @@ describe("request", () => {
 
     await request({
       baseUrl: "http://localhost:3001",
-      path: "/api/marketplace/123",
+      path: "/listing/marketplace/123",
       method: "DELETE",
     });
 
