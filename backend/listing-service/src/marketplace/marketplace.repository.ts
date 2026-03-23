@@ -3,7 +3,7 @@ import { Injectable } from "@nestjs/common";
 import { instanceToPlain } from "class-transformer";
 import { Listing } from "./types/marketplace.schema";
 import { QueryListing } from "./types/marketplace.type";
-import { handleDynamoError } from "../common/utils/common.utils";
+import { handleDynamoError } from "../dynamodb/dynamodb.util";
 import { AppLoggerService } from "../logger/logger.service";
 import { ListingProjections } from "./types/marketplace.view";
 import { DynamoDbService } from "../dynamodb/dynamodb.service";
