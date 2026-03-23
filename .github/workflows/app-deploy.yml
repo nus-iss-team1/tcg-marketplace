@@ -3,6 +3,10 @@ name: "CI: Backend"
 on:
   workflow_call:
     inputs:
+      service:
+        required: true
+        type: string
+        description: "Service name (e.g. listing or messaging)"
       image_tag_prefix:
         required: true
         type: string
@@ -19,9 +23,6 @@ permissions:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: [listing]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -31,25 +32,22 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: "./backend/${{ matrix.service }}-service/package-lock.json"
+          cache-dependency-path: "./backend/${{ inputs.service }}-service/package-lock.json"
 
       - name: Install Dependencies
         run: npm ci
-        working-directory: ./backend/${{ matrix.service }}-service
+        working-directory: ./backend/${{ inputs.service }}-service
 
       - name: Run ESLint
         run: npm run lint -- --max-warnings 0
-        working-directory: ./backend/${{ matrix.service }}-service
+        working-directory: ./backend/${{ inputs.service }}-service
 
   security-scan:
     needs: lint
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: [listing]
     defaults:
       run:
-        working-directory: ./backend/${{ matrix.service }}-service
+        working-directory: ./backend/${{ inputs.service }}-service
     steps:
       - uses: actions/checkout@v4
 
@@ -58,16 +56,11 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high --file=backend/${{ matrix.service }}-service/package-lock.json
+          args: --severity-threshold=high --file=backend/${{ inputs.service }}-service/package-lock.json
 
   build-and-push:
     needs: security-scan
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: [listing]
-    outputs:
-      image: ${{ steps.build-image.outputs.image }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -93,19 +86,15 @@ jobs:
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend/${{ matrix.service }}-service
-          file: ./backend/${{ matrix.service }}-service/Dockerfile
+          context: ./backend/${{ inputs.service }}-service
+          file: ./backend/${{ inputs.service }}-service/Dockerfile
           push: true
           provenance: false
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/nusiss-team-1-voc/tcgm-${{ matrix.service }}:${{ inputs.image_tag_prefix }}-latest
-            ${{ steps.login-ecr.outputs.registry }}/nusiss-team-1-voc/tcgm-${{ matrix.service }}:${{ inputs.image_tag_prefix }}-${{ steps.vars.outputs.sha_short }}
+            ${{ steps.login-ecr.outputs.registry }}/nusiss-team-1-voc/tcgm-${{ inputs.service }}:${{ inputs.image_tag_prefix }}-latest
+            ${{ steps.login-ecr.outputs.registry }}/nusiss-team-1-voc/tcgm-${{ inputs.service }}:${{ inputs.image_tag_prefix }}-${{ steps.vars.outputs.sha_short }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Set image output
-        id: build-image
-        run: echo "image=${{ steps.login-ecr.outputs.registry }}/nusiss-team-1-voc/tcgm-${{ matrix.service }}:${{ inputs.image_tag_prefix }}-${{ steps.vars.outputs.sha_short }}" >> $GITHUB_OUTPUT
 
   deploy:
     if: ${{ inputs.auto_deploy }}
@@ -113,11 +102,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
     concurrency:
-      group: app-deploy-dev-${{ matrix.service }}
+      group: app-deploy-dev-${{ inputs.service }}
       cancel-in-progress: false
-    strategy:
-      matrix:
-        service: [listing]
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -126,10 +112,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-southeast-1
 
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
       - name: Download current task definition
         run: |
           aws ecs describe-task-definition \
-            --task-definition nusiss-team-1-voc-${{ matrix.service }}-service \
+            --task-definition nusiss-team-1-voc-${{ inputs.service }}-service \
             --query taskDefinition \
             > task-def.json
 
@@ -139,12 +129,12 @@ jobs:
         with:
           task-definition: task-def.json
           container-name: app
-          image: ${{ needs.build-and-push.outputs.image }}
+          image: ${{ steps.login-ecr.outputs.registry }}/nusiss-team-1-voc/tcgm-${{ inputs.service }}:${{ inputs.image_tag_prefix }}-latest
 
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.render.outputs.task-definition }}
-          service: nusiss-team-1-voc-${{ matrix.service }}-service
+          service: nusiss-team-1-voc-${{ inputs.service }}-service
           cluster: nusiss-team-1-voc-cluster
           wait-for-service-stability: true

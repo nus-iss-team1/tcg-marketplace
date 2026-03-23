@@ -1,4 +1,4 @@
-name: "CI: Listing Service (prod)"
+name: "CI: Messaging Service (prod)"
 
 on:
   workflow_dispatch:
@@ -6,16 +6,16 @@ on:
     branches:
       - main
     paths:
-      - "backend/listing-service/**"
+      - "backend/messaging-service/**"
 
 concurrency:
-  group: listing-ci-prod-${{ github.ref }}
+  group: messaging-ci-prod-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
     uses: ./.github/workflows/app-deploy.yml
     with:
-      service: listing
+      service: messaging
       image_tag_prefix: prod
     secrets: inherit
