@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { handleDynamoError } from "../common/utils/common.utils";
+import { handleDynamoError } from "../dynamodb/dynamodb.util";
 import { AppLoggerService } from "../logger/logger.service";
 import { GameCardProjections } from "./types/reference.view";
 import { DynamoDbService } from "../dynamodb/dynamodb.service";
