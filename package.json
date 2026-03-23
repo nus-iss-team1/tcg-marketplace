@@ -19,6 +19,8 @@
     "web-build": " docker build -f frontend/Dockerfile -t ghcr.io/nus-iss-team1/tcg-marketplace:latest .",
     "web-run": "docker run -d -p 3000:3000 ghcr.io/nus-iss-team1/tcg-marketplace:latest    ",
     "listing-build": " docker build -f backend/listing-service/Dockerfile -t ghcr.io/nus-iss-team1/tcg-marketplace:latest .",
-    "listing-run": "docker run -d -p 3001:3001 ghcr.io/nus-iss-team1/tcg-marketplace:latest    "
+    "listing-run": "docker run -d -p 3001:3001 ghcr.io/nus-iss-team1/tcg-marketplace:latest    ",
+    "messaging-build": " docker build -f backend/messaging-service/Dockerfile -t ghcr.io/nus-iss-team1/tcg-marketplace:latest .",
+    "messaging-run": "docker run -d -p 3002:3002 ghcr.io/nus-iss-team1/tcg-marketplace:latest    "
   }
 }
