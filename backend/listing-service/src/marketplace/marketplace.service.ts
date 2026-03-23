@@ -15,7 +15,7 @@ import {
   SortListing
 } from "./types/marketplace.type";
 import { Listing } from "./types/marketplace.schema";
-import { padPrice } from "../common/utils/common.utils";
+import { padPrice } from "../dynamodb/dynamodb.util";
 import { CreateListingDto, QueryListingDto, UpdateListingDto } from "./dto/marketplace.dto";
 import { IMAGE_FOLDER, THUMBNAIL_FOLDER } from "../s3/constants/s3.constant";
 import { AppLoggerService } from "../logger/logger.service";
