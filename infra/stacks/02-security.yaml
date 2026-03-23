@@ -16,6 +16,14 @@ Resources:
         LifecyclePolicyText: |
           {"rules":[{"rulePriority":1,"description":"Keep last 10","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":50},"action":{"type":"expire"}}]}
 
+  MessagingServiceRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "${ProjectNamespace}/tcgm-messaging"
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {"rules":[{"rulePriority":1,"description":"Keep last 10","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":50},"action":{"type":"expire"}}]}
+
   WebRepository:
     Type: AWS::ECR::Repository
     Properties:
@@ -27,5 +35,7 @@ Resources:
 Outputs:
   ListingServiceRepoUri:
     Value: !GetAtt ListingServiceRepository.RepositoryUri
+  MessagingServiceRepoUri:
+    Value: !GetAtt MessagingServiceRepository.RepositoryUri
   WebRepoUri:
     Value: !GetAtt WebRepository.RepositoryUri

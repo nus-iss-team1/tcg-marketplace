@@ -1,4 +1,4 @@
-name: "CI: Frontend (dev)"
+name: "CI: Messaging Service (dev)"
 
 on:
   workflow_dispatch:
@@ -6,17 +6,17 @@ on:
     branches:
       - develop
     paths:
-      - "frontend/**"
+      - "backend/messaging-service/**"
 
 concurrency:
-  group: web-ci-${{ github.ref }}
+  group: messaging-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build-and-deploy:
-    uses: ./.github/workflows/web-deploy.yml
+    uses: ./.github/workflows/app-deploy.yml
     with:
-      environment: dev
+      service: messaging
       image_tag_prefix: develop
       auto_deploy: true
     secrets: inherit

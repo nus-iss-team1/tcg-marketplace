@@ -130,7 +130,7 @@ export async function getCardTypes(): Promise<CardType[]> {
   if (USE_MOCK) return MOCK_CARD_TYPES;
 
   try {
-    const res = await fetch(`${BASE_URL}/api/reference/game`);
+    const res = await fetch(`${BASE_URL}/listing/reference/game`);
     if (!res.ok) {
       console.error(`Failed to fetch card types: ${res.status} ${res.statusText}`);
       return [];
@@ -146,7 +146,7 @@ export async function getCardTypes(): Promise<CardType[]> {
   }
 }
 
-/* ── GET /api/reference/card ── */
+/* ── GET /listing/reference/card ── */
 
 export interface CardNameResult {
   cardName: string;
@@ -159,20 +159,20 @@ export async function fetchCardNames(
 ): Promise<CardNameResult[]> {
   const query = new URLSearchParams({ gameName });
   if (cardName) query.set("cardName", cardName);
-  const res = await fetch(`${BASE_URL}/api/reference/card?${query.toString()}`);
+  const res = await fetch(`${BASE_URL}/listing/reference/card?${query.toString()}`);
   if (!res.ok) throw new Error("Failed to fetch card names");
   const json = await res.json();
   return json.data ?? json ?? [];
 }
 
-/* ── GET /api/marketplace/{gameName}/{listingId} ── */
+/* ── GET /listing/marketplace/{gameName}/{listingId} ── */
 
 export async function fetchSpecificListing(
   gameName: string,
   listingId: string
 ): Promise<Listing> {
   const res = await fetch(
-    `${BASE_URL}/api/marketplace/${encodeURIComponent(gameName)}/${encodeURIComponent(listingId)}`
+    `${BASE_URL}/listing/marketplace/${encodeURIComponent(gameName)}/${encodeURIComponent(listingId)}`
   );
   if (!res.ok) throw new Error("Failed to fetch listing");
   const json = await res.json();
@@ -277,14 +277,14 @@ function mockFetchSellerProfile(sellerId: string): SellerProfile | null {
   };
 }
 
-/* ── GET /api/marketplace/profile/<sellerId> (profile) ── */
+/* ── GET /listing/marketplace/profile/<sellerId> (profile) ── */
 
 export async function fetchSellerProfile(
   sellerId: string
 ): Promise<SellerProfile | null> {
   if (USE_MOCK) return mockFetchSellerProfile(sellerId);
 
-  const res = await fetch(`${BASE_URL}/api/marketplace/profile/${encodeURIComponent(sellerId)}`);
+  const res = await fetch(`${BASE_URL}/listing/marketplace/profile/${encodeURIComponent(sellerId)}`);
   if (!res.ok) return null;
   const json = await res.json();
   const listings = json.data ?? [];
@@ -296,7 +296,7 @@ export async function fetchSellerProfile(
   };
 }
 
-/* ── GET /api/marketplace/<gameName> ── */
+/* ── GET /listing/marketplace/<gameName> ── */
 
 export async function fetchMarketplaceListings(
   gameName: string,
@@ -310,7 +310,7 @@ export async function fetchMarketplaceListings(
   if (params?.sort) query.set("sort", params.sort);
   if (params?.order) query.set("order", params.order);
   const qs = query.toString();
-  const url = `${BASE_URL}/api/marketplace/${encodeURIComponent(gameName)}${qs ? `?${qs}` : ""}`;
+  const url = `${BASE_URL}/listing/marketplace/${encodeURIComponent(gameName)}${qs ? `?${qs}` : ""}`;
 
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch listings");
@@ -321,7 +321,7 @@ export async function fetchMarketplaceListings(
   };
 }
 
-/* ── GET /api/marketplace/profile/<sellerId> ── */
+/* ── GET /listing/marketplace/profile/<sellerId> ── */
 
 export async function fetchSellerListings(
   sellerId: string,
@@ -335,7 +335,7 @@ export async function fetchSellerListings(
   if (params?.sort) query.set("sort", params.sort);
   if (params?.order) query.set("order", params.order);
   const qs = query.toString();
-  const url = `${BASE_URL}/api/marketplace/profile/${encodeURIComponent(sellerId)}${qs ? `?${qs}` : ""}`;
+  const url = `${BASE_URL}/listing/marketplace/profile/${encodeURIComponent(sellerId)}${qs ? `?${qs}` : ""}`;
 
   const res = await fetch(url, { headers: await authHeaders() });
   if (!res.ok) throw new Error("Failed to fetch seller listings");
@@ -346,7 +346,7 @@ export async function fetchSellerListings(
   };
 }
 
-/* ── POST /api/marketplace (multipart/form-data) ── */
+/* ── POST /listing/marketplace (multipart/form-data) ── */
 
 export async function createListing(body: CreateListingBody): Promise<Listing> {
   const formData = new FormData();
@@ -366,7 +366,7 @@ export async function createListing(body: CreateListingBody): Promise<Listing> {
   if (body.backImage) formData.append("backImage", body.backImage);
 
   const headers = await authHeaders();
-  const res = await fetch(`${BASE_URL}/api/marketplace`, {
+  const res = await fetch(`${BASE_URL}/listing/marketplace`, {
     method: "POST",
     headers,
     body: formData,
@@ -379,7 +379,7 @@ export async function createListing(body: CreateListingBody): Promise<Listing> {
   return res.json();
 }
 
-/* ── PATCH /api/marketplace/<listingId> (multipart/form-data) ── */
+/* ── PATCH /listing/marketplace/<listingId> (multipart/form-data) ── */
 
 export async function updateListing(
   listingId: string,
@@ -403,7 +403,7 @@ export async function updateListing(
   if (body.backImageAction) formData.append("backImageAction", body.backImageAction);
 
   const headers = await authHeaders();
-  const res = await fetch(`${BASE_URL}/api/marketplace/${encodeURIComponent(listingId)}`, {
+  const res = await fetch(`${BASE_URL}/listing/marketplace/${encodeURIComponent(listingId)}`, {
     method: "PATCH",
     headers,
     body: formData,
@@ -412,11 +412,11 @@ export async function updateListing(
   return res.json();
 }
 
-/* ── DELETE /api/marketplace/<listingId> ── */
+/* ── DELETE /listing/marketplace/<listingId> ── */
 
 export async function deleteListing(listingId: string): Promise<void> {
   const headers = await authHeaders();
-  const res = await fetch(`${BASE_URL}/api/marketplace/${encodeURIComponent(listingId)}`, {
+  const res = await fetch(`${BASE_URL}/listing/marketplace/${encodeURIComponent(listingId)}`, {
     method: "DELETE",
     headers,
   });

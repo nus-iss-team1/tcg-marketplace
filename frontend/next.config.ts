@@ -16,8 +16,17 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
+<<<<<<< HEAD
         source: "/api/:path*",
         destination: `${process.env.BACKEND_API}/api/:path*`,
+=======
+        source: "/listing/:path*",
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_API}/listing/:path*`,
+      },
+      {
+        source: "/messaging/:path*",
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_API}/messaging/:path*`,
+>>>>>>> f24248a (feat: add messaging service to CI/CD pipeline and infrastructure)
       },
     ];
   },
