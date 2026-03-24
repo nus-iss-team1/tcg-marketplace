@@ -9,10 +9,15 @@ Parameters:
     Type: String
     Default: ""
     Description: "Environment prefix (e.g. prod). Leave empty for dev."
+  HighAvailability:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+    Description: "Enable HA (2 NAT Gateways). Set false for dev to save costs."
   BaseDomainName:
     Type: String
     Default: ""
-    Description: "Base domain (e.g. vaultofcards.io). Subdomains voc-listing.<base> and voc-messaging.<base> will be created. Leave empty to skip."
+    Description: "Base domain (e.g. vaultofcards.io). Leave empty to skip."
   HostedZoneId:
     Type: String
     Default: ""
@@ -20,6 +25,7 @@ Parameters:
 
 Conditions:
   HasEnvPrefix: !Not [!Equals [!Ref Environment, ""]]
+  IsHA: !Equals [!Ref HighAvailability, "true"]
   HasDomain: !Not [!Equals [!Ref BaseDomainName, ""]]
 
 Resources:
@@ -144,6 +150,7 @@ Resources:
 
   NATGatewayEIPB:
     Type: AWS::EC2::EIP
+    Condition: IsHA
     DependsOn: VPCGatewayAttachment
     Properties:
       Domain: vpc
@@ -156,6 +163,7 @@ Resources:
 
   NATGatewayB:
     Type: AWS::EC2::NatGateway
+    Condition: IsHA
     Properties:
       AllocationId: !GetAtt NATGatewayEIPB.AllocationId
       SubnetId: !Ref PublicSubnetB
@@ -201,7 +209,10 @@ Resources:
     Properties:
       RouteTableId: !Ref PrivateRouteTableB
       DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NATGatewayB
+      NatGatewayId: !If
+        - IsHA
+        - !Ref NATGatewayB
+        - !Ref NATGatewayA
 
   PrivateSubnetA:
     Type: AWS::EC2::Subnet
@@ -455,17 +466,6 @@ Resources:
         - DomainName: !Ref BaseDomainName
           HostedZoneId: !Ref HostedZoneId
 
-  # Wildcard certificate for service subdomains (voc-*.dev.vaultofcards.io)
-  WildcardACMCertificate:
-    Type: AWS::CertificateManager::Certificate
-    Condition: HasDomain
-    Properties:
-      DomainName: !Sub "*.${BaseDomainName}"
-      ValidationMethod: DNS
-      DomainValidationOptions:
-        - DomainName: !Sub "*.${BaseDomainName}"
-          HostedZoneId: !Ref HostedZoneId
-
   # ── Base domain (<base>) ──────────────────────────────────
   ApiCustomDomain:
     Type: AWS::ApiGatewayV2::DomainName
@@ -495,63 +495,6 @@ Resources:
         DNSName: !GetAtt ApiCustomDomain.RegionalDomainName
         HostedZoneId: !GetAtt ApiCustomDomain.RegionalHostedZoneId
 
-  # ── Listing subdomain (voc-listing.<base>) ────────────────
-  ListingCustomDomain:
-    Type: AWS::ApiGatewayV2::DomainName
-    Condition: HasDomain
-    Properties:
-      DomainName: !Sub "voc-listing.${BaseDomainName}"
-      DomainNameConfigurations:
-        - EndpointType: REGIONAL
-          CertificateArn: !Ref WildcardACMCertificate
-
-  ListingDomainMapping:
-    Type: AWS::ApiGatewayV2::ApiMapping
-    Condition: HasDomain
-    Properties:
-      ApiId: !Ref HttpApi
-      DomainName: !Ref ListingCustomDomain
-      Stage: !Ref HttpApiStage
-
-  ListingDnsRecord:
-    Type: AWS::Route53::RecordSet
-    Condition: HasDomain
-    Properties:
-      HostedZoneId: !Ref HostedZoneId
-      Name: !Sub "voc-listing.${BaseDomainName}"
-      Type: A
-      AliasTarget:
-        DNSName: !GetAtt ListingCustomDomain.RegionalDomainName
-        HostedZoneId: !GetAtt ListingCustomDomain.RegionalHostedZoneId
-
-  # ── Messaging subdomain (voc-messaging.<base>) ────────────
-  MessagingCustomDomain:
-    Type: AWS::ApiGatewayV2::DomainName
-    Condition: HasDomain
-    Properties:
-      DomainName: !Sub "voc-messaging.${BaseDomainName}"
-      DomainNameConfigurations:
-        - EndpointType: REGIONAL
-          CertificateArn: !Ref WildcardACMCertificate
-
-  MessagingDomainMapping:
-    Type: AWS::ApiGatewayV2::ApiMapping
-    Condition: HasDomain
-    Properties:
-      ApiId: !Ref HttpApi
-      DomainName: !Ref MessagingCustomDomain
-      Stage: !Ref HttpApiStage
-
-  MessagingDnsRecord:
-    Type: AWS::Route53::RecordSet
-    Condition: HasDomain
-    Properties:
-      HostedZoneId: !Ref HostedZoneId
-      Name: !Sub "voc-messaging.${BaseDomainName}"
-      Type: A
-      AliasTarget:
-        DNSName: !GetAtt MessagingCustomDomain.RegionalDomainName
-        HostedZoneId: !GetAtt MessagingCustomDomain.RegionalHostedZoneId
 
 Outputs:
   # Networking
