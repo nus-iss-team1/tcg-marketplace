@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: ECR Repositories for Monorepo (App and Web)
+Description: ECR Repositories for Microservices images.
 
 Parameters:
   ProjectNamespace:
