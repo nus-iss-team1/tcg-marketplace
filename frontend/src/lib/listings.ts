@@ -379,12 +379,18 @@ export async function createListing(body: CreateListingBody): Promise<Listing> {
   return res.json();
 }
 
-/* ── PATCH /listing/marketplace/<listingId> (multipart/form-data) ── */
+/* ── PATCH /listing/marketplace/<gameName>/<listingId> (multipart/form-data) ── */
 
-export async function updateListing(
-  listingId: string,
-  body: UpdateListingBody
-): Promise<Listing> {
+export interface UpdateListingRequest {
+  gameName: string;
+  listingId: string;
+  body: UpdateListingBody;
+}
+
+export async function updateListing(request: UpdateListingRequest): Promise<Listing> {
+  const { gameName, listingId, body } = request;
+  if (!gameName) throw new Error("gameName is required");
+  if (!listingId) throw new Error("listingId is required");
   const formData = new FormData();
   if (body.cardName) formData.append("cardName", body.cardName);
   if (body.title) formData.append("title", body.title);
@@ -403,7 +409,7 @@ export async function updateListing(
   if (body.backImageAction) formData.append("backImageAction", body.backImageAction);
 
   const headers = await authHeaders();
-  const res = await fetch(`${BASE_URL}/listing/marketplace/${encodeURIComponent(listingId)}`, {
+  const res = await fetch(`${BASE_URL}/listing/marketplace/${encodeURIComponent(gameName)}/${encodeURIComponent(listingId)}`, {
     method: "PATCH",
     headers,
     body: formData,
@@ -412,11 +418,20 @@ export async function updateListing(
   return res.json();
 }
 
-/* ── DELETE /listing/marketplace/<listingId> ── */
+/* ── DELETE /listing/marketplace/<gameName>/<listingId> ── */
 
-export async function deleteListing(listingId: string): Promise<void> {
+export interface DeleteListingRequest {
+  gameName: string;
+  listingId: string;
+}
+
+export async function deleteListing(request: DeleteListingRequest): Promise<void> {
+  const { gameName, listingId } = request;
+  if (!gameName) throw new Error("gameName is required");
+  if (!listingId) throw new Error("listingId is required");
+
   const headers = await authHeaders();
-  const res = await fetch(`${BASE_URL}/listing/marketplace/${encodeURIComponent(listingId)}`, {
+  const res = await fetch(`${BASE_URL}/listing/marketplace/${encodeURIComponent(gameName)}/${encodeURIComponent(listingId)}`, {
     method: "DELETE",
     headers,
   });
