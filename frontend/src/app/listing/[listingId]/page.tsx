@@ -305,20 +305,24 @@ function EditListingView({ listing }: { listing: Listing }) {
           ? "DELETE" as const
           : "KEEP" as const;
 
-      await updateListing(listing.listingId, {
-        cardName,
-        title,
-        description: description || undefined,
-        setName: setName || undefined,
-        cardId: cardId || undefined,
-        rarity: rarity || undefined,
-        price: Number(Number(price).toFixed(2)),
-        pickup: pickUp || undefined,
-        paymentMethod,
-        frontImage: frontImage ?? undefined,
-        backImage: backImage ?? undefined,
-        frontImageAction,
-        backImageAction,
+      await updateListing({
+        gameName: listing.gameName,
+        listingId: listing.listingId,
+        body: {
+          cardName,
+          title,
+          description: description || undefined,
+          setName: setName || undefined,
+          cardId: cardId || undefined,
+          rarity: rarity || undefined,
+          price: Number(Number(price).toFixed(2)),
+          pickup: pickUp || undefined,
+          paymentMethod,
+          frontImage: frontImage ?? undefined,
+          backImage: backImage ?? undefined,
+          frontImageAction,
+          backImageAction,
+        },
       });
       toast.success("Listing updated successfully.");
       window.location.href = `/listing/${listing.listingId}?game=${encodeURIComponent(listing.gameName)}`;
@@ -331,7 +335,7 @@ function EditListingView({ listing }: { listing: Listing }) {
 
   const handleDelete = async () => {
     try {
-      await deleteListing(listing.listingId);
+      await deleteListing({ gameName: listing.gameName, listingId: listing.listingId });
       toast.success("Listing deleted.");
       router.push("/listing");
     } catch {

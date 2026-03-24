@@ -52,7 +52,7 @@ describe("request", () => {
 
     await request({
       baseUrl: "http://localhost:3001",
-      path: "/api/test",
+      path: "/listing/test",
       method: "GET",
     });
 
@@ -76,7 +76,7 @@ describe("request", () => {
 
     await request({
       baseUrl: "http://localhost:3001",
-      path: "/api/test",
+      path: "/listing/test",
       method: "GET",
     });
 
@@ -119,7 +119,7 @@ describe("request", () => {
 
     await request({
       baseUrl: "http://localhost:3001",
-      path: "/api/test",
+      path: "/listing/test",
       method: "GET",
     });
 
@@ -140,7 +140,7 @@ describe("request", () => {
 
     const result = await request<{ items: { id: number }[] }>({
       baseUrl: "http://localhost:3001",
-      path: "/api/test",
+      path: "/listing/test",
       method: "GET",
     });
 
@@ -204,7 +204,7 @@ describe("request", () => {
     try {
       await request({
         baseUrl: "http://localhost:3001",
-        path: "/api/test",
+        path: "/listing/test",
         method: "GET",
       });
     } catch (err) {
@@ -222,7 +222,7 @@ describe("request", () => {
 
     await request({
       baseUrl: "http://localhost:3001",
-      path: "/api/test",
+      path: "/listing/test",
       method: "GET",
       headers: { "X-Custom": "value" },
     });
