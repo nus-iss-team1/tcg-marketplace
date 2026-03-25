@@ -1,45 +1,18 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { ProfileContent, ProfileSkeleton } from "@/components/profile-content";
-
-import { ProfileHeader } from "@/components/profile-header";
-import { Badge } from "@/components/ui/badge";
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    document.title = "Profile - VAULT OF CARDS";
-  }, []);
+    if (!loading && user) {
+      router.replace(`/seller/${user.username}`);
+    }
+  }, [user, loading, router]);
 
-  const profile = useMemo(() => {
-    if (!user) return null;
-    return {
-      username: user.username,
-      displayName: user.givenName
-        ? `${user.givenName}${user.familyName ? ` ${user.familyName}` : ""}`
-        : user.username,
-    };
-  }, [user]);
-
-  return (
-    <>
-      <ProfileHeader
-        title={profile?.displayName || "My Profile"}
-        username={profile?.username}
-        badge={<Badge variant="secondary" className="text-xs">You</Badge>}
-      />
-      {loading ? (
-        <ProfileSkeleton />
-      ) : profile ? (
-        <ProfileContent profile={profile} isOwnProfile />
-      ) : (
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-muted-foreground">Profile not found.</p>
-        </div>
-      )}
-    </>
-  );
+  return null;
 }

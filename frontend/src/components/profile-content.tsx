@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
-import { MapPinIcon, CalendarIcon, PlusIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { ListingCard } from "@/components/listing-card";
 import { PaginationControls } from "@/components/pagination-controls";
 import { Button } from "@/components/ui/button";
@@ -15,15 +15,20 @@ export interface ProfileData {
   displayName: string;
   joinedAt?: number;
   address?: string;
+  bio?: string;
+  preferredPayment?: {
+    cash: boolean;
+    paynow: boolean;
+    bank: boolean;
+  };
 }
 
 interface ProfileContentProps {
   profile: ProfileData;
   isOwnProfile?: boolean;
-  action?: React.ReactNode;
 }
 
-export function ProfileContent({ profile, isOwnProfile, action }: ProfileContentProps) {
+export function ProfileContent({ profile, isOwnProfile }: ProfileContentProps) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loadingListings, setLoadingListings] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -39,26 +44,6 @@ export function ProfileContent({ profile, isOwnProfile, action }: ProfileContent
 
   return (
     <div className="flex flex-col gap-3 w-full">
-      {/* Profile meta */}
-      <div className="flex items-center justify-between animate-[fade-up_0.4s_ease-out_both]">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          {profile.address && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPinIcon className="h-3 w-3" />
-              {profile.address}
-            </span>
-          )}
-          {profile.joinedAt && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <CalendarIcon className="h-3 w-3" />
-              Joined {new Date(profile.joinedAt).toLocaleDateString()}
-            </span>
-          )}
-        </div>
-        {action}
-      </div>
-
-
       {/* Listings section */}
       <div>
         <h3 className="text-sm text-muted-foreground mb-4 animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0.1s" }}>
@@ -66,7 +51,7 @@ export function ProfileContent({ profile, isOwnProfile, action }: ProfileContent
         </h3>
 
         {loadingListings ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 sm:gap-6 md:gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5 sm:gap-6 md:gap-8">
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="aspect-5/7 w-full rounded-none" />
             ))}
@@ -91,7 +76,7 @@ export function ProfileContent({ profile, isOwnProfile, action }: ProfileContent
           </EmptyState>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 sm:gap-6 md:gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5 sm:gap-6 md:gap-8">
               {listings.map((listing, i) => (
                 <ListingCard key={listing.listingId} listing={listing} index={i} animationDelayOffset={0.15} />
               ))}
@@ -118,7 +103,7 @@ export function ProfileSkeleton() {
       <Skeleton className="h-3 w-48" />
       <Skeleton className="h-px w-full" />
       <Skeleton className="h-4 w-24" />
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 sm:gap-6 md:gap-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5 sm:gap-6 md:gap-8">
         {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} className="aspect-5/7 w-full rounded-none" />
         ))}

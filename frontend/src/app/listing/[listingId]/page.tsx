@@ -31,7 +31,7 @@ import {
   RefreshCwIcon,
   Trash2Icon,
 } from "lucide-react";
-import { fetchSpecificListing, updateListing, deleteListing, type Listing, type PaymentMethod } from "@/lib/listings";
+import { fetchSpecificListing, fetchSellerProfile, updateListing, deleteListing, type Listing, type PaymentMethod, type SellerProfile } from "@/lib/listings";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import { useAuth } from "@/context/AuthContext";
@@ -109,7 +109,15 @@ function ViewListingContent() {
 }
 
 function ReadListingView({ listing, isOwner }: { listing: Listing; isOwner: boolean }) {
-  const displayName = listing.sellerName || listing.sellerId || "Unknown";
+  const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(null);
+
+  useEffect(() => {
+    if (listing.sellerId) {
+      fetchSellerProfile(listing.sellerId).then(setSellerProfile);
+    }
+  }, [listing.sellerId]);
+
+  const displayName = sellerProfile?.displayName || listing.sellerName || listing.sellerId || "Unknown";
   const sellerInitials = displayName.substring(0, 2).toUpperCase();
 
   return (
@@ -199,18 +207,39 @@ function ReadListingView({ listing, isOwner }: { listing: Listing; isOwner: bool
 
           <Separator />
 
-          <div className="my-4">
-            <p className="text-xs text-muted-foreground mb-2">Seller</p>
-            <Link href={`/seller/${listing.sellerId}`} className="flex items-center gap-3 p-2 -m-2 min-w-0 overflow-hidden hover:bg-muted/50 rounded-md transition-colors">
-              <Avatar className="h-9 w-9">
-                <AvatarFallback className="text-xs">{sellerInitials}</AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs truncate">{displayName}</span>
-                <span className="text-xs text-muted-foreground truncate">@{listing.sellerId}</span>
+          <Link href={`/seller/${listing.sellerId}`} className="my-4 flex gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+            <Avatar className="h-12 w-12 shrink-0">
+              <AvatarFallback className="text-sm">{sellerInitials}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col min-w-0 gap-0.5">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium truncate">{displayName}</span>
+                <span className="text-xs text-muted-foreground">@{listing.sellerId}</span>
               </div>
-            </Link>
-          </div>
+              {sellerProfile?.bio && (
+                <p className="text-xs text-muted-foreground italic line-clamp-2">&ldquo;{sellerProfile.bio}&rdquo;</p>
+              )}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
+                {sellerProfile?.address && (
+                  <span className="text-xs text-muted-foreground">{sellerProfile.address}</span>
+                )}
+                {sellerProfile?.joinedAt && (
+                  <span className="text-xs text-muted-foreground">
+                    Joined {new Date(sellerProfile.joinedAt).toLocaleDateString()}
+                  </span>
+                )}
+                {sellerProfile?.preferredPayment && (sellerProfile.preferredPayment.cash || sellerProfile.preferredPayment.paynow || sellerProfile.preferredPayment.bank) && (
+                  <span className="text-xs text-muted-foreground">
+                    Accepts: {[
+                      sellerProfile.preferredPayment.cash && "Cash",
+                      sellerProfile.preferredPayment.paynow && "PayNow",
+                      sellerProfile.preferredPayment.bank && "Bank Transfer",
+                    ].filter(Boolean).join(", ")}
+                  </span>
+                )}
+              </div>
+            </div>
+          </Link>
 
           {!isOwner && (
             <div className="flex gap-3 pt-2">
