@@ -17,14 +17,18 @@ const nextConfig: NextConfig = {
     return [
       {
 <<<<<<< HEAD
+<<<<<<< HEAD
         source: "/api/:path*",
         destination: `${process.env.BACKEND_API}/api/:path*`,
 =======
         source: "/listing/:path*",
+=======
+        source: "/api/listing/:path*",
+>>>>>>> 77596b0 (feat: add forgot password flow, fix API proxy routing and mobile edit buttons)
         destination: `${process.env.NEXT_PUBLIC_BACKEND_API}/listing/:path*`,
       },
       {
-        source: "/messaging/:path*",
+        source: "/api/messaging/:path*",
         destination: `${process.env.NEXT_PUBLIC_BACKEND_API}/messaging/:path*`,
 >>>>>>> f24248a (feat: add messaging service to CI/CD pipeline and infrastructure)
       },
