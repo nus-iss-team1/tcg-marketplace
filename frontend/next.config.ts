@@ -16,11 +16,11 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: "/listing/:path*",
+        source: "/api/listing/:path*",
         destination: `${process.env.NEXT_PUBLIC_BACKEND_API}/listing/:path*`,
       },
       {
-        source: "/messaging/:path*",
+        source: "/api/messaging/:path*",
         destination: `${process.env.NEXT_PUBLIC_BACKEND_API}/messaging/:path*`,
       },
     ];

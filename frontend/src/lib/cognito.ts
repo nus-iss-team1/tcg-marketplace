@@ -218,6 +218,38 @@ export function updateUserAttributes(
   });
 }
 
+export function forgotPassword(username: string): Promise<void> {
+  const cognitoUser = new CognitoUser({
+    Username: username,
+    Pool: getUserPool(),
+  });
+
+  return new Promise((resolve, reject) => {
+    cognitoUser.forgotPassword({
+      onSuccess: () => resolve(),
+      onFailure: (err) => reject(err),
+    });
+  });
+}
+
+export function confirmForgotPassword(
+  username: string,
+  code: string,
+  newPassword: string
+): Promise<void> {
+  const cognitoUser = new CognitoUser({
+    Username: username,
+    Pool: getUserPool(),
+  });
+
+  return new Promise((resolve, reject) => {
+    cognitoUser.confirmPassword(code, newPassword, {
+      onSuccess: () => resolve(),
+      onFailure: (err) => reject(err),
+    });
+  });
+}
+
 export function changePassword(
   oldPassword: string,
   newPassword: string

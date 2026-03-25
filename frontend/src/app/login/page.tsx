@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
-import { confirmSignUp, resendConfirmationCode } from "@/lib/cognito";
+import { confirmSignUp, resendConfirmationCode, forgotPassword, confirmForgotPassword } from "@/lib/cognito";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,6 +46,14 @@ function AuthForm() {
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [showVerify, setShowVerify] = useState(false);
+
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotStep, setForgotStep] = useState<"request" | "confirm">("request");
+  const [forgotUsername, setForgotUsername] = useState("");
+  const [forgotCode, setForgotCode] = useState("");
+  const [forgotNewPassword, setForgotNewPassword] = useState("");
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   const [activeTab, setActiveTab] = useState(initialTab);
 
@@ -136,6 +144,148 @@ function AuthForm() {
     }
   };
 
+  const handleForgotRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    try {
+      await forgotPassword(forgotUsername);
+      toast.success("If an account with this username exists, a reset code has been sent to the associated email.");
+      setForgotStep("confirm");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send reset code");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleForgotConfirm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      await confirmForgotPassword(forgotUsername, forgotCode, forgotNewPassword);
+      toast.success("Password reset successfully. Please sign in.");
+      setShowForgotPassword(false);
+      setForgotStep("request");
+      setForgotUsername("");
+      setForgotCode("");
+      setForgotNewPassword("");
+      setForgotConfirmPassword("");
+      setActiveTab("signin");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to reset password");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  if (showForgotPassword) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <div className="w-xl animate-[fade-up_0.4s_ease-out_both]">
+          <Card className="bg-background">
+            <CardHeader>
+              <CardTitle>{forgotStep === "request" ? "Forgot Password" : "Reset Password"}</CardTitle>
+              <CardDescription>
+                {forgotStep === "request"
+                  ? "Enter your username. If an account exists, a reset code will be sent to the associated email."
+                  : "Enter the code from your email and your new password."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {forgotStep === "request" ? (
+                <form onSubmit={handleForgotRequest} className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="forgot-username">Username</Label>
+                    <Input
+                      id="forgot-username"
+                      type="text"
+                      value={forgotUsername}
+                      onChange={(e) => setForgotUsername(e.target.value)}
+                      required
+                      autoFocus
+                    />
+                  </div>
+                  <Button type="submit" disabled={forgotLoading} className="w-full">
+                    {forgotLoading ? "Sending..." : "Send Reset Code"}
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleForgotConfirm} className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="forgot-code">Verification Code</Label>
+                    <Input
+                      id="forgot-code"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="ENTER 6-DIGIT CODE"
+                      value={forgotCode}
+                      onChange={(e) => setForgotCode(e.target.value)}
+                      required
+                      autoFocus
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="forgot-new-password">New Password</Label>
+                    <Input
+                      id="forgot-new-password"
+                      type="password"
+                      value={forgotNewPassword}
+                      onChange={(e) => setForgotNewPassword(e.target.value)}
+                      required
+                      minLength={8}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Min 8 characters, uppercase, lowercase, and number required
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="forgot-confirm-password">Confirm New Password</Label>
+                    <Input
+                      id="forgot-confirm-password"
+                      type="password"
+                      value={forgotConfirmPassword}
+                      onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                      required
+                      minLength={8}
+                    />
+                    {forgotConfirmPassword && forgotNewPassword !== forgotConfirmPassword && (
+                      <p className="text-xs text-destructive">
+                        Passwords do not match
+                      </p>
+                    )}
+                  </div>
+                  <Button type="submit" disabled={forgotLoading || (!!forgotConfirmPassword && forgotNewPassword !== forgotConfirmPassword)} className="w-full">
+                    {forgotLoading ? "Resetting..." : "Reset Password"}
+                  </Button>
+                </form>
+              )}
+              <div className="mt-4 text-center text-sm text-muted-foreground">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    setForgotStep("request");
+                    setForgotUsername("");
+                    setForgotCode("");
+                    setForgotNewPassword("");
+                    setForgotConfirmPassword("");
+                  }}
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  Back to sign in
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (showVerify) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -221,6 +371,16 @@ function AuthForm() {
                       onChange={(e) => setLoginPassword(e.target.value)}
                       required
                     />
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-xs text-muted-foreground hover:underline cursor-pointer"
+                    >
+                      Forgot password?
+                    </button>
                   </div>
 
                   <Button type="submit" disabled={loginLoading} className="mt-2 w-full">
