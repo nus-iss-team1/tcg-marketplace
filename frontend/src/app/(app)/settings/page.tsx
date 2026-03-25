@@ -107,7 +107,7 @@ export default function SettingsPage() {
       await updateSellerProfile({
         displayName: displayName || undefined,
         address: address || undefined,
-        bio: bio || undefined,
+        bio,
         preferredPayment,
       });
       toast.success("Profile updated successfully.");

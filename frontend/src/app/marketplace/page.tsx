@@ -10,6 +10,7 @@ import { ListingCard } from "@/components/listing-card";
 import { PaginationControls } from "@/components/pagination-controls";
 import { Button } from "@/components/ui/button";
 import { fetchMarketplaceListings, type Listing } from "@/lib/listings";
+import { GameBanner } from "@/components/game-banner";
 import Link from "next/link";
 
 export default function MarketplacePage() {
@@ -67,6 +68,8 @@ function MarketplaceContent() {
 
   return (
     <>
+      <GameBanner game={gameType} />
+
       {/* Fixed top: title + search */}
       <div className="shrink-0">
         <PageHeader title="Marketplace" description={gameType} />
