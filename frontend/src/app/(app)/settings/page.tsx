@@ -4,13 +4,15 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
   getUserAttributes,
-  updateUserAttributes,
   changePassword,
 } from "@/lib/cognito";
+import { fetchSellerProfile, updateSellerProfile } from "@/lib/listings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
@@ -50,7 +52,7 @@ export default function SettingsPage() {
           }
         }
       },
-      { rootMargin: "-20% 0px -60% 0px" }
+      { rootMargin: "-20% 0px -60% 0px" },
     );
 
     for (const { id } of SECTIONS) {
@@ -67,39 +69,51 @@ export default function SettingsPage() {
 
   /* ── Profile state ── */
   const [email, setEmail] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [address, setAddress] = useState("");
+  const [bio, setBio] = useState("");
+  const [preferredPayment, setPreferredPayment] = useState({ cash: false, paynow: false, bank: false });
   const [loadingAttrs, setLoadingAttrs] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
-    getUserAttributes()
-      .then((attrs) => {
+    const loadProfile = async () => {
+      try {
+        const attrs = await getUserAttributes();
         setEmail(attrs["email"] ?? "");
-        setFirstName(attrs["given_name"] ?? "");
-        setLastName(attrs["family_name"] ?? "");
-        setAddress(attrs["address"] ?? "");
-      })
-      .catch(() => {})
-      .finally(() => setLoadingAttrs(false));
-  }, []);
+
+        if (user) {
+          const profile = await fetchSellerProfile(user.username);
+          if (profile) {
+            setDisplayName(profile.displayName ?? "");
+            setAddress(profile.address ?? "");
+            setBio(profile.bio ?? "");
+            if (profile.preferredPayment) setPreferredPayment(profile.preferredPayment);
+          }
+        }
+      } catch {
+        // ignore
+      } finally {
+        setLoadingAttrs(false);
+      }
+    };
+    loadProfile();
+  }, [user]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingProfile(true);
     try {
-      const attrs: Record<string, string> = {};
-      if (email) attrs["email"] = email;
-      if (firstName) attrs["given_name"] = firstName;
-      if (lastName) attrs["family_name"] = lastName;
-      attrs["address"] = address;
-      await updateUserAttributes(attrs);
-      await refreshUser();
+      await updateSellerProfile({
+        displayName: displayName || undefined,
+        address: address || undefined,
+        bio: bio || undefined,
+        preferredPayment,
+      });
       toast.success("Profile updated successfully.");
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to update profile"
+        err instanceof Error ? err.message : "Failed to update profile",
       );
     } finally {
       setSavingProfile(false);
@@ -173,8 +187,12 @@ export default function SettingsPage() {
       <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full">
         {/* Content sections */}
         <div className="flex-1 min-w-0 flex flex-col gap-6 order-2 md:order-1">
-        {/* Profile */}
-        <section id="profile" className="animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0s" }}>
+          {/* Profile */}
+          <section
+            id="profile"
+            className="animate-[fade-up_0.4s_ease-out_both]"
+            style={{ animationDelay: "0s" }}
+          >
             <Card className="bg-background">
               <CardHeader>
                 <div className="flex items-center gap-2">
@@ -202,25 +220,15 @@ export default function SettingsPage() {
                     <Label className="text-muted-foreground">Username</Label>
                     <p className="text-sm normal-case">{user?.username}</p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="profile-first-name">First Name</Label>
-                      <Input
-                        id="profile-first-name"
-                        type="text"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="profile-last-name">Last Name</Label>
-                      <Input
-                        id="profile-last-name"
-                        type="text"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                      />
-                    </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="profile-display-name">Display Name</Label>
+                    <Input
+                      id="profile-display-name"
+                      type="text"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      maxLength={50}
+                    />
                   </div>
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="profile-address">Address (optional)</Label>
@@ -231,94 +239,117 @@ export default function SettingsPage() {
                       onChange={(e) => setAddress(e.target.value)}
                     />
                   </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="profile-bio">Bio (optional)</Label>
+                    <Textarea
+                      id="profile-bio"
+                      placeholder="Tell buyers about yourself"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      maxLength={500}
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label>Preferred Payment Methods</Label>
+                    <div className="flex flex-wrap gap-x-6 gap-y-2">
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={preferredPayment.cash}
+                          onCheckedChange={(v) => setPreferredPayment((p) => ({ ...p, cash: v === true }))}
+                        />
+                        Cash
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={preferredPayment.paynow}
+                          onCheckedChange={(v) => setPreferredPayment((p) => ({ ...p, paynow: v === true }))}
+                        />
+                        PayNow
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={preferredPayment.bank}
+                          onCheckedChange={(v) => setPreferredPayment((p) => ({ ...p, bank: v === true }))}
+                        />
+                        Bank Transfer
+                      </label>
+                    </div>
+                  </div>
                   <Button
                     type="submit"
                     disabled={savingProfile}
                     className="w-full sm:w-auto self-end mt-2"
                   >
-                                        {savingProfile ? "Saving..." : "Save Changes"}
+                    {savingProfile ? "Saving..." : "Save Changes"}
                   </Button>
                 </form>
               </CardContent>
             </Card>
-        </section>
+          </section>
 
-        {/* Change Password */}
-        <section id="password" className="animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0.1s" }}>
-          <Card className="bg-background">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <CardTitle>Change Password</CardTitle>
-              </div>
-              <CardDescription>Update your account password</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form
-                onSubmit={handleChangePassword}
-                className="flex flex-col gap-4"
-              >
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="current-password">Current Password</Label>
-                  <Input
-                    id="current-password"
-                    type="password"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="new-password">New Password</Label>
-                  <Input
-                    id="new-password"
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="confirm-password">
-                    Confirm New Password
-                  </Label>
-                  <Input
-                    id="confirm-password"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={savingPassword}
-                  className="w-full sm:w-auto self-end mt-2"
-                >
-                                    {savingPassword ? "Saving..." : "Update Password"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </section>
-
-      
-      </div>
-
-        {/* App Info */}
-        {process.env.NEXT_PUBLIC_IMAGE_TAG && (
-          <section className="animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0.2s" }}>
+          {/* Change Password */}
+          <section
+            id="password"
+            className="animate-[fade-up_0.4s_ease-out_both]"
+            style={{ animationDelay: "0.1s" }}
+          >
             <Card className="bg-background">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Build</span>
-                  <Badge variant="outline" className="font-mono text-xs">
-                    {process.env.NEXT_PUBLIC_IMAGE_TAG}
-                  </Badge>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <CardTitle>Change Password</CardTitle>
                 </div>
+                <CardDescription>Update your account password</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={handleChangePassword}
+                  className="flex flex-col gap-4"
+                >
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="current-password">Current Password</Label>
+                    <Input
+                      id="current-password"
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="new-password">New Password</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="confirm-password">
+                      Confirm New Password
+                    </Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={savingPassword}
+                    className="w-full sm:w-auto self-end mt-2"
+                  >
+                    {savingPassword ? "Saving..." : "Update Password"}
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </section>
-        )}
+        </div>
 
         {/* Table of contents nav — hidden on mobile, right side on md+ */}
         <nav className="hidden md:block w-44 shrink-0 sticky top-20 self-start order-2">
@@ -333,7 +364,7 @@ export default function SettingsPage() {
                     "block w-full text-left text-[13px] py-1.5 pl-3 -ml-px border-l-2 transition-colors cursor-pointer",
                     activeSection === id
                       ? "border-primary text-foreground font-medium"
-                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50",
                   )}
                 >
                   {label}
@@ -346,3 +377,4 @@ export default function SettingsPage() {
     </ContentLayout>
   );
 }
+
