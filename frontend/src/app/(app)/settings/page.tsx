@@ -2,10 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import {
-  getUserAttributes,
-  changePassword,
-} from "@/lib/cognito";
+import { getUserAttributes, changePassword } from "@/lib/cognito";
 import { fetchSellerProfile, updateSellerProfile } from "@/lib/listings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +31,7 @@ const SECTIONS = [
 ];
 
 export default function SettingsPage() {
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     document.title = "Settings - VAULT OF CARDS";
@@ -72,7 +69,11 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState("");
   const [address, setAddress] = useState("");
   const [bio, setBio] = useState("");
-  const [preferredPayment, setPreferredPayment] = useState({ cash: false, paynow: false, bank: false });
+  const [preferredPayment, setPreferredPayment] = useState({
+    cash: false,
+    paynow: false,
+    bank: false,
+  });
   const [loadingAttrs, setLoadingAttrs] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
 
@@ -88,7 +89,8 @@ export default function SettingsPage() {
             setDisplayName(profile.displayName ?? "");
             setAddress(profile.address ?? "");
             setBio(profile.bio ?? "");
-            if (profile.preferredPayment) setPreferredPayment(profile.preferredPayment);
+            if (profile.preferredPayment)
+              setPreferredPayment(profile.preferredPayment);
           }
         }
       } catch {
@@ -256,21 +258,36 @@ export default function SettingsPage() {
                       <label className="flex items-center gap-2 text-sm">
                         <Checkbox
                           checked={preferredPayment.cash}
-                          onCheckedChange={(v) => setPreferredPayment((p) => ({ ...p, cash: v === true }))}
+                          onCheckedChange={(v) =>
+                            setPreferredPayment((p) => ({
+                              ...p,
+                              cash: v === true,
+                            }))
+                          }
                         />
                         Cash
                       </label>
                       <label className="flex items-center gap-2 text-sm">
                         <Checkbox
                           checked={preferredPayment.paynow}
-                          onCheckedChange={(v) => setPreferredPayment((p) => ({ ...p, paynow: v === true }))}
+                          onCheckedChange={(v) =>
+                            setPreferredPayment((p) => ({
+                              ...p,
+                              paynow: v === true,
+                            }))
+                          }
                         />
                         PayNow
                       </label>
                       <label className="flex items-center gap-2 text-sm">
                         <Checkbox
                           checked={preferredPayment.bank}
-                          onCheckedChange={(v) => setPreferredPayment((p) => ({ ...p, bank: v === true }))}
+                          onCheckedChange={(v) =>
+                            setPreferredPayment((p) => ({
+                              ...p,
+                              bank: v === true,
+                            }))
+                          }
                         />
                         Bank Transfer
                       </label>
