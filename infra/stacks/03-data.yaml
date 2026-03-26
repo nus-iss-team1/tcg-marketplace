@@ -235,6 +235,27 @@ Resources:
           Projection:
             ProjectionType: ALL
 
+  UserProfile:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TableName: !If
+        - HasEnvPrefix
+        - !Sub "${Environment}-UserProfile"
+        - UserProfile
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+
 Outputs:
   # Storage
   AssetsBucketName:
@@ -319,3 +340,19 @@ Outputs:
         - HasEnvPrefix
         - !Sub "${ProjectNamespace}-${Environment}-TCGMarketplaceTableArn"
         - !Sub "${ProjectNamespace}-TCGMarketplaceTableArn"
+  UserProfileTableName:
+    Description: "The name of the DynamoDB table UserProfile"
+    Value: !Ref UserProfile
+    Export:
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-UserProfileTableName"
+        - !Sub "${ProjectNamespace}-UserProfileTableName"
+  UserProfileTableArn:
+    Description: "The ARN of the DynamoDB table UserProfile"
+    Value: !GetAtt UserProfile.Arn
+    Export:
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-UserProfileTableArn"
+        - !Sub "${ProjectNamespace}-UserProfileTableArn"

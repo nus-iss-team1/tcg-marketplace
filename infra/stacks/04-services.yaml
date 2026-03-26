@@ -159,6 +159,21 @@ Resources:
                             Fn::Sub: "${ProjectNamespace}-${Environment}-TCGMarketplaceTableArn"
                         - !ImportValue
                             Fn::Sub: "${ProjectNamespace}-TCGMarketplaceTableArn"
+                  # UserProfile table + indexes
+                  - !If
+                    - HasEnvPrefix
+                    - !ImportValue
+                        Fn::Sub: "${ProjectNamespace}-${Environment}-UserProfileTableArn"
+                    - !ImportValue
+                        Fn::Sub: "${ProjectNamespace}-UserProfileTableArn"
+                  - !Sub
+                    - "${TableArn}/index/*"
+                    - TableArn: !If
+                        - HasEnvPrefix
+                        - !ImportValue
+                            Fn::Sub: "${ProjectNamespace}-${Environment}-UserProfileTableArn"
+                        - !ImportValue
+                            Fn::Sub: "${ProjectNamespace}-UserProfileTableArn"
 
   # ── Messaging Service Task Role (MessagingPlatform only) ──
   MessagingTaskRole:
@@ -331,6 +346,13 @@ Resources:
                     Fn::Sub: "${ProjectNamespace}-${Environment}-AssetsCDNUrl"
                 - !ImportValue
                     Fn::Sub: "${ProjectNamespace}-AssetsCDNUrl"
+            - Name: USER_PROFILE_TABLE
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-UserProfileTableName"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-UserProfileTableName"
 
   MessagingServiceTaskDefinition:
     Type: AWS::ECS::TaskDefinition

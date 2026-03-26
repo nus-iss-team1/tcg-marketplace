@@ -262,6 +262,12 @@ export interface SellerProfile {
   displayName: string;
   address?: string;
   joinedAt?: number;
+  bio?: string;
+  preferredPayment?: {
+    cash: boolean;
+    paynow: boolean;
+    bank: boolean;
+  };
 }
 
 function mockFetchSellerProfile(sellerId: string): SellerProfile | null {
@@ -275,22 +281,55 @@ function mockFetchSellerProfile(sellerId: string): SellerProfile | null {
   };
 }
 
-/* ── GET /api/listing/marketplace/profile/<sellerId> (profile) ── */
+/* ── GET /api/listing/profile/<userId> ── */
 
 export async function fetchSellerProfile(
-  sellerId: string
+  userId: string
 ): Promise<SellerProfile | null> {
-  if (USE_MOCK) return mockFetchSellerProfile(sellerId);
+  if (USE_MOCK) return mockFetchSellerProfile(userId);
 
-  const res = await fetch(`${BASE_URL}/api/listing/marketplace/profile/${encodeURIComponent(sellerId)}`);
+  const res = await fetch(`${BASE_URL}/api/listing/profile/${encodeURIComponent(userId)}`);
   if (!res.ok) return null;
   const json = await res.json();
-  const listings = json.data ?? [];
-  if (listings.length === 0) return null;
-  const firstListing = listings[0];
   return {
-    username: sellerId,
-    displayName: firstListing?.sellerName ?? sellerId,
+    username: json.userId,
+    displayName: json.displayName,
+    address: json.address,
+    joinedAt: json.joinedAt,
+    bio: json.bio,
+    preferredPayment: json.preferredPayment,
+  };
+}
+
+/* ── PATCH /api/listing/profile ── */
+
+export interface UpdateProfileBody {
+  displayName?: string;
+  address?: string;
+  bio?: string;
+  preferredPayment?: {
+    cash: boolean;
+    paynow: boolean;
+    bank: boolean;
+  };
+}
+
+export async function updateSellerProfile(body: UpdateProfileBody): Promise<SellerProfile> {
+  const headers = await authHeaders();
+  const res = await fetch(`${BASE_URL}/api/listing/profile`, {
+    method: "PATCH",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error("Failed to update profile");
+  const json = await res.json();
+  return {
+    username: json.userId,
+    displayName: json.displayName,
+    address: json.address,
+    joinedAt: json.joinedAt,
+    bio: json.bio,
+    preferredPayment: json.preferredPayment,
   };
 }
 
