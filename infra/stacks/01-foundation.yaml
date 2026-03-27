@@ -382,28 +382,26 @@ Resources:
 
   MessagingAPIListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Condition: HasDomain
     Properties:
       ListenerArn: !Ref ALBListener
       Priority: 10
       Conditions:
-        - Field: host-header
+        - Field: !If [HasDomain, host-header, path-pattern]
           Values:
-            - !Sub "messaging.${BaseDomainName}"
+            - !If [HasDomain, !Sub "messaging.${BaseDomainName}", "/messaging/*"]
       Actions:
         - Type: forward
           TargetGroupArn: !Ref MessagingTargetGroup
 
   APIListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Condition: HasDomain
     Properties:
       ListenerArn: !Ref ALBListener
       Priority: 20
       Conditions:
-        - Field: host-header
+        - Field: !If [HasDomain, host-header, path-pattern]
           Values:
-            - !Sub "listing.${BaseDomainName}"
+            - !If [HasDomain, !Sub "listing.${BaseDomainName}", "/listing/*"]
       Actions:
         - Type: forward
           TargetGroupArn: !Ref AppTargetGroup
@@ -457,18 +455,25 @@ Resources:
       AutoDeploy: true
 
   # ── Custom Domains (conditional) ───────────────────────────
-  # Existing certificate for base domain (dev.vaultofcards.io / vaultofcards.io)
+  # Certificate for base domain (dev.vaultofcards.io / vaultofcards.io)
   ACMCertificate:
     Type: AWS::CertificateManager::Certificate
     Condition: HasDomain
     Properties:
       DomainName: !Ref BaseDomainName
-      SubjectAlternativeNames:
-        - !Sub "*.${BaseDomainName}"
       ValidationMethod: DNS
       DomainValidationOptions:
         - DomainName: !Ref BaseDomainName
           HostedZoneId: !Ref HostedZoneId
+
+  # Wildcard certificate for service subdomains (*.dev.vaultofcards.io)
+  WildcardACMCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Condition: HasDomain
+    Properties:
+      DomainName: !Sub "*.${BaseDomainName}"
+      ValidationMethod: DNS
+      DomainValidationOptions:
         - DomainName: !Sub "*.${BaseDomainName}"
           HostedZoneId: !Ref HostedZoneId
 
@@ -509,7 +514,7 @@ Resources:
       DomainName: !Sub "listing.${BaseDomainName}"
       DomainNameConfigurations:
         - EndpointType: REGIONAL
-          CertificateArn: !Ref ACMCertificate
+          CertificateArn: !Ref WildcardACMCertificate
 
   ListingApiDomainMapping:
     Type: AWS::ApiGatewayV2::ApiMapping
@@ -538,7 +543,7 @@ Resources:
       DomainName: !Sub "messaging.${BaseDomainName}"
       DomainNameConfigurations:
         - EndpointType: REGIONAL
-          CertificateArn: !Ref ACMCertificate
+          CertificateArn: !Ref WildcardACMCertificate
 
   MessagingApiDomainMapping:
     Type: AWS::ApiGatewayV2::ApiMapping
