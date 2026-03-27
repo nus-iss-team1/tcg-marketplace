@@ -72,7 +72,7 @@ export default function SellerProfilePage() {
                 {isOwnProfile && <Badge variant="secondary" className="text-xs">You</Badge>}
               </div>
               {profile?.username && (
-                <p className="text-xs text-muted-foreground">@{profile.username}</p>
+                <p className="text-xs text-muted-foreground lowercase">@{profile.username}</p>
               )}
               <p className="text-xs text-muted-foreground mt-2">Lives in Singapore</p>
               {profile?.joinedAt && (
@@ -91,7 +91,7 @@ export default function SellerProfilePage() {
         {/* Bio */}
         <div className="mt-4 px-4">
           {profile?.bio ? (
-            <p className="text-sm text-muted-foreground normal-case tracking-normal text-center sm:text-start">{profile.bio}</p>
+            <p className="text-muted-foreground normal-case tracking-normal text-xs text-start">{profile.bio}</p>
           ) : (
             <p className="text-xs text-muted-foreground/50 italic">No bio yet</p>
           )}
@@ -100,9 +100,14 @@ export default function SellerProfilePage() {
         {/* Actions */}
         <div className="mt-4 px-4 flex items-center gap-2">
           {isOwnProfile && (
-            <Button size="sm" asChild>
-              <Link href="/settings">Edit Profile</Link>
-            </Button>
+            <>
+              <Button size="sm" asChild>
+                <Link href="/listing/create">Create Listing</Link>
+              </Button>
+              <Button size="sm" variant="secondary" asChild>
+                <Link href="/settings">Edit Profile</Link>
+              </Button>
+            </>
           )}
           <Button variant="outline" size="sm" onClick={handleShare}>
             {copied ? "Copied!" : "Share"}
