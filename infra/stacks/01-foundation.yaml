@@ -386,9 +386,9 @@ Resources:
       ListenerArn: !Ref ALBListener
       Priority: 10
       Conditions:
-        - Field: path-pattern
+        - Field: !If [HasDomain, host-header, path-pattern]
           Values:
-            - "/messaging/*"
+            - !If [HasDomain, !Sub "messaging.${BaseDomainName}", "/messaging/*"]
       Actions:
         - Type: forward
           TargetGroupArn: !Ref MessagingTargetGroup
@@ -399,9 +399,9 @@ Resources:
       ListenerArn: !Ref ALBListener
       Priority: 20
       Conditions:
-        - Field: path-pattern
+        - Field: !If [HasDomain, host-header, path-pattern]
           Values:
-            - "/listing/*"
+            - !If [HasDomain, !Sub "listing.${BaseDomainName}", "/listing/*"]
       Actions:
         - Type: forward
           TargetGroupArn: !Ref AppTargetGroup
@@ -455,7 +455,7 @@ Resources:
       AutoDeploy: true
 
   # ── Custom Domains (conditional) ───────────────────────────
-  # Existing certificate for base domain (dev.vaultofcards.io / vaultofcards.io)
+  # Certificate for base domain (dev.vaultofcards.io / vaultofcards.io)
   ACMCertificate:
     Type: AWS::CertificateManager::Certificate
     Condition: HasDomain
@@ -464,6 +464,17 @@ Resources:
       ValidationMethod: DNS
       DomainValidationOptions:
         - DomainName: !Ref BaseDomainName
+          HostedZoneId: !Ref HostedZoneId
+
+  # Wildcard certificate for service subdomains (*.dev.vaultofcards.io)
+  WildcardACMCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Condition: HasDomain
+    Properties:
+      DomainName: !Sub "*.${BaseDomainName}"
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Sub "*.${BaseDomainName}"
           HostedZoneId: !Ref HostedZoneId
 
   # ── Base domain (<base>) ──────────────────────────────────
@@ -494,6 +505,64 @@ Resources:
       AliasTarget:
         DNSName: !GetAtt ApiCustomDomain.RegionalDomainName
         HostedZoneId: !GetAtt ApiCustomDomain.RegionalHostedZoneId
+
+  # ── Listing subdomain ──────────────────────────────────
+  ListingApiCustomDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Condition: HasDomain
+    Properties:
+      DomainName: !Sub "listing.${BaseDomainName}"
+      DomainNameConfigurations:
+        - EndpointType: REGIONAL
+          CertificateArn: !Ref WildcardACMCertificate
+
+  ListingApiDomainMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Condition: HasDomain
+    Properties:
+      ApiId: !Ref HttpApi
+      DomainName: !Ref ListingApiCustomDomain
+      Stage: !Ref HttpApiStage
+
+  ListingDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: HasDomain
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Sub "listing.${BaseDomainName}"
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt ListingApiCustomDomain.RegionalDomainName
+        HostedZoneId: !GetAtt ListingApiCustomDomain.RegionalHostedZoneId
+
+  # ── Messaging subdomain ────────────────────────────────
+  MessagingApiCustomDomain:
+    Type: AWS::ApiGatewayV2::DomainName
+    Condition: HasDomain
+    Properties:
+      DomainName: !Sub "messaging.${BaseDomainName}"
+      DomainNameConfigurations:
+        - EndpointType: REGIONAL
+          CertificateArn: !Ref WildcardACMCertificate
+
+  MessagingApiDomainMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Condition: HasDomain
+    Properties:
+      ApiId: !Ref HttpApi
+      DomainName: !Ref MessagingApiCustomDomain
+      Stage: !Ref HttpApiStage
+
+  MessagingDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: HasDomain
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Sub "messaging.${BaseDomainName}"
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt MessagingApiCustomDomain.RegionalDomainName
+        HostedZoneId: !GetAtt MessagingApiCustomDomain.RegionalHostedZoneId
 
 
 Outputs:
