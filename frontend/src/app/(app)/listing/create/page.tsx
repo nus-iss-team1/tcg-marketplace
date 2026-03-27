@@ -113,7 +113,7 @@ export default function CreateListingPage() {
         cardId: cardId || undefined,
         rarity: rarity || undefined,
         price: Number(Number(price).toFixed(2)),
-        pickup: pickUp || undefined,
+        pickUp: pickUp || undefined,
         paymentMethod,
         frontImage: frontImage ?? undefined,
         backImage: backImage ?? undefined,
