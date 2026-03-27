@@ -13,6 +13,16 @@ async function bootstrap() {
   const logger = app.get(AppLoggerService);
 
   app.setGlobalPrefix("listing");
+  app.enableCors({
+    origin: (origin, callback) => {
+      if (!origin || /^https?:\/\/([^/]*\.)?(dev\.vaultofcards\.io|vaultofcards\.io|localhost:\d+)$/.test(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true
+  });
   app.useLogger(logger);
   overrideConsole(logger);
 
