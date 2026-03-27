@@ -382,6 +382,7 @@ Resources:
 
   MessagingAPIListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Condition: HasDomain
     Properties:
       ListenerArn: !Ref ALBListener
       Priority: 10
@@ -395,6 +396,7 @@ Resources:
 
   APIListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Condition: HasDomain
     Properties:
       ListenerArn: !Ref ALBListener
       Priority: 20
@@ -461,6 +463,8 @@ Resources:
     Condition: HasDomain
     Properties:
       DomainName: !Ref BaseDomainName
+      SubjectAlternativeNames:
+        - !Sub "*.${BaseDomainName}"
       ValidationMethod: DNS
       DomainValidationOptions:
         - DomainName: !Ref BaseDomainName
