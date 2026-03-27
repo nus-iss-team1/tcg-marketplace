@@ -135,6 +135,8 @@ Resources:
           AttributeType: S
         - AttributeName: updatedAt
           AttributeType: N
+        - AttributeName: filterMessageType
+          AttributeType: S
       KeySchema:
         - AttributeName: conversationId
           KeyType: HASH
