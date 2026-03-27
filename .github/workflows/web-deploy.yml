@@ -16,6 +16,16 @@ on:
         type: boolean
         default: false
         description: "Auto-deploy after build"
+      listing_api:
+        required: false
+        type: string
+        default: ""
+        description: "Listing service API URL"
+      messaging_api:
+        required: false
+        type: string
+        default: ""
+        description: "Messaging service API URL"
 
 permissions:
   contents: read
@@ -119,6 +129,8 @@ jobs:
             NEXT_PUBLIC_COGNITO_USER_POOL_ID=${{ secrets.NEXT_PUBLIC_COGNITO_USER_POOL_ID }}
             NEXT_PUBLIC_COGNITO_CLIENT_ID=${{ secrets.NEXT_PUBLIC_COGNITO_CLIENT_ID }}
             NEXT_PUBLIC_BACKEND_API=${{ secrets.NEXT_PUBLIC_BACKEND_API }}
+            NEXT_PUBLIC_LISTING_API=${{ inputs.listing_api }}
+            NEXT_PUBLIC_MESSAGING_API=${{ inputs.messaging_api }}
             NEXT_PUBLIC_IMAGE_TAG=${{ inputs.image_tag_prefix }}-${{ steps.vars.outputs.sha_short }}
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/nusiss-team-1-voc/tcgm-web:${{ inputs.image_tag_prefix }}-latest
