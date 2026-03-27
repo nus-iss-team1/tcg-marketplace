@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 // import { CardFan } from "@/components/card-fan";
-import { WorldsBanner } from "@/components/worlds-banner";
+
 
 export default function LandingPage() {
   const { user, loading } = useAuth();
@@ -48,13 +48,8 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center">
-      {/* Top banner */}
-      <div className="w-full">
-        <WorldsBanner />
-      </div>
-
       {/* Hero section */}
-      <div className="relative w-full mt-12 sm:mt-16 md:mt-20">
+      <div className="relative w-full">
         {/* Background card fan — hidden for now */}
         {/* <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06]">
           <CardFan className="h-72 w-56 sm:h-80 sm:w-60 md:h-96 md:w-72" />

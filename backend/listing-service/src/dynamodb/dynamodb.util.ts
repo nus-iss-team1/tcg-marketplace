@@ -21,7 +21,7 @@ export function buildProjection<
 
 export function padPrice(price: number): string {
   const scaled = Math.floor(price * 10 ** 2);
-  return scaled.toString().padStart(1, "0");
+  return scaled.toString().padStart(12, "0");
 }
 
 export function handleDynamoError(error: unknown): never {
