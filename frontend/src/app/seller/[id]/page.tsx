@@ -63,8 +63,8 @@ export default function SellerProfilePage() {
         {/* Banner: Avatar + Name + Meta */}
         <div className="flex items-start gap-4 md:gap-10">
           <div className="flex items-center gap-4 shrink-0 min-w-0">
-            <Avatar className="h-14 w-14 shrink-0">
-              <AvatarFallback className="text-lg">{initials}</AvatarFallback>
+            <Avatar className="h-18 w-18 shrink-0">
+              <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
             </Avatar>
             <div>
               <div className="flex items-center gap-2">
@@ -89,9 +89,9 @@ export default function SellerProfilePage() {
         </div>
 
         {/* Bio */}
-        <div className="mt-8 px-4">
+        <div className="mt-4 px-4">
           {profile?.bio ? (
-            <p className="text-sm text-muted-foreground normal-case tracking-normal">{profile.bio}</p>
+            <p className="text-sm text-muted-foreground normal-case tracking-normal text-center sm:text-start">{profile.bio}</p>
           ) : (
             <p className="text-xs text-muted-foreground/50 italic">No bio yet</p>
           )}

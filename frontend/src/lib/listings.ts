@@ -151,6 +151,57 @@ export interface CardNameResult {
   gameName: string;
 }
 
+/* ── Card Image Lookup (external APIs) ── */
+
+async function fetchPokemonImage(cardName: string): Promise<string | null> {
+  try {
+    const cleanName = cardName.replace(/\s*\(.*?\)\s*/g, "").trim();
+    const res = await fetch(`https://api.tcgdex.net/v2/en/cards?name=${encodeURIComponent(cleanName)}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    const match = json?.find((c: { image?: string }) => c.image);
+    return match?.image ? `${match.image}/low.webp` : null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchYugiohImage(cardName: string): Promise<string | null> {
+  try {
+    const cleanName = cardName.replace(/\s*\(.*?\)\s*/g, "").trim();
+    const res = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(cleanName)}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data?.[0]?.card_images?.[0]?.image_url_small ?? json.data?.[0]?.card_images?.[0]?.image_url ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchMtgImage(cardName: string): Promise<string | null> {
+  try {
+    const cleanName = cardName.replace(/\s*\(.*?\)\s*/g, "").trim();
+    const res = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(cleanName)}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.image_uris?.small ?? json.image_uris?.normal ?? null;
+  } catch {
+    return null;
+  }
+}
+
+const CARD_IMAGE_FETCHERS: Record<string, (cardName: string) => Promise<string | null>> = {
+  "Pokemon TCG": fetchPokemonImage,
+  "Yu-Gi-Oh!": fetchYugiohImage,
+  "Magic: The Gathering": fetchMtgImage,
+};
+
+export async function fetchCardImage(gameName: string, cardName: string): Promise<string | null> {
+  const fetcher = CARD_IMAGE_FETCHERS[gameName];
+  if (!fetcher) return null;
+  return fetcher(cardName);
+}
+
 export async function fetchCardNames(
   gameName: string,
   cardName?: string
@@ -215,6 +266,8 @@ export interface FetchListingsParams {
   cursor?: string;
   sort?: string;
   order?: string;
+  filter?: "title" | "cardName" | "sellerId";
+  filterValue?: string;
 }
 
 export interface FetchListingsResponse {
@@ -346,6 +399,8 @@ export async function fetchMarketplaceListings(
   if (params?.cursor) query.set("cursor", params.cursor);
   if (params?.sort) query.set("sort", params.sort);
   if (params?.order) query.set("order", params.order);
+  if (params?.filter) query.set("filter", params.filter);
+  if (params?.filterValue) query.set("filterValue", params.filterValue);
   const qs = query.toString();
   const url = `${BASE_URL}/api/listing/marketplace/${encodeURIComponent(gameName)}${qs ? `?${qs}` : ""}`;
 

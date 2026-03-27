@@ -43,7 +43,7 @@ export function ProfileContent({ profile, isOwnProfile }: ProfileContentProps) {
   }, [profile.username]);
 
   return (
-    <div className="flex flex-col gap-3 w-full">
+    <div className="flex flex-col gap-3 w-full px-4">
       {/* Listings section */}
       <div>
         <h3 className="text-sm text-muted-foreground mb-4 animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0.1s" }}>
