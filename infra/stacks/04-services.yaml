@@ -27,10 +27,15 @@ Parameters:
     Type: String
     Default: ""
     Description: "Base domain (e.g. dev.vaultofcards.io). Leave empty to skip."
+  BaseDomainName:
+    Type: String
+    Default: ""
+    Description: "Base domain (e.g. dev.vaultofcards.io). Leave empty to skip."
 
 Conditions:
   HasEnvPrefix: !Not [!Equals [!Ref Environment, ""]]
   IsHA: !Equals [!Ref HighAvailability, "true"]
+  HasDomain: !Not [!Equals [!Ref BaseDomainName, ""]]
   HasDomain: !Not [!Equals [!Ref BaseDomainName, ""]]
 
 Resources:
@@ -453,10 +458,10 @@ Resources:
                 - ALBDns: !If
                     - HasEnvPrefix
                     - !ImportValue
-                      Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
+                        Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
                     - !ImportValue
-                      Fn::Sub: "${ProjectNamespace}-ALBDnsName"
-            - Name: LISTING_API
+                        Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+            - Name: NEXT_PUBLIC_LISTING_API
               Value: !If
                 - HasDomain
                 - !Sub "https://listing.${BaseDomainName}"
@@ -465,10 +470,10 @@ Resources:
                   - ALBDns: !If
                       - HasEnvPrefix
                       - !ImportValue
-                        Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
+                          Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
                       - !ImportValue
-                        Fn::Sub: "${ProjectNamespace}-ALBDnsName"
-            - Name: MESSAGING_API
+                          Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+            - Name: NEXT_PUBLIC_MESSAGING_API
               Value: !If
                 - HasDomain
                 - !Sub "https://messaging.${BaseDomainName}"
@@ -477,32 +482,9 @@ Resources:
                   - ALBDns: !If
                       - HasEnvPrefix
                       - !ImportValue
-                        Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
+                          Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
                       - !ImportValue
-                        Fn::Sub: "${ProjectNamespace}-ALBDnsName"
-            - Name: COGNITO_USER_POOL_ID
-              Value: !If
-                - HasEnvPrefix
-                - !ImportValue
-                  Fn::Sub: "${ProjectNamespace}-${Environment}-UserPoolId"
-                - !ImportValue
-                  Fn::Sub: "${ProjectNamespace}-dev-UserPoolId"
-            - Name: COGNITO_CLIENT_ID
-              Value: !If
-                - HasEnvPrefix
-                - !ImportValue
-                  Fn::Sub: "${ProjectNamespace}-${Environment}-UserPoolClientId"
-                - !ImportValue
-                  Fn::Sub: "${ProjectNamespace}-dev-UserPoolClientId"
-            - Name: IMAGE_TAG
-              Value: !Ref WebImageTag
-            - Name: CDN_HOSTNAME
-              Value: !If
-                - HasEnvPrefix
-                - !ImportValue
-                  Fn::Sub: "${ProjectNamespace}-${Environment}-AssetsCDNDomainName"
-                - !ImportValue
-                  Fn::Sub: "${ProjectNamespace}-AssetsCDNDomainName"
+                          Fn::Sub: "${ProjectNamespace}-ALBDnsName"
           LogConfiguration:
             LogDriver: awslogs
             Options:
