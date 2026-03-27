@@ -14,14 +14,16 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
+    const listingApi = process.env.NEXT_PUBLIC_LISTING_API || process.env.NEXT_PUBLIC_BACKEND_API;
+    const messagingApi = process.env.NEXT_PUBLIC_MESSAGING_API || process.env.NEXT_PUBLIC_BACKEND_API;
     return [
       {
         source: "/api/listing/:path*",
-        destination: `${process.env.NEXT_PUBLIC_BACKEND_API}/listing/:path*`,
+        destination: `${listingApi}/listing/:path*`,
       },
       {
         source: "/api/messaging/:path*",
-        destination: `${process.env.NEXT_PUBLIC_BACKEND_API}/messaging/:path*`,
+        destination: `${messagingApi}/messaging/:path*`,
       },
     ];
   },
