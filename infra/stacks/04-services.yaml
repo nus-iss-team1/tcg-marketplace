@@ -23,10 +23,15 @@ Parameters:
     Default: "false"
     AllowedValues: ["true", "false"]
     Description: "Enable HA (min 2 tasks). Set false for dev to save costs."
+  BaseDomainName:
+    Type: String
+    Default: ""
+    Description: "Base domain (e.g. dev.vaultofcards.io). Leave empty to skip."
 
 Conditions:
   HasEnvPrefix: !Not [!Equals [!Ref Environment, ""]]
   IsHA: !Equals [!Ref HighAvailability, "true"]
+  HasDomain: !Not [!Equals [!Ref BaseDomainName, ""]]
 
 Resources:
   # IAM Roles
@@ -438,6 +443,7 @@ Resources:
                     - !ImportValue
                         Fn::Sub: "${ProjectNamespace}-ALBDnsName"
 <<<<<<< HEAD
+<<<<<<< HEAD
             - Name: COGNITO_USER_POOL_ID
               Value: !If
                 - HasEnvPrefix
@@ -463,6 +469,32 @@ Resources:
                     Fn::Sub: "${ProjectNamespace}-AssetsCDNDomainName"
 =======
 >>>>>>> cd51391 (revert: use build-arg approach for frontend env vars instead of entrypoint script)
+=======
+            - Name: NEXT_PUBLIC_LISTING_API
+              Value: !If
+                - HasDomain
+                - !Sub "https://listing.${BaseDomainName}"
+                - !Sub
+                  - "http://${ALBDns}"
+                  - ALBDns: !If
+                      - HasEnvPrefix
+                      - !ImportValue
+                          Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
+                      - !ImportValue
+                          Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+            - Name: NEXT_PUBLIC_MESSAGING_API
+              Value: !If
+                - HasDomain
+                - !Sub "https://messaging.${BaseDomainName}"
+                - !Sub
+                  - "http://${ALBDns}"
+                  - ALBDns: !If
+                      - HasEnvPrefix
+                      - !ImportValue
+                          Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
+                      - !ImportValue
+                          Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+>>>>>>> 6fe6a2b (feat: add subdomain-based routing for backend services)
           LogConfiguration:
             LogDriver: awslogs
             Options:
