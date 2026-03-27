@@ -23,10 +23,15 @@ Parameters:
     Default: "false"
     AllowedValues: ["true", "false"]
     Description: "Enable HA (min 2 tasks). Set false for dev to save costs."
+  BaseDomainName:
+    Type: String
+    Default: ""
+    Description: "Base domain (e.g. dev.vaultofcards.io). Leave empty to skip."
 
 Conditions:
   HasEnvPrefix: !Not [!Equals [!Ref Environment, ""]]
   IsHA: !Equals [!Ref HighAvailability, "true"]
+  HasDomain: !Not [!Equals [!Ref BaseDomainName, ""]]
 
 Resources:
   # IAM Roles
@@ -437,6 +442,30 @@ Resources:
                         Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
                     - !ImportValue
                         Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+            - Name: NEXT_PUBLIC_LISTING_API
+              Value: !If
+                - HasDomain
+                - !Sub "https://listing.${BaseDomainName}"
+                - !Sub
+                  - "http://${ALBDns}"
+                  - ALBDns: !If
+                      - HasEnvPrefix
+                      - !ImportValue
+                          Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
+                      - !ImportValue
+                          Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+            - Name: NEXT_PUBLIC_MESSAGING_API
+              Value: !If
+                - HasDomain
+                - !Sub "https://messaging.${BaseDomainName}"
+                - !Sub
+                  - "http://${ALBDns}"
+                  - ALBDns: !If
+                      - HasEnvPrefix
+                      - !ImportValue
+                          Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
+                      - !ImportValue
+                          Fn::Sub: "${ProjectNamespace}-ALBDnsName"
           LogConfiguration:
             LogDriver: awslogs
             Options:
