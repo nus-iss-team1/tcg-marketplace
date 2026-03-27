@@ -13,10 +13,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  read-manifest:
+    runs-on: ubuntu-latest
+    outputs:
+      listing_api: ${{ steps.parse.outputs.listing_api }}
+      messaging_api: ${{ steps.parse.outputs.messaging_api }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse deploy manifest
+        id: parse
+        run: |
+          echo "listing_api=$(yq '.dev.listing_api' deploy.yaml)" >> $GITHUB_OUTPUT
+          echo "messaging_api=$(yq '.dev.messaging_api' deploy.yaml)" >> $GITHUB_OUTPUT
+
   build-and-deploy:
+    needs: read-manifest
     uses: ./.github/workflows/web-deploy.yml
     with:
       environment: dev
       image_tag_prefix: develop
       auto_deploy: true
+      listing_api: ${{ needs.read-manifest.outputs.listing_api }}
+      messaging_api: ${{ needs.read-manifest.outputs.messaging_api }}
     secrets: inherit
