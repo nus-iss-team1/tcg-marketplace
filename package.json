@@ -21,6 +21,16 @@
     "listing-build": " docker build -f backend/listing-service/Dockerfile -t ghcr.io/nus-iss-team1/tcg-marketplace:latest .",
     "listing-run": "docker run -d -p 3001:3001 ghcr.io/nus-iss-team1/tcg-marketplace:latest    ",
     "messaging-build": " docker build -f backend/messaging-service/Dockerfile -t ghcr.io/nus-iss-team1/tcg-marketplace:latest .",
-    "messaging-run": "docker run -d -p 3002:3002 ghcr.io/nus-iss-team1/tcg-marketplace:latest    "
+    "messaging-run": "docker run -d -p 3002:3002 ghcr.io/nus-iss-team1/tcg-marketplace:latest    ",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "backend/listing-service/src/**/*.ts": "cd backend/listing-service && npx eslint",
+    "backend/messaging-service/src/**/*.ts": "cd backend/messaging-service && npx eslint",
+    "frontend/src/**/*.{ts,tsx}": "cd frontend && npx eslint"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0"
   }
 }
