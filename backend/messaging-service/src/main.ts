@@ -14,7 +14,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix("messaging");
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       if (!origin || /^https?:\/\/([^/]*\.)?(dev\.vaultofcards\.io|vaultofcards\.io|localhost:\d+)$/.test(origin)) {
         callback(null, true);
       } else {
