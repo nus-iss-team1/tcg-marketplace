@@ -67,11 +67,11 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {children}
 
-            {/* Desktop: Shop dropdown */}
+            {/* Desktop: Browse dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="hidden md:flex items-center gap-1 h-8 rounded-none px-1 text-xs">
-                  Shop
+                  Browse
                   <ChevronDownIcon className="h-3.5 w-3.5 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>

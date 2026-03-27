@@ -136,12 +136,12 @@ function ReadListingView({ listing, isOwner }: { listing: Listing; isOwner: bool
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-heading">
-            {listing.title || listing.cardName}
             {listing.listingStatus && (
-              <Badge className="ml-4 align-middle text-sm" variant={listing.listingStatus === "ACTIVE" ? "default" : "secondary"}>
+              <Badge className="mr-3 align-middle text-2xl px-2 py-0.1" variant={listing.listingStatus === "ACTIVE" ? "default" : "secondary"}>
                 {listing.listingStatus}
               </Badge>
             )}
+            {listing.title || listing.cardName}
           </h1>
           {listing.title && (
             <p className="text-sm text-muted-foreground mt-1">{listing.cardName}</p>
@@ -188,18 +188,29 @@ function ReadListingView({ listing, isOwner }: { listing: Listing; isOwner: bool
           {listing.description && (
             <div className="mt-6">
               <p className="text-xs text-muted-foreground mb-1">Description</p>
-              <p className="text-sm">{listing.description}</p>
+              <p className="text-sm normal-case">{listing.description}</p>
             </div>
           )}
 
           {/* Miscellaneous */}
           <div className="grid grid-cols-2 gap-4 mt-6">
-            {listing.pickUp && (
-              <div className="space-y-0.5">
-                <p className="text-xs text-muted-foreground">Pickup Location</p>
-                <p className="text-sm">{listing.pickUp}</p>
-              </div>
-            )}
+            {listing.pickUp && (() => {
+              const match = listing.pickUp.match(/^(.+?)\s*\((.+)\)$/);
+              const address = match ? match[1] : listing.pickUp;
+              const details = match ? match[2] : null;
+              return (
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground">Pickup Location</p>
+                  <p className="text-sm">{address}</p>
+                  {details && (
+                    <>
+                      <p className="text-xs text-muted-foreground mt-1">Meetup Details</p>
+                      <p className="text-sm normal-case">{details}</p>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
             {listing.paymentMethod && (
               <div className="space-y-0.5">
                 <p className="text-xs text-muted-foreground">Payment</p>
@@ -311,7 +322,7 @@ function EditListingView({ listing }: { listing: Listing }) {
           cardId: cardId || undefined,
           rarity: rarity || undefined,
           price: Number(Number(price).toFixed(2)),
-          pickup: pickUp || undefined,
+          pickUp: pickUp || undefined,
           paymentMethod,
           frontImage: frontImage ?? undefined,
           backImage: backImage ?? undefined,
@@ -591,6 +602,23 @@ function EditListingView({ listing }: { listing: Listing }) {
   );
 }
 
+function FadeImage({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <>
+      {!loaded && <Skeleton className="absolute inset-0 w-full h-full rounded-none" />}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        className={`w-full h-full object-contain transition-opacity duration-500 ease-in-out ${loaded ? "opacity-100" : "opacity-0"}`}
+        onLoad={() => setLoaded(true)}
+      />
+    </>
+  );
+}
+
 function ImageCarousel({ attachment }: { attachment?: { front?: string; back?: string; images?: string[] } }) {
   const images = attachment?.images?.length
     ? attachment.images
@@ -604,9 +632,8 @@ function ImageCarousel({ attachment }: { attachment?: { front?: string; back?: s
 
   if (images.length === 1) {
     return (
-      <div className="w-full aspect-5/7 rounded-none bg-background overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={images[0]} alt="Card image" className="w-full h-full object-contain" />
+      <div className="relative w-full aspect-5/7 rounded-none bg-background overflow-hidden">
+        <FadeImage src={images[0]} alt="Card image" />
       </div>
     );
   }
@@ -616,9 +643,8 @@ function ImageCarousel({ attachment }: { attachment?: { front?: string; back?: s
       <CarouselContent>
         {images.map((src, i) => (
           <CarouselItem key={i}>
-            <div className="w-full aspect-5/7 rounded-none bg-background overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt={`Card image ${i + 1}`} className="w-full h-full object-contain" />
+            <div className="relative w-full aspect-5/7 rounded-none bg-background overflow-hidden">
+              <FadeImage src={src} alt={`Card image ${i + 1}`} />
             </div>
           </CarouselItem>
         ))}

@@ -64,7 +64,7 @@ class BaseListingDto {
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  readonly pickup?: string;
+  readonly pickUp?: string;
 }
 
 export class CreateListingDto extends BaseListingDto {
