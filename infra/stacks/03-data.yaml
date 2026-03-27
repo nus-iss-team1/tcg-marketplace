@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: "S3 Storage and DynamoDB Tables"
 
 Parameters:
@@ -14,7 +14,6 @@ Conditions:
   HasEnvPrefix: !Not [!Equals [!Ref Environment, ""]]
 
 Resources:
-
   AssetsBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -48,7 +47,6 @@ Resources:
             Condition:
               StringEquals:
                 "AWS:SourceArn": !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${AssetsCDN}"
-
 
   AssetsCDNOriginAccessControl:
     Type: AWS::CloudFront::OriginAccessControl
@@ -91,7 +89,6 @@ Resources:
         HttpVersion: http2
         PriceClass: PriceClass_200
 
-
   GameCardLookup:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Delete
@@ -130,18 +127,18 @@ Resources:
         - MessagingPlatform
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: entityId
+        - AttributeName: conversationId
           AttributeType: S
-        - AttributeName: entityType
+        - AttributeName: meta
           AttributeType: S
-        - AttributeName: lastMessageAt
-          AttributeType: N
-        - AttributeName: createdAt
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: updatedAt
           AttributeType: N
       KeySchema:
-        - AttributeName: entityId
+        - AttributeName: conversationId
           KeyType: HASH
-        - AttributeName: entityType
+        - AttributeName: meta
           KeyType: RANGE
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
@@ -150,19 +147,19 @@ Resources:
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
       GlobalSecondaryIndexes:
-        - IndexName: RoomIndex
+        - IndexName: UserConversationIndex
           KeySchema:
-            - AttributeName: entityId
+            - AttributeName: userId
               KeyType: HASH
-            - AttributeName: lastMessageAt
+            - AttributeName: updatedAt
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
-        - IndexName: MessageIndex
+        - IndexName: MessageTypeIndex
           KeySchema:
-            - AttributeName: entityId
+            - AttributeName: conversationId
               KeyType: HASH
-            - AttributeName: createdAt
+            - AttributeName: filterMessageType
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
