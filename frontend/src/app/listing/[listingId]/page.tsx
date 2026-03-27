@@ -3,12 +3,13 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -25,13 +26,15 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { CardSearch } from "@/components/card-search";
+import { LocationSearch } from "@/components/location-search";
 import {
   CalendarIcon,
   UploadIcon,
   RefreshCwIcon,
   Trash2Icon,
 } from "lucide-react";
-import { fetchSpecificListing, fetchSellerProfile, updateListing, deleteListing, type Listing, type PaymentMethod, type SellerProfile } from "@/lib/listings";
+import { fetchSpecificListing, updateListing, deleteListing, type Listing, type PaymentMethod } from "@/lib/listings";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import { useAuth } from "@/context/AuthContext";
@@ -109,16 +112,7 @@ function ViewListingContent() {
 }
 
 function ReadListingView({ listing, isOwner }: { listing: Listing; isOwner: boolean }) {
-  const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(null);
-
-  useEffect(() => {
-    if (listing.sellerId) {
-      fetchSellerProfile(listing.sellerId).then(setSellerProfile);
-    }
-  }, [listing.sellerId]);
-
-  const displayName = sellerProfile?.displayName || listing.sellerName || listing.sellerId || "Unknown";
-  const sellerInitials = displayName.substring(0, 2).toUpperCase();
+  const sellerId = listing.sellerId || "Unknown";
 
   return (
     <ContentLayout className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both]">
@@ -141,58 +135,75 @@ function ReadListingView({ listing, isOwner }: { listing: Listing; isOwner: bool
             )}
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-heading">{listing.title || listing.cardName}</h1>
+          <h1 className="text-3xl sm:text-4xl font-heading">
+            {listing.title || listing.cardName}
+            {listing.listingStatus && (
+              <Badge className="ml-4 align-middle text-sm" variant={listing.listingStatus === "ACTIVE" ? "default" : "secondary"}>
+                {listing.listingStatus}
+              </Badge>
+            )}
+          </h1>
           {listing.title && (
             <p className="text-sm text-muted-foreground mt-1">{listing.cardName}</p>
           )}
 
-          <p className="text-lg sm:text-xl text-primary mt-2 mb-4">
+          <p className="text-lg sm:text-xl text-primary mt-2">
             ${Number(listing.price).toFixed(2)}
           </p>
 
-          <div className="flex items-center gap-2 mb-4">
-            {listing.listingStatus && (
-              <Badge variant={listing.listingStatus === "ACTIVE" ? "default" : "secondary"}>
-                {listing.listingStatus}
-              </Badge>
-            )}
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <CalendarIcon className="h-3.5 w-3.5" />
-              Listed {new Date(listing.updatedAt).toLocaleDateString()}
+          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+            <Link href={`/seller/${listing.sellerId}`} className="underline hover:text-foreground transition-colors normal-case">
+              @{sellerId}
+            </Link>
+            <span>&middot;</span>
+            <span className="flex items-center gap-1">
+              <CalendarIcon className="h-3 w-3" />
+              {new Date(listing.updatedAt).toLocaleDateString()}
             </span>
           </div>
 
-          <Separator />
-
-          <div className="grid grid-cols-1 gap-3 my-4">
+          {/* Card Details */}
+          <div className="grid grid-cols-3 gap-2 mt-6">
             {listing.setName && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-muted-foreground">Set:</span>
-                <span>{listing.setName}</span>
+              <div className="space-y-0.5">
+                <p className="text-xs text-muted-foreground">Set Name</p>
+                <p className="text-sm">{listing.setName}</p>
               </div>
             )}
             {listing.cardId && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-muted-foreground">Card ID:</span>
-                <span>{listing.cardId}</span>
+              <div className="space-y-0.5">
+                <p className="text-xs text-muted-foreground">Card ID</p>
+                <p className="text-sm">{listing.cardId}</p>
               </div>
             )}
             {listing.rarity && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-muted-foreground">Rarity:</span>
-                <span>{listing.rarity}</span>
+              <div className="space-y-0.5">
+                <p className="text-xs text-muted-foreground">Rarity</p>
+                <p className="text-sm">{listing.rarity}</p>
               </div>
             )}
+          </div>
+
+          {/* Description */}
+          {listing.description && (
+            <div className="mt-6">
+              <p className="text-xs text-muted-foreground mb-1">Description</p>
+              <p className="text-sm">{listing.description}</p>
+            </div>
+          )}
+
+          {/* Miscellaneous */}
+          <div className="grid grid-cols-2 gap-4 mt-6">
             {listing.pickUp && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-muted-foreground">Pickup:</span>
-                <span>{listing.pickUp}</span>
+              <div className="space-y-0.5">
+                <p className="text-xs text-muted-foreground">Pickup Location</p>
+                <p className="text-sm">{listing.pickUp}</p>
               </div>
             )}
             {listing.paymentMethod && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-muted-foreground">Payment:</span>
-                <span>
+              <div className="space-y-0.5">
+                <p className="text-xs text-muted-foreground">Payment</p>
+                <p className="text-sm">
                   {[
                     listing.paymentMethod.cash && "Cash",
                     listing.paymentMethod.paynow && "PayNow",
@@ -200,56 +211,11 @@ function ReadListingView({ listing, isOwner }: { listing: Listing; isOwner: bool
                   ]
                     .filter(Boolean)
                     .join(", ") || "\u2014"}
-                </span>
+                </p>
               </div>
             )}
           </div>
 
-          <Separator />
-
-          <Link href={`/seller/${listing.sellerId}`} className="my-4 flex gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-            <Avatar className="h-12 w-12 shrink-0">
-              <AvatarFallback className="text-sm">{sellerInitials}</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col min-w-0 gap-0.5">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium truncate">{displayName}</span>
-                <span className="text-xs text-muted-foreground">@{listing.sellerId}</span>
-              </div>
-              {sellerProfile?.bio && (
-                <p className="text-xs text-muted-foreground italic line-clamp-2">&ldquo;{sellerProfile.bio}&rdquo;</p>
-              )}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
-                {sellerProfile?.address && (
-                  <span className="text-xs text-muted-foreground">{sellerProfile.address}</span>
-                )}
-                {sellerProfile?.joinedAt && (
-                  <span className="text-xs text-muted-foreground">
-                    Joined {new Date(sellerProfile.joinedAt).toLocaleDateString()}
-                  </span>
-                )}
-                {sellerProfile?.preferredPayment && (sellerProfile.preferredPayment.cash || sellerProfile.preferredPayment.paynow || sellerProfile.preferredPayment.bank) && (
-                  <span className="text-xs text-muted-foreground">
-                    Accepts: {[
-                      sellerProfile.preferredPayment.cash && "Cash",
-                      sellerProfile.preferredPayment.paynow && "PayNow",
-                      sellerProfile.preferredPayment.bank && "Bank Transfer",
-                    ].filter(Boolean).join(", ")}
-                  </span>
-                )}
-              </div>
-            </div>
-          </Link>
-
-          {!isOwner && (
-            <div className="flex gap-3 pt-2">
-              <Button className="flex-1 sm:flex-none" asChild>
-                <Link href={`/seller/${listing.sellerId}`}>
-                  Contact Seller
-                </Link>
-              </Button>
-            </div>
-          )}
         </div>
       </div>
     </ContentLayout>
@@ -438,21 +404,45 @@ function EditListingView({ listing }: { listing: Listing }) {
           )}
         </div>
 
-        {/* Game (read-only) & Card Name */}
-        <div className="mt-4 mb-2">
-          <p className="text-xs text-muted-foreground">{listing.gameName}</p>
-          <div className="space-y-2 mt-1">
-            <Label htmlFor="cardName">Card Name *</Label>
-            <Input
-              id="cardName"
-              placeholder="E.G. CHARIZARD VMAX"
-              value={cardName}
-              onChange={(e) => setCardName(e.target.value)}
-              maxLength={100}
-              className="h-9"
-            />
+        {/* Card Details */}
+        <div className="mt-4">
+          <div className="space-y-2">
+            <Label>Game</Label>
+            <div className="h-9 flex items-center px-3 rounded-md border bg-muted text-sm text-muted-foreground">{listing.gameName}</div>
           </div>
           <div className="space-y-2 mt-3">
+            <Label htmlFor="cardName">Card Name *</Label>
+            <CardSearch
+              gameName={listing.gameName}
+              value={cardName}
+              onChange={setCardName}
+              onSelect={(card) => {
+                setCardName(card.cardName);
+                if (card.setName) setSetNameValue(card.setName);
+                if (card.cardId) setCardId(card.cardId);
+                if (card.rarity) setRarity(card.rarity);
+              }}
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            <div className="space-y-0.5">
+              <Label>Set Name</Label>
+              <p className="text-xs text-muted-foreground truncate">{setName || "\u2014"}</p>
+            </div>
+            <div className="space-y-0.5">
+              <Label>Card ID</Label>
+              <p className="text-xs text-muted-foreground truncate">{cardId || "\u2014"}</p>
+            </div>
+            <div className="space-y-0.5">
+              <Label>Rarity</Label>
+              <p className="text-xs text-muted-foreground truncate">{rarity || "\u2014"}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Listing Details */}
+        <div className="mt-8">
+          <div className="space-y-2">
             <Label htmlFor="title">Listing Title *</Label>
             <Input
               id="title"
@@ -465,116 +455,66 @@ function EditListingView({ listing }: { listing: Listing }) {
           </div>
           <div className="space-y-2 mt-3">
             <Label htmlFor="description">Description</Label>
-            <Input
+            <Textarea
               id="description"
               placeholder="DESCRIBE CONDITION, DETAILS, ETC."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={500}
+              className="text-sm"
+            />
+          </div>
+          <div className="space-y-2 mt-3 w-1/3 min-w-28">
+            <Label htmlFor="price">Price (SGD) *</Label>
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              min="0.01"
+              placeholder="0.00"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
               className="h-9"
             />
           </div>
         </div>
 
-        {/* Price */}
-        <div className="space-y-2 my-4">
-          <Label htmlFor="price">Price (SGD) *</Label>
-          <Input
-            id="price"
-            type="number"
-            step="0.01"
-            min="0.01"
-            placeholder="0.00"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="h-9"
-          />
-        </div>
-
-        <Separator />
-
-        {/* Card details */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
-          <div className="space-y-2">
-            <Label htmlFor="setName">Set Name</Label>
-            <Input
-              id="setName"
-              placeholder="E.G. DARKNESS ABLAZE"
-              value={setName}
-              onChange={(e) => setSetNameValue(e.target.value)}
-              maxLength={100}
-              className="h-9"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="cardId">Card ID</Label>
-            <Input
-              id="cardId"
-              placeholder="E.G. 020/189"
-              value={cardId}
-              onChange={(e) => setCardId(e.target.value)}
-              maxLength={100}
-              className="h-9"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="rarity">Rarity</Label>
-            <Input
-              id="rarity"
-              placeholder="E.G. ULTRA RARE"
-              value={rarity}
-              onChange={(e) => setRarity(e.target.value)}
-              maxLength={100}
-              className="h-9"
-            />
-          </div>
+        {/* Miscellaneous */}
+        <div className="mt-8">
           <div className="space-y-2">
             <Label htmlFor="pickup">Pickup Location</Label>
-            <Input
-              id="pickup"
-              placeholder="E.G. JURONG EAST MRT"
-              value={pickUp}
-              onChange={(e) => setPickUp(e.target.value)}
-              maxLength={100}
-              className="h-9"
-            />
+            <LocationSearch value={pickUp} onChange={setPickUp} />
+          </div>
+          <div className="space-y-2 mt-3">
+            <Label>Payment Method *</Label>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 h-9 items-center">
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={paymentMethod.cash}
+                  onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, cash: v === true }))}
+                />
+                Cash
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={paymentMethod.paynow}
+                  onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, paynow: v === true }))}
+                />
+                PayNow
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={paymentMethod.bank}
+                  onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, bank: v === true }))}
+                />
+                Bank Transfer
+              </label>
+            </div>
           </div>
         </div>
-
-        <Separator />
-
-        {/* Payment Method */}
-        <div className="space-y-3 my-4">
-          <Label>Payment Method *</Label>
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={paymentMethod.cash}
-                onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, cash: v === true }))}
-              />
-              Cash
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={paymentMethod.paynow}
-                onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, paynow: v === true }))}
-              />
-              PayNow
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={paymentMethod.bank}
-                onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, bank: v === true }))}
-              />
-              Bank Transfer
-            </label>
-          </div>
-        </div>
-
-        <Separator />
 
         {/* Submit */}
-        <div className="flex gap-3 my-4">
+        <div className="flex gap-3 mt-8 mb-4">
           <Button type="submit" disabled={!canSubmit} className="flex-1 sm:flex-none">
             {submitting ? "Saving..." : "Save Changes"}
           </Button>

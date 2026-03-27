@@ -49,9 +49,9 @@ export class MarketplaceService {
       [OrderListing.DESC]: false
     };
     const indexMap: Record<SortListing, string> = {
-      [SortListing.cardName]: "UpdatedListingIndex",
-      [SortListing.price]: "CardListingIndex",
-      [SortListing.updatedAt]: "PriceListingIndex"
+      [SortListing.cardName]: "CardListingIndex",
+      [SortListing.price]: "PriceListingIndex",
+      [SortListing.updatedAt]: "UpdatedListingIndex"
     };
     const filterMap: Record<FilterListing, string> = {
       [FilterListing.title]: "filterTitle",
@@ -209,7 +209,7 @@ export class MarketplaceService {
     frontImage?: Express.Multer.File,
     backImage?: Express.Multer.File
   ) {
-    const isAdmin = role.includes("admin");
+    const isAdmin = (role ?? []).includes("admin");
     let record: Listing;
 
     // check if role is admin or username is owner of the record
@@ -305,7 +305,7 @@ export class MarketplaceService {
   }
 
   async deleteListing(username: string, role: string[], gameName: string, listingId: string) {
-    const isAdmin = role.includes("admin");
+    const isAdmin = (role ?? []).includes("admin");
     let record: Listing;
 
     // check if role is admin or username is owner of the record

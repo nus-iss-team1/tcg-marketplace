@@ -5,8 +5,9 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+
 import {
   Select,
   SelectContent,
@@ -29,6 +30,8 @@ import {
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import { ContentLayout } from "@/components/content-layout";
+import { CardSearch } from "@/components/card-search";
+import { LocationSearch } from "@/components/location-search";
 import { getCardTypes, createListing } from "@/lib/listings";
 
 export default function CreateListingPage() {
@@ -209,9 +212,9 @@ export default function CreateListingPage() {
           )}
         </div>
 
-        {/* Game & Card Name */}
-        <div className="mt-4 mb-2">
-          <div className="space-y-2 mb-3">
+        {/* Card Details */}
+        <div className="mt-4">
+          <div className="space-y-2">
             <Label htmlFor="gameName">Game *</Label>
             <Select value={gameName} onValueChange={setGameName}>
               <SelectTrigger id="gameName" className="h-9">
@@ -226,18 +229,39 @@ export default function CreateListingPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 mt-3">
             <Label htmlFor="cardName">Card Name *</Label>
-            <Input
-              id="cardName"
-              placeholder="E.G. CHARIZARD VMAX"
+            <CardSearch
+              gameName={gameName}
               value={cardName}
-              onChange={(e) => setCardName(e.target.value)}
-              maxLength={100}
-              className="h-9"
+              onChange={setCardName}
+              onSelect={(card) => {
+                setCardName(card.cardName);
+                if (card.setName) setSetName(card.setName);
+                if (card.cardId) setCardId(card.cardId);
+                if (card.rarity) setRarity(card.rarity);
+              }}
             />
           </div>
-          <div className="space-y-2 mt-3">
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            <div className="space-y-0.5">
+              <Label>Set Name</Label>
+              <p className="text-xs text-muted-foreground truncate">{setName || "\u2014"}</p>
+            </div>
+            <div className="space-y-0.5">
+              <Label>Card ID</Label>
+              <p className="text-xs text-muted-foreground truncate">{cardId || "\u2014"}</p>
+            </div>
+            <div className="space-y-0.5">
+              <Label>Rarity</Label>
+              <p className="text-xs text-muted-foreground truncate">{rarity || "\u2014"}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Listing Details */}
+        <div className="mt-8">
+          <div className="space-y-2">
             <Label htmlFor="title">Listing Title *</Label>
             <Input
               id="title"
@@ -250,116 +274,66 @@ export default function CreateListingPage() {
           </div>
           <div className="space-y-2 mt-3">
             <Label htmlFor="description">Description</Label>
-            <Input
+            <Textarea
               id="description"
               placeholder="DESCRIBE CONDITION, DETAILS, ETC."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={500}
+              className="text-sm"
+            />
+          </div>
+          <div className="space-y-2 mt-3 w-1/3 min-w-28">
+            <Label htmlFor="price">Price (SGD) *</Label>
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              min="0.01"
+              placeholder="0.00"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
               className="h-9"
             />
           </div>
         </div>
 
-        {/* Price */}
-        <div className="space-y-2 my-4">
-          <Label htmlFor="price">Price (SGD) *</Label>
-          <Input
-            id="price"
-            type="number"
-            step="0.01"
-            min="0.01"
-            placeholder="0.00"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="h-9"
-          />
-        </div>
-
-        <Separator />
-
-        {/* Card details */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
-          <div className="space-y-2">
-            <Label htmlFor="setName">Set Name</Label>
-            <Input
-              id="setName"
-              placeholder="E.G. DARKNESS ABLAZE"
-              value={setName}
-              onChange={(e) => setSetName(e.target.value)}
-              maxLength={100}
-              className="h-9"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="cardId">Card ID</Label>
-            <Input
-              id="cardId"
-              placeholder="E.G. 020/189"
-              value={cardId}
-              onChange={(e) => setCardId(e.target.value)}
-              maxLength={100}
-              className="h-9"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="rarity">Rarity</Label>
-            <Input
-              id="rarity"
-              placeholder="E.G. ULTRA RARE"
-              value={rarity}
-              onChange={(e) => setRarity(e.target.value)}
-              maxLength={100}
-              className="h-9"
-            />
-          </div>
+        {/* Miscellaneous */}
+        <div className="mt-8">
           <div className="space-y-2">
             <Label htmlFor="pickup">Pickup Location</Label>
-            <Input
-              id="pickup"
-              placeholder="E.G. JURONG EAST MRT"
-              value={pickUp}
-              onChange={(e) => setPickUp(e.target.value)}
-              maxLength={100}
-              className="h-9"
-            />
+            <LocationSearch value={pickUp} onChange={setPickUp} />
+          </div>
+          <div className="space-y-2 mt-3">
+            <Label>Payment Method *</Label>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 h-9 items-center">
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={paymentMethod.cash}
+                  onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, cash: v === true }))}
+                />
+                Cash
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={paymentMethod.paynow}
+                  onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, paynow: v === true }))}
+                />
+                PayNow
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={paymentMethod.bank}
+                  onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, bank: v === true }))}
+                />
+                Bank Transfer
+              </label>
+            </div>
           </div>
         </div>
-
-        <Separator />
-
-        {/* Payment Method */}
-        <div className="space-y-3 my-4">
-          <Label>Payment Method *</Label>
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={paymentMethod.cash}
-                onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, cash: v === true }))}
-              />
-              Cash
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={paymentMethod.paynow}
-                onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, paynow: v === true }))}
-              />
-              PayNow
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={paymentMethod.bank}
-                onCheckedChange={(v) => setPaymentMethod((p) => ({ ...p, bank: v === true }))}
-              />
-              Bank Transfer
-            </label>
-          </div>
-        </div>
-
-        <Separator />
 
         {/* Submit */}
-        <div className="flex gap-3 my-4">
+        <div className="flex gap-3 mt-8 mb-4">
           <Button type="submit" disabled={!canSubmit} className="flex-1 sm:flex-none">
             {submitting ? "Creating..." : "Create Listing"}
           </Button>
