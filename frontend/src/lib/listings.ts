@@ -285,7 +285,6 @@ export interface CreateListingBody {
   rarity?: string;
   price: number;
   paymentMethod?: PaymentMethod;
-  pickup?: string;
   pickUp?: string;
   listingStatus?: "ACTIVE" | "SOLD" | "DELETED";
   frontImage?: File;
@@ -301,7 +300,6 @@ export interface UpdateListingBody {
   rarity?: string;
   price?: number;
   paymentMethod?: PaymentMethod;
-  pickup?: string;
   pickUp?: string;
   listingStatus?: "ACTIVE" | "SOLD" | "DELETED";
   frontImage?: File;
@@ -450,7 +448,6 @@ export async function createListing(body: CreateListingBody): Promise<Listing> {
   if (body.setName) formData.append("setName", body.setName);
   if (body.cardId) formData.append("cardId", body.cardId);
   if (body.rarity) formData.append("rarity", body.rarity);
-  if (body.pickup) formData.append("pickup", body.pickup);
   if (body.pickUp) formData.append("pickUp", body.pickUp);
   if (body.listingStatus) formData.append("listingStatus", body.listingStatus);
   formData.append("paymentMethod", JSON.stringify(body.paymentMethod ?? { cash: true, paynow: false, bank: false }));
@@ -491,7 +488,6 @@ export async function updateListing(request: UpdateListingRequest): Promise<List
   if (body.cardId) formData.append("cardId", body.cardId);
   if (body.rarity) formData.append("rarity", body.rarity);
   if (body.price != null) formData.append("price", String(body.price));
-  if (body.pickup) formData.append("pickup", body.pickup);
   if (body.pickUp) formData.append("pickUp", body.pickUp);
   if (body.listingStatus) formData.append("listingStatus", body.listingStatus);
   if (body.paymentMethod) formData.append("paymentMethod", JSON.stringify(body.paymentMethod));

@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getCardTypes, type CardType } from "@/lib/listings";
 import {
   Card,
   CardContent,
@@ -18,20 +17,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 
 export default function LandingPage() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+  const { loading } = useAuth();
+  const [gameTypes, setGameTypes] = useState<CardType[]>([]);
 
   useEffect(() => {
     document.title = "VAULT OF CARDS";
+    getCardTypes().then(setGameTypes);
   }, []);
-
-  const handleCreateListing = () => {
-    if (user) {
-      router.push("/listing/create");
-    } else {
-      router.push("/login?tab=signin&redirect=/listing/create");
-    }
-  };
 
   if (loading) {
     return (
@@ -61,7 +53,7 @@ export default function LandingPage() {
               VOC
             </Badge>
             <div className="text-center max-w-5xl mx-auto">
-              <CardTitle className="text-7xl sm:text-8xl md:text-9xl leading-none animate-[fade-up_0.5s_ease-out_0.1s_both]">
+              <CardTitle className="text-7xl sm:text-8xl md:text-8xl lg:text-9xl leading-none animate-[fade-up_0.5s_ease-out_0.1s_both]">
                 <span className="bg-linear-to-r from-foreground to-foreground/85 bg-clip-text text-transparent">
                   The marketplace for every collector
                 </span>
@@ -73,17 +65,19 @@ export default function LandingPage() {
             </div>
           </CardHeader>
 
-          <CardContent className="flex flex-row justify-center gap-3 px-0 animate-[fade-up_0.5s_ease-out_0.3s_both]">
-            <Button size="lg" asChild>
-              <Link href="/marketplace">Start Exploring</Link>
-            </Button>
-            <Button
-              size="lg"
-              variant="secondary"
-              onClick={handleCreateListing}
-            >
-              Create Listing
-            </Button>
+          <CardContent className="flex flex-col items-center gap-4 px-0 animate-[fade-up_0.5s_ease-out_0.3s_both]">
+            <p className="text-lg font-heading tracking-wider text-foreground mb-2">Start Exploring</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {gameTypes.map((game) => (
+                <Link
+                  key={game.value}
+                  href={`/marketplace?game=${encodeURIComponent(game.value)}`}
+                  className="text-xs text-muted-foreground border border-border px-3 py-1 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors duration-200 ease-in-out"
+                >
+                  {game.label}
+                </Link>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
