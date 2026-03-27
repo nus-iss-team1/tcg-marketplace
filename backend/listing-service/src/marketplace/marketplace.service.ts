@@ -220,87 +220,102 @@ export class MarketplaceService {
       record = result[0];
     }
 
-    if (record) {
-      const { frontImageAction, backImageAction, ...updatedField } = listing;
-      const oldRecord = record;
-      const uploadedKeys: string[] = [];
-      const attachment: ListingAttachment = {
-        front: oldRecord.attachment?.front,
-        back: oldRecord.attachment?.back
-      };
-      let thumbnail = oldRecord.thumbnail;
-      let updatedListing: Listing;
-
-      try {
-        // replace image in s3
-        if (frontImageAction === ImageAction.REPLACE && frontImage) {
-          const [frontKey, thumbnailKey] = await this.s3Service.uploadImage(
-            frontImage,
-            listingId,
-            true
-          );
-          attachment.front = frontKey;
-          thumbnail = thumbnailKey;
-          uploadedKeys.push(attachment.front);
-          uploadedKeys.push(thumbnail);
-        }
-        if (backImageAction === ImageAction.REPLACE && backImage) {
-          const [backKey, _] = await this.s3Service.uploadImage(backImage, listingId, false);
-          attachment.back = backKey;
-          uploadedKeys.push(attachment.back);
-        }
-
-        if (backImageAction === ImageAction.DELETE) {
-          attachment.back = "";
-        }
-
-        // replace old record with new changes
-        const cardName = updatedField.cardName ? updatedField.cardName : oldRecord.cardName;
-        const title = updatedField.title ? updatedField.title : oldRecord.title;
-        const currentTs = DateTime.now().toMillis();
-        const paddedPrice = padPrice(listing.price);
-        const modifiedListing: Listing = {
-          ...oldRecord,
-          ...updatedField,
-          listingUpdatedAt: `${currentTs}#${listingId}`.toLowerCase(),
-          listingCardName: `${cardName}#${listingId}`.toLowerCase(),
-          listingPrice: `${paddedPrice}#${listingId}`.toLowerCase(),
-          filterTitle: `${title}#${listingId}`.toLowerCase(),
-          attachment: attachment,
-          thumbnail: thumbnail,
-          updatedAt: currentTs,
-          updatedBy: username
-        };
-
-        // update record in database table
-        updatedListing = await this.marketplaceRepo.updateListing(modifiedListing);
-      } catch (err) {
-        this.logger.error(err);
-
-        // revert newly uploaded images
-        await Promise.all(uploadedKeys.map((key) => this.s3Service.deleteObject(key)));
-
-        // revert update on database
-        await this.marketplaceRepo.updateListing(oldRecord);
-
-        throw new InternalServerErrorException("Unexpected error occurred while update listing");
-      }
-
-      // delete old images
-      if (frontImageAction === ImageAction.REPLACE && oldRecord.attachment?.front) {
-        await this.s3Service.deleteObject(oldRecord.attachment.front);
-        await this.s3Service.deleteObject(oldRecord.thumbnail);
-      }
-      if (
-        (backImageAction === ImageAction.REPLACE || backImageAction === ImageAction.DELETE) &&
-        oldRecord.attachment?.back
-      ) {
-        await this.s3Service.deleteObject(oldRecord.attachment.back);
-      }
-
-      return updatedListing;
-    } else {
+    if (!record) {
       throw new ForbiddenException("Record doesn't exist or unauthorized");
+    }
+
+    const { frontImageAction, backImageAction, ...updatedField } = listing;
+    const oldRecord = record;
+    const uploadedKeys: string[] = [];
+    const attachment: ListingAttachment = {
+      front: oldRecord.attachment?.front,
+      back: oldRecord.attachment?.back
+    };
+    let thumbnail = oldRecord.thumbnail;
+    let updatedListing: Listing;
+
+    try {
+      await this.processImageUploads(
+        frontImageAction,
+        backImageAction,
+        frontImage,
+        backImage,
+        listingId,
+        attachment,
+        uploadedKeys
+      );
+      if (frontImageAction === ImageAction.REPLACE && uploadedKeys.length > 0) {
+        thumbnail = uploadedKeys[1];
+      }
+      if (backImageAction === ImageAction.DELETE) {
+        attachment.back = "";
+      }
+
+      // replace old record with new changes
+      const cardName = updatedField.cardName ? updatedField.cardName : oldRecord.cardName;
+      const title = updatedField.title ? updatedField.title : oldRecord.title;
+      const currentTs = DateTime.now().toMillis();
+      const paddedPrice = padPrice(listing.price);
+      const modifiedListing: Listing = {
+        ...oldRecord,
+        ...updatedField,
+        listingUpdatedAt: `${currentTs}#${listingId}`.toLowerCase(),
+        listingCardName: `${cardName}#${listingId}`.toLowerCase(),
+        listingPrice: `${paddedPrice}#${listingId}`.toLowerCase(),
+        filterTitle: `${title}#${listingId}`.toLowerCase(),
+        attachment: attachment,
+        thumbnail: thumbnail,
+        updatedAt: currentTs,
+        updatedBy: username
+      };
+
+      // update record in database table
+      updatedListing = await this.marketplaceRepo.updateListing(modifiedListing);
+    } catch (err) {
+      this.logger.error(err);
+
+      // revert newly uploaded images
+      await Promise.all(uploadedKeys.map((key) => this.s3Service.deleteObject(key)));
+
+      // revert update on database
+      await this.marketplaceRepo.updateListing(oldRecord);
+
+      throw new InternalServerErrorException("Unexpected error occurred while update listing");
+    }
+
+    // delete old images
+    if (frontImageAction === ImageAction.REPLACE && oldRecord.attachment?.front) {
+      await this.s3Service.deleteObject(oldRecord.attachment.front);
+      await this.s3Service.deleteObject(oldRecord.thumbnail);
+    }
+    if (
+      (backImageAction === ImageAction.REPLACE || backImageAction === ImageAction.DELETE) &&
+      oldRecord.attachment?.back
+    ) {
+      await this.s3Service.deleteObject(oldRecord.attachment.back);
+    }
+
+    return updatedListing;
+  }
+
+  private async processImageUploads(
+    frontImageAction: ImageAction | undefined,
+    backImageAction: ImageAction | undefined,
+    frontImage: Express.Multer.File | undefined,
+    backImage: Express.Multer.File | undefined,
+    listingId: string,
+    attachment: ListingAttachment,
+    uploadedKeys: string[]
+  ) {
+    if (frontImageAction === ImageAction.REPLACE && frontImage) {
+      const [frontKey, thumbnailKey] = await this.s3Service.uploadImage(frontImage, listingId, true);
+      attachment.front = frontKey;
+      uploadedKeys.push(frontKey, thumbnailKey);
+    }
+    if (backImageAction === ImageAction.REPLACE && backImage) {
+      const [backKey] = await this.s3Service.uploadImage(backImage, listingId, false);
+      attachment.back = backKey;
+      uploadedKeys.push(backKey);
     }
   }
 
