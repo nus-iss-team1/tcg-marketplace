@@ -5,6 +5,9 @@ const messagingApi = process.env.MESSAGING_API || process.env.BACKEND_API || "ht
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  turbopack: {
+    root: ".",
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
