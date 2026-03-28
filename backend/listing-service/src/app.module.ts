@@ -25,7 +25,11 @@ import { ProfileModule } from "./profile/profile.module";
         AWS_S3_BUCKET: Joi.string().required(),
         CDN_URL: Joi.string().required(),
         COGNITO_USER_POOL_ID: Joi.string().required(),
-        COGNITO_APP_CLIENT_ID: Joi.string().required()
+        COGNITO_APP_CLIENT_ID: Joi.string().required(),
+        GAME_CARD_LOOKUP_TABLE: Joi.string().required(),
+        TCG_MARKETPLACE_TABLE: Joi.string().required(),
+        MESSAGING_PLATFORM_TABLE: Joi.string().required(),
+        USER_PROFILE_TABLE: Joi.string().required()
       }),
       validationOptions: {
         abortEarly: true
