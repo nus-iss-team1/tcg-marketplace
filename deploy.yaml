@@ -5,8 +5,8 @@ dev:
   listing_api: https://listing.dev.vaultofcards.io
   messaging_api: https://messaging.dev.vaultofcards.io
 prod:
-  app_image_tag: develop-latest
-  messaging_image_tag: develop-latest
+  app_image_tag: prod-latest
+  messaging_image_tag: prod-latest
   web_image_tag: prod-latest
-  listing_api: ""
-  messaging_api: ""
+  listing_api: https://listing.vaultofcards.io
+  messaging_api: https://messaging.vaultofcards.io
