@@ -115,7 +115,7 @@ export function LocationSearch({ value, onChange }: LocationSearchProps) {
           className="h-9"
         />
         {open && address.length >= 3 && (results.length > 0 || loading) && (
-          <div className="absolute top-full left-0 right-0 z-50 mt-2 max-h-[200px] overflow-y-auto rounded-md border bg-background p-1 shadow-md">
+          <div className="absolute top-full left-0 right-0 z-50 mt-2 max-h-50 overflow-y-auto rounded-md border bg-background p-1 shadow-md">
             {loading ? (
               <p className="py-3 text-center text-xs text-muted-foreground">Searching...</p>
             ) : (
