@@ -1,0 +1,13 @@
+# Snyk (https://snyk.io) policy file
+# path-to-regexp@8.3.0 is declared by @nestjs/core and @nestjs/platform-express,
+# but npm overrides resolve it to 8.4.0 at install time.
+version: v1.25.1
+ignore:
+  SNYK-JS-PATHTOREGEXP-15789763:
+    - '* > path-to-regexp':
+        reason: Patched via npm overrides to 8.4.0
+        expires: 2026-06-28T00:00:00.000Z
+  SNYK-JS-PATHTOREGEXP-15789765:
+    - '* > path-to-regexp':
+        reason: Patched via npm overrides to 8.4.0
+        expires: 2026-06-28T00:00:00.000Z
