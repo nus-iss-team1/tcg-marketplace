@@ -8,8 +8,8 @@ function getBackendUrl(path: string, search: string) {
   return `${base}/listing/${path}${search}`;
 }
 
-async function proxy(req: NextRequest, params: Promise<{ path: string[] }>) {
-  const { path } = await params;
+async function proxy(req: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+  const { path } = await context.params;
   const url = getBackendUrl(path.join("/"), req.nextUrl.search);
 
   const headers = new Headers(req.headers);
