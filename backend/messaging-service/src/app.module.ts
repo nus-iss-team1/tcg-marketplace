@@ -20,7 +20,9 @@ import { MessagingModule } from "./messaging/messaging.module";
         AWS_ACCESS_KEY_ID: Joi.string().optional(),
         AWS_SECRET_ACCESS_KEY: Joi.string().optional(),
         COGNITO_USER_POOL_ID: Joi.string().required(),
-        COGNITO_APP_CLIENT_ID: Joi.string().required()
+        COGNITO_APP_CLIENT_ID: Joi.string().required(),
+        REDIS_HOST: Joi.string().required(),
+        REDIS_PORT: Joi.number().default(6379)
       }),
       validationOptions: {
         abortEarly: true
