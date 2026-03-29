@@ -13,7 +13,15 @@ async function proxy(req: NextRequest, context: { params: Promise<{ path: string
   const url = getBackendUrl(path.join("/"), req.nextUrl.search);
 
   const headers = new Headers(req.headers);
-  headers.delete("host");
+  // ALB uses host-header routing: messaging.{domain} → messaging service
+  const incomingHost = req.headers.get("host") ?? "";
+  if (process.env.MESSAGING_API) {
+    headers.set("host", new URL(process.env.MESSAGING_API).host);
+  } else if (incomingHost) {
+    headers.set("host", `messaging.${incomingHost}`);
+  } else {
+    headers.delete("host");
+  }
 
   const res = await fetch(url, {
     method: req.method,
