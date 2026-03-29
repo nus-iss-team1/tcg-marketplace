@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [listing]
+        service: [listing, messaging]
     steps:
       - uses: actions/checkout@v4
 
@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [listing]
+        service: [listing, messaging]
     steps:
       - uses: actions/checkout@v4
 
