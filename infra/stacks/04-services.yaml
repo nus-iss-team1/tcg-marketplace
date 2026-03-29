@@ -413,6 +413,20 @@ Resources:
                     Fn::Sub: "${ProjectNamespace}-${Environment}-MessagingPlatformTableName"
                 - !ImportValue
                     Fn::Sub: "${ProjectNamespace}-MessagingPlatformTableName"
+            - Name: REDIS_HOST
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-RedisEndpoint"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-RedisEndpoint"
+            - Name: REDIS_PORT
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-RedisPort"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-RedisPort"
 
   WebTaskDefinition:
     Type: AWS::ECS::TaskDefinition

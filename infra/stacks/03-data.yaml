@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "S3 Storage and DynamoDB Tables"
+Description: "S3 Storage, DynamoDB Tables, and ElastiCache"
 
 Parameters:
   ProjectNamespace:
@@ -9,6 +9,10 @@ Parameters:
     Type: String
     Default: ""
     Description: "Environment prefix (e.g. prod). Leave empty for dev."
+  CacheNodeType:
+    Type: String
+    Default: cache.t3.micro
+    Description: "ElastiCache node instance type"
 
 Conditions:
   HasEnvPrefix: !Not [!Equals [!Ref Environment, ""]]
@@ -255,6 +259,75 @@ Resources:
       SSESpecification:
         SSEEnabled: true
 
+  # ════════════════════════════════════════════════════════════
+  # ElastiCache (Redis) for Messaging Service
+  # ════════════════════════════════════════════════════════════
+
+  ElastiCacheSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow Redis access from ECS tasks
+      VpcId: !If
+        - HasEnvPrefix
+        - !ImportValue
+            Fn::Sub: "${ProjectNamespace}-${Environment}-VpcId"
+        - !ImportValue
+            Fn::Sub: "${ProjectNamespace}-VpcId"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId: !If
+            - HasEnvPrefix
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-${Environment}-ECSSecurityGroupId"
+            - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-ECSSecurityGroupId"
+      Tags:
+        - Key: Name
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-redis-sg"
+            - !Sub "${ProjectNamespace}-redis-sg"
+
+  ElastiCacheSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      CacheSubnetGroupName: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-redis-subnets"
+        - !Sub "${ProjectNamespace}-redis-subnets"
+      Description: Private subnets for ElastiCache Redis
+      SubnetIds: !Split
+        - ","
+        - !If
+          - HasEnvPrefix
+          - !ImportValue
+              Fn::Sub: "${ProjectNamespace}-${Environment}-PrivateSubnetIds"
+          - !ImportValue
+              Fn::Sub: "${ProjectNamespace}-PrivateSubnetIds"
+
+  ElastiCacheRedis:
+    Type: AWS::ElastiCache::CacheCluster
+    Properties:
+      ClusterName: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-redis"
+        - !Sub "${ProjectNamespace}-redis"
+      Engine: redis
+      EngineVersion: "7.1"
+      CacheNodeType: !Ref CacheNodeType
+      NumCacheNodes: 1
+      CacheSubnetGroupName: !Ref ElastiCacheSubnetGroup
+      VpcSecurityGroupIds:
+        - !GetAtt ElastiCacheSecurityGroup.GroupId
+      Tags:
+        - Key: Name
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-redis"
+            - !Sub "${ProjectNamespace}-redis"
+
 Outputs:
   # Storage
   AssetsBucketName:
@@ -355,3 +428,21 @@ Outputs:
         - HasEnvPrefix
         - !Sub "${ProjectNamespace}-${Environment}-UserProfileTableArn"
         - !Sub "${ProjectNamespace}-UserProfileTableArn"
+
+  # ElastiCache
+  RedisEndpoint:
+    Description: "ElastiCache Redis endpoint address"
+    Value: !GetAtt ElastiCacheRedis.RedisEndpoint.Address
+    Export:
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-RedisEndpoint"
+        - !Sub "${ProjectNamespace}-RedisEndpoint"
+  RedisPort:
+    Description: "ElastiCache Redis port"
+    Value: !GetAtt ElastiCacheRedis.RedisEndpoint.Port
+    Export:
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-RedisPort"
+        - !Sub "${ProjectNamespace}-RedisPort"
