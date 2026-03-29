@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { instanceToPlain } from "class-transformer";
 import { UserProfile } from "./types/profile.schema";
 import { handleDynamoError } from "../dynamodb/dynamodb.util";
@@ -8,12 +9,15 @@ import { DynamoDbService } from "../dynamodb/dynamodb.service";
 
 @Injectable()
 export class ProfileRepository {
-  private readonly tableName = "UserProfile";
+  private readonly tableName: string;
 
   constructor(
     private readonly logger: AppLoggerService,
-    private readonly dynamoDbService: DynamoDbService
-  ) {}
+    private readonly dynamoDbService: DynamoDbService,
+    private readonly configService: ConfigService
+  ) {
+    this.tableName = this.configService.getOrThrow<string>("USER_PROFILE_TABLE");
+  }
 
   async createProfile(profile: UserProfile) {
     try {
