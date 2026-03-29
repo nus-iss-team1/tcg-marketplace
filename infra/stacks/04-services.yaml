@@ -62,7 +62,7 @@ Resources:
                   - logs:PutLogEvents
                 Resource: "*"
 
-  # ── Listing Service Task Role (S3 + GameCardLookup + MessagingPlatform + TCGMarketplace) ──
+  # -- Listing Service Task Role (S3 + GameCardLookup + MessagingPlatform + TCGMarketplace) --
   ListingTaskRole:
     Type: AWS::IAM::Role
     Properties:
@@ -180,7 +180,7 @@ Resources:
                         - !ImportValue
                             Fn::Sub: "${ProjectNamespace}-UserProfileTableArn"
 
-  # ── Messaging Service Task Role (MessagingPlatform only) ──
+  # -- Messaging Service Task Role (MessagingPlatform only) --
   MessagingTaskRole:
     Type: AWS::IAM::Role
     Properties:
@@ -224,7 +224,7 @@ Resources:
                         - !ImportValue
                             Fn::Sub: "${ProjectNamespace}-MessagingPlatformTableArn"
 
-  # ── Web Task Role (no AWS resource access needed) ──
+  # -- Web Task Role (no AWS resource access needed) --
   WebTaskRole:
     Type: AWS::IAM::Role
     Properties:
@@ -413,6 +413,20 @@ Resources:
                     Fn::Sub: "${ProjectNamespace}-${Environment}-MessagingPlatformTableName"
                 - !ImportValue
                     Fn::Sub: "${ProjectNamespace}-MessagingPlatformTableName"
+            - Name: REDIS_HOST
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-RedisEndpoint"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-RedisEndpoint"
+            - Name: REDIS_PORT
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-${Environment}-RedisPort"
+                - !ImportValue
+                    Fn::Sub: "${ProjectNamespace}-RedisPort"
 
   WebTaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -626,9 +640,9 @@ Resources:
             - !ImportValue
                 Fn::Sub: "${ProjectNamespace}-MessagingTargetGroupArn"
 
-  # ════════════════════════════════════════════════════════════
+  # ------------------------------------------------------------
   # Auto Scaling
-  # ════════════════════════════════════════════════════════════
+  # ------------------------------------------------------------
 
   AutoScalingRole:
     Type: AWS::IAM::Role
@@ -752,11 +766,11 @@ Resources:
         ScaleInCooldown: 300
         ScaleOutCooldown: 60
 
-  # ════════════════════════════════════════════════════════════
+  # ------------------------------------------------------------
   # Monitoring & Alerts
-  # ════════════════════════════════════════════════════════════
+  # ------------------------------------------------------------
 
-  # ── High CPU Alarms (>85% for 5 min) ─────────────────────
+  # -- High CPU Alarms (>85% for 5 min) ---------------------
   ListingServiceHighCPUAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
@@ -838,7 +852,7 @@ Resources:
       ComparisonOperator: GreaterThanThreshold
 
 
-  # ── Running Task Count Alarms (< 1 for 1 min = service down) ──
+  # -- Running Task Count Alarms (< 1 for 1 min = service down) --
   ListingServiceTaskCountAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
@@ -920,7 +934,7 @@ Resources:
       ComparisonOperator: LessThanThreshold
 
 
-  # ── High Memory Alarms (>85% for 5 min) ──────────────────
+  # -- High Memory Alarms (>85% for 5 min) ------------------
   ListingServiceHighMemoryAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
