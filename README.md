@@ -22,10 +22,10 @@
   <p align="center">
     A full-stack trading card game marketplace for buying and selling collectible cards.
     <br />
-    <a href="https://vaultofcards.io"><strong>Visit Vault of Cards</strong></a>
+    <a href=""><strong>Visit Vault of Cards</strong></a>
     <br />
     <br />
-    <a href="https://vaultofcards.io">View Live</a>
+    <a href="">View Live</a>
     &middot;
     <a href="https://github.com/nus-iss-team1/tcg-marketplace/issues/new?labels=bug">Report Bug</a>
     &middot;
