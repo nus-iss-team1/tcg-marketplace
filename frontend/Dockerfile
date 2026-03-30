@@ -33,13 +33,16 @@ RUN adduser --system --uid 1001 nextjs
 
 # Copy the standalone build output
 # Note: standalone includes a minimal node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
 # Copy entrypoint script
-COPY --chown=nextjs:nodejs scripts/entrypoint.sh ./entrypoint.sh
+COPY scripts/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
+
+# Make all files owned by nextjs so entrypoint can sed-replace placeholders
+RUN chown -R nextjs:nodejs /app
 
 USER nextjs
 
