@@ -303,77 +303,57 @@ function ReadListingView({
 
                 {/* Card Details */}
                 <div className="grid grid-cols-3 gap-2 mt-6">
-                  {listing.setName && (
-                    <div className="space-y-0.5">
-                      <p className="text-xs text-muted-foreground">Set Name</p>
-                      <p className="text-sm">{listing.setName}</p>
-                    </div>
-                  )}
-                  {listing.cardId && (
-                    <div className="space-y-0.5">
-                      <p className="text-xs text-muted-foreground">Card ID</p>
-                      <p className="text-sm">{listing.cardId}</p>
-                    </div>
-                  )}
-                  {listing.rarity && (
-                    <div className="space-y-0.5">
-                      <p className="text-xs text-muted-foreground">Rarity</p>
-                      <p className="text-sm">{listing.rarity}</p>
-                    </div>
-                  )}
+                  <div className="space-y-0.5">
+                    <p className="text-xs text-muted-foreground">Set Name</p>
+                    <p className="text-sm">{listing.setName || "\u2014"}</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-xs text-muted-foreground">Card ID</p>
+                    <p className="text-sm">{listing.cardId || "\u2014"}</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-xs text-muted-foreground">Rarity</p>
+                    <p className="text-sm">{listing.rarity || "\u2014"}</p>
+                  </div>
                 </div>
 
                 {/* Description */}
-                {listing.description && (
-                  <div className="mt-6">
-                    <p className="text-xs text-muted-foreground mb-1">
-                      Description
-                    </p>
-                    <p className="text-sm normal-case">{listing.description}</p>
-                  </div>
-                )}
-
-                {/* Miscellaneous */}
-                <div className="grid grid-cols-2 gap-4 mt-6">
-                  {listing.pickUp &&
-                    (() => {
-                      const match = listing.pickUp.match(/^(.+?)\s*\((.+)\)$/);
-                      const address = match ? match[1] : listing.pickUp;
-                      const details = match ? match[2] : null;
-                      return (
-                        <div className="space-y-0.5">
-                          <p className="text-xs text-muted-foreground">
-                            Pickup Location
-                          </p>
-                          <p className="text-sm">{address}</p>
-                          {details && (
-                            <>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Meetup Details
-                              </p>
-                              <p className="text-sm normal-case">{details}</p>
-                            </>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  {listing.paymentMethod && (
-                    <div className="space-y-0.5">
-                      <p className="text-xs text-muted-foreground">Payment</p>
-                      <p className="text-sm">
-                        {[
-                          listing.paymentMethod.cash && "Cash",
-                          listing.paymentMethod.paynow && "PayNow",
-                          listing.paymentMethod.bank && "Bank Transfer",
-                        ]
-                          .filter(Boolean)
-                          .join(", ") || "\u2014"}
-                      </p>
-                    </div>
-                  )}
+                <div className="mt-6">
+                  <p className="text-xs text-muted-foreground mb-1">Description</p>
+                  <p className="text-sm normal-case">{listing.description || "\u2014"}</p>
                 </div>
 
-                <div className="flex-1" />
+                {/* Miscellaneous */}
+                <div className="mt-6 space-y-0.5">
+                  <p className="text-xs text-muted-foreground">Payment</p>
+                    <p className="text-sm">
+                      {listing.paymentMethod
+                        ? [
+                            listing.paymentMethod.cash && "Cash",
+                            listing.paymentMethod.paynow && "PayNow",
+                            listing.paymentMethod.bank && "Bank Transfer",
+                          ]
+                            .filter(Boolean)
+                            .join(", ") || "\u2014"
+                        : "\u2014"}
+                    </p>
+                </div>
+
+                <div className="mt-4 space-y-0.5">
+                  <p className="text-xs text-muted-foreground">Pickup Location</p>
+                  <p className="text-sm">
+                    {listing.pickUp
+                      ? (listing.pickUp.match(/^(.+?)\s*\((.+)\)$/)?.[1] ?? listing.pickUp)
+                      : "\u2014"}
+                  </p>
+                </div>
+
+                <div className="mt-4 space-y-0.5">
+                  <p className="text-xs text-muted-foreground">Meetup Details</p>
+                  <p className="text-sm normal-case">
+                    {listing.pickUp?.match(/^(.+?)\s*\((.+)\)$/)?.[2] || "\u2014"}
+                  </p>
+                </div>
 
                 <SellerSection
                   sellerId={sellerId}
@@ -512,7 +492,7 @@ function EditListingView({ listing }: { listing: Listing }) {
         listingId: listing.listingId,
       });
       toast.success("Listing deleted.");
-      router.push("/listing");
+      router.push("/profile");
     } catch {
       toast.error("Failed to delete listing.");
     } finally {
@@ -825,6 +805,11 @@ function EditListingView({ listing }: { listing: Listing }) {
 
 function FadeImage({ src, alt }: { src: string; alt: string }) {
   const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
+
+  if (errored) {
+    return <ImagePlaceholder className="w-full h-full" />;
+  }
 
   return (
     <>
@@ -837,6 +822,7 @@ function FadeImage({ src, alt }: { src: string; alt: string }) {
         alt={alt}
         className={`w-full h-full object-contain transition-opacity duration-500 ease-in-out ${loaded ? "opacity-100" : "opacity-0"}`}
         onLoad={() => setLoaded(true)}
+        onError={() => setErrored(true)}
       />
     </>
   );

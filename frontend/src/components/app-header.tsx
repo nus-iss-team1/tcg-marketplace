@@ -94,13 +94,13 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem asChild className="focus:bg-transparent hover:bg-transparent hover:text-muted-foreground">
+                  <Link href="/profile">Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="focus:bg-transparent hover:bg-transparent hover:text-muted-foreground">
                   <Link href="/messaging">Messages</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="focus:bg-transparent hover:bg-transparent hover:text-muted-foreground">
                   <Link href="/settings">Settings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="focus:bg-transparent hover:bg-transparent hover:text-muted-foreground">
-                  <Link href="/profile">Profile</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="focus:bg-transparent hover:bg-transparent hover:text-muted-foreground" onClick={() => { signOut(); router.push("/"); }}>
                   Sign Out
@@ -148,18 +148,18 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
 
             <nav className="flex flex-col px-2">
               <Link
-                href="/messaging"
-                onClick={() => setSidebarOpen(false)}
-                className="flex items-center gap-3 rounded-none px-3 py-2.5 text-xs hover:text-muted-foreground transition-colors"
-              >
-                Messages
-              </Link>
-              <Link
                 href="/profile"
                 onClick={() => setSidebarOpen(false)}
                 className="flex items-center gap-3 rounded-none px-3 py-2.5 text-xs hover:text-muted-foreground transition-colors"
               >
                 Profile
+              </Link>
+              <Link
+                href="/messaging"
+                onClick={() => setSidebarOpen(false)}
+                className="flex items-center gap-3 rounded-none px-3 py-2.5 text-xs hover:text-muted-foreground transition-colors"
+              >
+                Messages
               </Link>
               <Link
                 href="/settings"

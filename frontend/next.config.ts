@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { hostname: "picsum.photos" },
       { hostname: "*.cloudfront.net" },
+      { hostname: "assets.tcgdex.net" },
     ],
   },
   async rewrites() {

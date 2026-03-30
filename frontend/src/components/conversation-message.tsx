@@ -74,7 +74,7 @@ export function ConversationMessage({ message, partnerName, imageUrl, senderName
           {isPartner ? partnerName : (senderName || "You")}
         </p>
         <div className={cn(
-          "max-w-[75%] px-3 py-2 text-xs normal-case",
+          "min-w-24 sm:min-w-32 md:min-w-40 max-w-[75%] px-3 py-2 text-xs normal-case",
           isPartner
             ? "bg-card text-foreground border border-border"
             : "bg-primary text-primary-foreground"

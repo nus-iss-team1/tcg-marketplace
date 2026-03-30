@@ -16,8 +16,15 @@ interface ListingCardProps {
 export function ListingCard({ listing, index, animationDelayOffset = 0, onImageLoad }: ListingCardProps) {
   const imageUrl = listing.thumbnail || listing.attachment?.front;
   const [loaded, setLoaded] = useState(!imageUrl);
+  const [errored, setErrored] = useState(false);
 
   const handleLoad = useCallback(() => {
+    setLoaded(true);
+    onImageLoad?.();
+  }, [onImageLoad]);
+
+  const handleError = useCallback(() => {
+    setErrored(true);
     setLoaded(true);
     onImageLoad?.();
   }, [onImageLoad]);
@@ -36,7 +43,7 @@ export function ListingCard({ listing, index, animationDelayOffset = 0, onImageL
     >
       <div className="overflow-hidden">
         <div className="transition-transform duration-500 ease-out group-hover:scale-105">
-          {imageUrl ? (
+          {imageUrl && !errored ? (
             <Image
               src={imageUrl}
               alt={listing.cardName}
@@ -44,7 +51,7 @@ export function ListingCard({ listing, index, animationDelayOffset = 0, onImageL
               height={427}
               className="w-full aspect-5/7 object-contain bg-background"
               onLoad={handleLoad}
-              onError={handleLoad}
+              onError={handleError}
             />
           ) : (
             <ImagePlaceholder className="w-full" seed={listing.listingId} />
