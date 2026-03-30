@@ -130,6 +130,10 @@ jobs:
             --query taskDefinition \
             > task-def.json
 
+      - name: Set short SHA
+        id: vars
+        run: echo "sha_short=$(echo '${{ needs.build-and-push.outputs.image }}' | grep -o '[^:]*$')" >> $GITHUB_OUTPUT
+
       - name: Update image in task definition
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         id: render
@@ -137,6 +141,8 @@ jobs:
           task-definition: task-def.json
           container-name: web
           image: ${{ needs.build-and-push.outputs.image }}
+          environment-variables: |
+            IMAGE_TAG=${{ steps.vars.outputs.sha_short }}
 
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2

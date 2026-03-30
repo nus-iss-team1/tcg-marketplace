@@ -204,6 +204,8 @@ jobs:
           task-definition: task-def.json
           container-name: web
           image: ${{ steps.login-ecr.outputs.registry }}/nusiss-team-1-voc/tcgm-web:${{ needs.detect-changes.outputs.web_image_tag }}
+          environment-variables: |
+            IMAGE_TAG=v${{ needs.detect-changes.outputs.web_image_tag }}
 
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
