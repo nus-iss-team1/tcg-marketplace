@@ -14,6 +14,10 @@ COPY . .
 
 # Disable telemetry during build for privacy/speed
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Use placeholder for backend API so rewrites compile at build time.
+# The entrypoint script replaces this with the real value at container start.
+ENV BACKEND_API=BAKED_BACKEND_API
 RUN npm run build
 
 # --- STAGE 3: Production Runner ---
@@ -33,6 +37,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy entrypoint script
+COPY --chown=nextjs:nodejs scripts/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 USER nextjs
 
 EXPOSE 3000
@@ -41,4 +49,4 @@ ENV PORT=3000
 # Runtime env vars — set these when running the container:
 # COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID, BACKEND_API, IMAGE_TAG, CDN_HOSTNAME
 
-CMD ["node", "server.js"]
+ENTRYPOINT ["./entrypoint.sh"]
