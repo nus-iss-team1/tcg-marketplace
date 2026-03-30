@@ -5,14 +5,16 @@ import {
   CognitoUserAttribute,
   CognitoUserSession,
 } from "amazon-cognito-identity-js";
+import { getEnv } from "./env";
 
 let userPool: CognitoUserPool | null = null;
 
 function getUserPool(): CognitoUserPool {
   if (!userPool) {
+    const env = getEnv();
     userPool = new CognitoUserPool({
-      UserPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID!,
-      ClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID!,
+      UserPoolId: env.COGNITO_USER_POOL_ID,
+      ClientId: env.COGNITO_CLIENT_ID,
     });
   }
   return userPool;

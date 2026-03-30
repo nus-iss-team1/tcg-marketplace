@@ -1,5 +1,4 @@
 import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { handleDynamoError } from "../dynamodb/dynamodb.util";
 import { AppLoggerService } from "../logger/logger.service";
 import { GameCardProjections } from "./types/reference.view";
@@ -7,15 +6,12 @@ import { DynamoDbService } from "../dynamodb/dynamodb.service";
 
 @Injectable()
 export class ReferenceRepository {
-  private readonly tableName: string;
+  private readonly tableName = "GameCardLookup";
 
   constructor(
     private readonly logger: AppLoggerService,
-    private readonly dynamoDbService: DynamoDbService,
-    private readonly configService: ConfigService
-  ) {
-    this.tableName = this.configService.getOrThrow<string>("GAME_CARD_LOOKUP_TABLE");
-  }
+    private readonly dynamoDbService: DynamoDbService
+  ) {}
 
   async retrieveGameName() {
     try {

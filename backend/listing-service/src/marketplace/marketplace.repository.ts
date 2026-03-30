@@ -1,6 +1,5 @@
 import { QueryCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { instanceToPlain } from "class-transformer";
 import { Listing } from "./types/marketplace.schema";
 import { QueryListing } from "./types/marketplace.type";
@@ -11,15 +10,12 @@ import { DynamoDbService } from "../dynamodb/dynamodb.service";
 
 @Injectable()
 export class MarketplaceRepository {
-  private readonly tableName: string;
+  private readonly tableName = "TCGMarketplace";
 
   constructor(
     private readonly logger: AppLoggerService,
-    private readonly dynamoDbService: DynamoDbService,
-    private readonly configService: ConfigService
-  ) {
-    this.tableName = this.configService.getOrThrow<string>("TCG_MARKETPLACE_TABLE");
-  }
+    private readonly dynamoDbService: DynamoDbService
+  ) {}
 
   async createListing(listing: Listing) {
     try {
