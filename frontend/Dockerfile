@@ -17,7 +17,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 # Use placeholder for backend API so rewrites compile at build time.
 # The entrypoint script replaces this with the real value at container start.
-ENV BACKEND_API=BAKED_BACKEND_API
+ENV BACKEND_API=http://baked-backend-api.internal
 RUN npm run build
 
 # --- STAGE 3: Production Runner ---
