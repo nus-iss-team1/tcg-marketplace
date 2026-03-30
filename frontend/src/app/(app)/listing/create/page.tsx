@@ -119,7 +119,7 @@ export default function CreateListingPage() {
         backImage: backImage ?? undefined,
       });
       toast.success("Listing created successfully.");
-      router.push("/listing");
+      router.push("/profile");
     } catch {
       toast.error("Failed to create listing. Please try again.");
     } finally {
@@ -340,7 +340,7 @@ export default function CreateListingPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/listing")}
+            onClick={() => router.push("/profile")}
           >
             Cancel
           </Button>

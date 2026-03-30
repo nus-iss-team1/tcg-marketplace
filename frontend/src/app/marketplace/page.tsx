@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
-
 import { XIcon } from "lucide-react";
 import { ListingCard } from "@/components/listing-card";
-import { PaginationControls } from "@/components/pagination-controls";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { fetchMarketplaceListings, type Listing } from "@/lib/listings";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import Link from "next/link";
 
 const SORT_OPTIONS = [
@@ -19,6 +19,7 @@ const SORT_OPTIONS = [
 ] as const;
 
 type SortType = (typeof SORT_OPTIONS)[number]["value"];
+const PAGE_SIZE = 20;
 
 export default function MarketplacePage() {
   return (
@@ -32,14 +33,11 @@ function MarketplaceContent() {
   const searchParams = useSearchParams();
   const gameType = searchParams.get("game") || "Pokemon TCG";
 
-  const [currentPage, setCurrentPage] = useState(1);
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [imagesLoaded, setImagesLoaded] = useState(0);
-  const totalPages = Math.ceil(listings.length / 15) || 1;
-
-  const imageCount = listings.filter((l) => l.thumbnail || l.attachment?.front).length;
-  const allReady = !loading && (listings.length === 0 || imageCount === 0 || imagesLoaded >= imageCount);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const cursorRef = useRef<string | undefined>(undefined);
+  const hasMore = useRef(true);
 
   const [query, setQuery] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
@@ -50,15 +48,18 @@ function MarketplaceContent() {
     document.title = `Marketplace - VAULT OF CARDS`;
   }, [gameType]);
 
+  // Initial load + reset on filter/sort change
   useEffect(() => {
     let cancelled = false;
 
     const run = async () => {
-      const baseParams = { sort, order };
+      const baseParams = { sort, order, limit: PAGE_SIZE };
       const searchValue = activeQuery.toLowerCase();
 
       try {
         let results: Listing[];
+        let nextCursor: string | undefined;
+
         if (activeQuery) {
           const [byTitle, byCard] = await Promise.all([
             fetchMarketplaceListings(gameType, { ...baseParams, filter: "title", filterValue: searchValue }),
@@ -73,14 +74,17 @@ function MarketplaceContent() {
             }
           }
           results = merged;
+          nextCursor = undefined; // search doesn't paginate well with merged results
         } else {
           const res = await fetchMarketplaceListings(gameType, baseParams);
           results = res.listings;
+          nextCursor = res.cursor;
         }
 
         if (!cancelled) {
           setListings(results);
-          setCurrentPage(1);
+          cursorRef.current = nextCursor;
+          hasMore.current = !activeQuery && !!nextCursor && results.length > 0;
           setLoading(false);
         }
       } catch {
@@ -88,18 +92,34 @@ function MarketplaceContent() {
       }
     };
 
-    /* eslint-disable react-hooks/set-state-in-effect */
     setLoading(true);
-    setImagesLoaded(0);
-    /* eslint-enable react-hooks/set-state-in-effect */
+    cursorRef.current = undefined;
+    hasMore.current = true;
     run();
 
     return () => { cancelled = true; };
   }, [gameType, sort, order, activeQuery]);
 
-  const handleImageLoad = useCallback(() => {
-    setImagesLoaded((prev) => prev + 1);
-  }, []);
+  // Load more
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore.current || !cursorRef.current || activeQuery) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetchMarketplaceListings(gameType, {
+        sort, order, limit: PAGE_SIZE, cursor: cursorRef.current,
+      });
+      setListings((prev) => [...prev, ...res.listings]);
+      cursorRef.current = res.cursor;
+      hasMore.current = !!res.cursor && res.listings.length >= PAGE_SIZE;
+    } catch {
+      // stop trying on error
+      hasMore.current = false;
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [gameType, sort, order, activeQuery, loadingMore]);
+
+  const sentinelRef = useInfiniteScroll(loadMore, !loading && hasMore.current && !loadingMore);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,16 +131,14 @@ function MarketplaceContent() {
     setActiveQuery("");
   };
 
-
   return (
     <>
-      {/* Header */}
       <div className="shrink-0">
         <PageHeader title="Marketplace" description={gameType} />
       </div>
 
-      {/* Search + Sort — sticky floating */}
-      <div className="sticky top-12 sm:top-14 z-40 mb-4 w-full max-w-lg md:max-w-2xl mx-auto bg-background/40 backdrop-blur-md rounded-md px-3 py-2">
+      {/* Search + Sort */}
+      <div className="sticky top-12 sm:top-14 z-40 mb-4 w-full mx-auto bg-background/40 backdrop-blur-md px-3 py-2">
         <form onSubmit={handleSearch} className="flex items-center gap-3">
           <div className="relative flex-1">
             <span className="absolute left-0 top-1/2 -translate-y-1/2 text-muted-foreground/30 text-sm pointer-events-none">/</span>
@@ -175,7 +193,7 @@ function MarketplaceContent() {
       </div>
 
       {/* Listings */}
-      {allReady && listings.length === 0 ? (
+      {!loading && listings.length === 0 ? (
         <EmptyState
           title={activeQuery ? "No results found" : "No listings yet"}
           description={
@@ -195,22 +213,22 @@ function MarketplaceContent() {
           )}
         </EmptyState>
       ) : (
-        <div key={`${activeQuery}-${sort}-${order}`} className={allReady ? "animate-[fade-up_0.4s_ease-out_both]" : "opacity-0"}>
+        <div key={`${activeQuery}-${sort}-${order}`} className="animate-[fade-up_0.4s_ease-out_both]">
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 sm:gap-6 md:gap-8">
             {listings.map((listing, i) => (
-              <ListingCard key={listing.listingId} listing={listing} index={i} onImageLoad={handleImageLoad} />
+              <ListingCard key={listing.listingId} listing={listing} index={i} />
             ))}
           </div>
 
-          <div className="h-14 sm:hidden" />
+          {/* Infinite scroll sentinel */}
+          <div ref={sentinelRef} className="h-1" />
 
-          {totalPages > 1 && (
-            <PaginationControls
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              className="mt-8 sticky bottom-2 sm:static bg-background/40 backdrop-blur-md py-3 sm:py-0 sm:bg-transparent sm:backdrop-blur-none rounded-none mx-2 sm:mx-0"
-            />
+          {loadingMore && (
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 sm:gap-6 md:gap-8 mt-5 sm:mt-6 md:mt-8">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="aspect-5/7 w-full rounded-none" />
+              ))}
+            </div>
           )}
         </div>
       )}

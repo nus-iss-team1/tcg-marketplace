@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { ListingCard } from "@/components/listing-card";
-import { PaginationControls } from "@/components/pagination-controls";
 import { fetchSellerListings, type Listing } from "@/lib/listings";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 export interface ProfileData {
   username: string;
@@ -25,23 +25,50 @@ interface ProfileContentProps {
   isOwnProfile?: boolean;
 }
 
+const PAGE_SIZE = 15;
+
 export function ProfileContent({ profile, isOwnProfile }: ProfileContentProps) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loadingListings, setLoadingListings] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(listings.length / 15) || 1;
+  const [loadingMore, setLoadingMore] = useState(false);
+  const cursorRef = useRef<string | undefined>(undefined);
+  const hasMore = useRef(true);
 
   useEffect(() => {
     let cancelled = false;
-    fetchSellerListings(profile.username)
-      .then((res) => { if (!cancelled) setListings(res.listings); })
+    fetchSellerListings(profile.username, { limit: PAGE_SIZE })
+      .then((res) => {
+        if (!cancelled) {
+          setListings(res.listings);
+          cursorRef.current = res.cursor;
+          hasMore.current = !!res.cursor && res.listings.length > 0;
+        }
+      })
       .finally(() => { if (!cancelled) setLoadingListings(false); });
     return () => { cancelled = true; };
   }, [profile.username]);
 
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore.current || !cursorRef.current) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetchSellerListings(profile.username, {
+        limit: PAGE_SIZE, cursor: cursorRef.current,
+      });
+      setListings((prev) => [...prev, ...res.listings]);
+      cursorRef.current = res.cursor;
+      hasMore.current = !!res.cursor && res.listings.length > 0;
+    } catch {
+      hasMore.current = false;
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [profile.username, loadingMore]);
+
+  const sentinelRef = useInfiniteScroll(loadMore, !loadingListings && hasMore.current && !loadingMore);
+
   return (
     <div className="flex flex-col gap-3 w-full px-4">
-      {/* Listings section */}
       <div>
         <h3 className="text-sm text-muted-foreground mb-4 animate-[fade-up_0.4s_ease-out_both]" style={{ animationDelay: "0.1s" }}>
           Listings ({listings.length})
@@ -70,14 +97,15 @@ export function ProfileContent({ profile, isOwnProfile }: ProfileContentProps) {
               ))}
             </div>
 
-            <div className="h-14 sm:hidden" />
+            <div ref={sentinelRef} className="h-1" />
 
-            <PaginationControls
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              className="mt-8 sticky bottom-2 sm:static bg-background/40 backdrop-blur-md py-3 sm:py-0 sm:bg-transparent sm:backdrop-blur-none rounded-none mx-2 sm:mx-0"
-            />
+            {loadingMore && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5 sm:gap-6 md:gap-8 mt-5 sm:mt-6 md:mt-8">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="aspect-5/7 w-full rounded-none" />
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>
