@@ -11,6 +11,6 @@ prod:
   messaging_source_tag: develop-53c96ad
   messaging_image_tag: 0.0.2
   web_source_tag: develop-f562b2e
-  web_image_tag: 0.0.1
+  web_image_tag: 0.0.2
   listing_api: https://listing.vaultofcards.io
   messaging_api: https://messaging.vaultofcards.io
