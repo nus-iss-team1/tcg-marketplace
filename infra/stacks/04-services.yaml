@@ -456,6 +456,30 @@ Resources:
                         Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
                     - !ImportValue
                         Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+            - Name: LISTING_API
+              Value: !If
+                - HasDomain
+                - !Sub "https://listing.${BaseDomainName}"
+                - !Sub
+                    - "http://${ALBDns}"
+                    - ALBDns: !If
+                        - HasEnvPrefix
+                        - !ImportValue
+                            Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
+                        - !ImportValue
+                            Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+            - Name: MESSAGING_API
+              Value: !If
+                - HasDomain
+                - !Sub "https://messaging.${BaseDomainName}"
+                - !Sub
+                    - "http://${ALBDns}"
+                    - ALBDns: !If
+                        - HasEnvPrefix
+                        - !ImportValue
+                            Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
+                        - !ImportValue
+                            Fn::Sub: "${ProjectNamespace}-ALBDnsName"
             - Name: COGNITO_USER_POOL_ID
               Value: !If
                 - HasEnvPrefix
