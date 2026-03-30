@@ -8,8 +8,10 @@ export function useInfiniteScroll(
   const onLoadMoreRef = useRef(onLoadMore);
   const enabledRef = useRef(enabled);
 
-  onLoadMoreRef.current = onLoadMore;
-  enabledRef.current = enabled;
+  useEffect(() => {
+    onLoadMoreRef.current = onLoadMore;
+    enabledRef.current = enabled;
+  });
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
