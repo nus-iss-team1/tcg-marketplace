@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 export interface ConversationSummary {
   id: string;
@@ -49,32 +50,33 @@ export function ConversationHistoryCard({
     <button
       type="button"
       onClick={onSelect}
-      className={`w-full rounded-3xl border px-4 py-3 text-left transition-all duration-200 ${
+      className={cn(
+        "w-full border px-4 py-3 text-left transition-colors",
         isSelected
-          ? "border-primary bg-primary/10"
-          : "border-border bg-card hover:border-primary/70 hover:bg-accent/5"
-      }`}
+          ? "border-border bg-secondary"
+          : "border-border bg-background hover:bg-secondary/50"
+      )}
     >
       <div className="flex items-center gap-3">
-        <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground overflow-hidden">
+        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground overflow-hidden">
           {showImage ? (
             <Image
               src={conversation.imageUrl as string}
               alt={conversation.partnerName}
               fill
               className="object-cover"
-              onError={handleImageError}
+            onError={handleImageError}
             />
           ) : (
             getInitials(conversation.partnerName)
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-foreground">{conversation.partnerName}</div>
-          <div className="mt-1 truncate text-xs text-muted-foreground normal-case">{conversation.latestText}</div>
+          <div className="text-xs font-semibold text-foreground">{conversation.partnerName}</div>
+          <div className="mt-0.5 truncate text-xs text-muted-foreground normal-case">{conversation.latestText}</div>
         </div>
+        <div className="shrink-0 text-[10px] text-muted-foreground">{formatConversationDate(conversation.lastDate)}</div>
       </div>
-      <div className="mt-3 text-xs text-muted-foreground">{formatConversationDate(conversation.lastDate)}</div>
     </button>
   );
 }

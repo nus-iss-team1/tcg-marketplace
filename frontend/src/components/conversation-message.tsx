@@ -2,6 +2,8 @@
 
 import { useCallback, useState } from "react";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export interface Message {
   id: string;
@@ -20,7 +22,7 @@ function formatMessageDate(date: Date) {
 
 function getInitials(name: string) {
   return name
-    .split(" ")
+    .split(/[\s._-]+/)
     .filter(Boolean)
     .map((part) => part[0])
     .slice(0, 2)
@@ -32,22 +34,29 @@ interface ConversationMessageProps {
   message: Message;
   partnerName: string;
   imageUrl?: string;
+  senderName?: string;
+  index?: number;
 }
 
-export function ConversationMessage({ message, partnerName, imageUrl }: ConversationMessageProps) {
+export function ConversationMessage({ message, partnerName, imageUrl, senderName, index = 0 }: ConversationMessageProps) {
   const isPartner = message.sender === "partner";
   const [imageFailed, setImageFailed] = useState(false);
-  const showImage = !!imageUrl && !imageFailed;
+  const showImage = isPartner && !!imageUrl && !imageFailed;
 
   const handleImageError = useCallback(() => {
     setImageFailed(true);
   }, []);
 
+  const initials = getInitials(isPartner ? partnerName : (senderName || partnerName));
+
   return (
-    <div className={`flex items-start ${isPartner ? "gap-3 justify-start" : "justify-end"}`}>
-      {isPartner && (
-        <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground overflow-hidden">
-          {showImage ? (
+    <div
+      className={cn("flex items-end gap-2 animate-[fade-up_0.3s_ease-out_both]", isPartner ? "justify-start" : "justify-end sm:justify-start")}
+      style={{ animationDelay: `${0.05 * index}s` }}
+    >
+      <Avatar className={cn("h-8 w-8 shrink-0", isPartner ? "" : "hidden sm:flex order-last sm:order-first")}>
+        {showImage ? (
+          <div className="relative h-full w-full">
             <Image
               src={imageUrl as string}
               alt="Partner avatar"
@@ -55,16 +64,29 @@ export function ConversationMessage({ message, partnerName, imageUrl }: Conversa
               className="object-cover"
               onError={handleImageError}
             />
-          ) : (
-            getInitials(partnerName)
-          )}
+          </div>
+        ) : (
+          <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+        )}
+      </Avatar>
+      <div>
+        <p className="text-[10px] text-muted-foreground mb-0.5 normal-case">
+          {isPartner ? partnerName : (senderName || "You")}
+        </p>
+        <div className={cn(
+          "max-w-[75%] px-3 py-2 text-xs normal-case",
+          isPartner
+            ? "bg-card text-foreground border border-border"
+            : "bg-primary text-primary-foreground"
+        )}>
+          <p>{message.text}</p>
+        <p className={cn(
+          "mt-1 text-[10px]",
+          isPartner ? "text-muted-foreground" : "text-primary-foreground/70"
+        )}>
+          {formatMessageDate(message.date)}
+        </p>
         </div>
-      )}
-      <div className={`max-w-[80%] rounded-3xl px-4 py-3 text-sm normal-case ${
-        isPartner ? "bg-card text-foreground" : "bg-primary text-primary-foreground"
-      }`}>
-        <p>{message.text}</p>
-        <p className="mt-2 text-[11px] text-muted-foreground normal-case">{formatMessageDate(message.date)}</p>
       </div>
     </div>
   );

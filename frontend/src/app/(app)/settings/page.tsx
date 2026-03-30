@@ -66,6 +66,8 @@ export default function SettingsPage() {
 
   /* ── Profile state ── */
   const [email, setEmail] = useState("");
+  const [givenName, setGivenName] = useState("");
+  const [familyName, setFamilyName] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [address, setAddress] = useState("");
   const [bio, setBio] = useState("");
@@ -82,6 +84,8 @@ export default function SettingsPage() {
       try {
         const attrs = await getUserAttributes();
         setEmail(attrs["email"] ?? "");
+        setGivenName(attrs["given_name"] ?? "");
+        setFamilyName(attrs["family_name"] ?? "");
 
         if (user) {
           const profile = await fetchSellerProfile(user.username);
@@ -221,6 +225,16 @@ export default function SettingsPage() {
                   <div className="flex flex-col gap-1">
                     <Label className="text-muted-foreground">Username</Label>
                     <p className="text-sm normal-case">{user?.username}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <Label className="text-muted-foreground">First Name</Label>
+                      <p className="text-sm normal-case">{givenName || "\u2014"}</p>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label className="text-muted-foreground">Last Name</Label>
+                      <p className="text-sm normal-case">{familyName || "\u2014"}</p>
+                    </div>
                   </div>
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="profile-display-name">Display Name</Label>

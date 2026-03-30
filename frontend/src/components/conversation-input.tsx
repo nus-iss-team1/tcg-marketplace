@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface ConversationInputProps {
   value: string;
@@ -10,20 +11,23 @@ interface ConversationInputProps {
 
 export function ConversationInput({ value, onChange, onSend }: ConversationInputProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-3xl border border-border bg-card p-4">
-      <label className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Write a message</label>
-      <div className="flex gap-3">
-        <input
-          type="text"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder="Type your message..."
-          className="flex-1 rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-        />
-        <Button type="button" variant="default" onClick={onSend} className="whitespace-nowrap">
-          Send
-        </Button>
-      </div>
+    <div className="flex items-center gap-2 border-t border-border pt-3">
+      <Input
+        type="text"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            onSend();
+          }
+        }}
+        placeholder="Type your message..."
+        className="flex-1 normal-case"
+      />
+      <Button size="default" onClick={onSend}>
+        Send
+      </Button>
     </div>
   );
 }

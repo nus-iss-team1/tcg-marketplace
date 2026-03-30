@@ -27,8 +27,8 @@ export function ConversationHeader({ conversation }: ConversationHeaderProps) {
   }, []);
 
   return (
-    <div className="flex items-center gap-4 rounded-3xl border border-border bg-card px-4 py-4">
-      <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-xl font-semibold text-primary-foreground overflow-hidden">
+    <div className="flex items-center gap-3 border-b border-border pb-3">
+      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground overflow-hidden">
         {hasImage ? (
           <Image
             src={conversation?.imageUrl as string}
@@ -42,8 +42,8 @@ export function ConversationHeader({ conversation }: ConversationHeaderProps) {
         )}
       </div>
       <div>
-        <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Chat with</p>
-        <p className="text-lg font-semibold text-foreground">
+        <p className="text-xs text-muted-foreground">Chat with</p>
+        <p className="text-sm font-semibold text-foreground">
           {conversation?.partnerName ?? "Select a conversation"}
         </p>
       </div>
