@@ -1,0 +1,21 @@
+name: "CI: Listing Service (prod)"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/listing-service/**"
+
+concurrency:
+  group: listing-ci-prod-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/app-deploy.yml
+    with:
+      service: listing
+      image_tag_prefix: prod
+    secrets: inherit

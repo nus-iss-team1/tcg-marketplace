@@ -1,0 +1,22 @@
+name: "CI: Listing Service (dev)"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - develop
+    paths:
+      - "backend/listing-service/**"
+
+concurrency:
+  group: listing-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    uses: ./.github/workflows/app-deploy.yml
+    with:
+      service: listing
+      image_tag_prefix: develop
+      auto_deploy: true
+    secrets: inherit
