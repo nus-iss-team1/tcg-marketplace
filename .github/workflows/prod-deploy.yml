@@ -80,7 +80,7 @@ jobs:
       - name: Download current task definition
         run: |
           aws ecs describe-task-definition \
-            --task-definition nusiss-team-1-voc-listing-service \
+            --task-definition nusiss-team-1-voc-prod-listing-service \
             --query taskDefinition \
             > task-def.json
 
@@ -96,8 +96,8 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.render.outputs.task-definition }}
-          service: nusiss-team-1-voc-listing-service
-          cluster: nusiss-team-1-voc-cluster
+          service: nusiss-team-1-voc-prod-listing-service
+          cluster: nusiss-team-1-voc-prod-cluster
           wait-for-service-stability: true
 
   deploy-messaging:
@@ -132,7 +132,7 @@ jobs:
       - name: Download current task definition
         run: |
           aws ecs describe-task-definition \
-            --task-definition nusiss-team-1-voc-messaging-service \
+            --task-definition nusiss-team-1-voc-prod-messaging-service \
             --query taskDefinition \
             > task-def.json
 
@@ -148,8 +148,8 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.render.outputs.task-definition }}
-          service: nusiss-team-1-voc-messaging-service
-          cluster: nusiss-team-1-voc-cluster
+          service: nusiss-team-1-voc-prod-messaging-service
+          cluster: nusiss-team-1-voc-prod-cluster
           wait-for-service-stability: true
 
   deploy-web:
@@ -184,7 +184,7 @@ jobs:
       - name: Download current task definition
         run: |
           aws ecs describe-task-definition \
-            --task-definition nusiss-team-1-voc-web \
+            --task-definition nusiss-team-1-voc-prod-web \
             --query taskDefinition \
             > task-def.json
 
@@ -200,6 +200,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.render.outputs.task-definition }}
-          service: nusiss-team-1-voc-web-service
-          cluster: nusiss-team-1-voc-cluster
+          service: nusiss-team-1-voc-prod-web-service
+          cluster: nusiss-team-1-voc-prod-cluster
           wait-for-service-stability: true
