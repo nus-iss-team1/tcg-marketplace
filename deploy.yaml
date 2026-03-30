@@ -6,10 +6,10 @@ dev:
   messaging_api: https://messaging.dev.vaultofcards.io
 
 prod:
-  listing_source_tag: develop-79c4189
-  listing_image_tag: 0.0.1
-  messaging_source_tag: develop-79c4189
-  messaging_image_tag: 0.0.1
+  listing_source_tag: develop-53c96ad
+  listing_image_tag: 0.0.2
+  messaging_source_tag: develop-53c96ad
+  messaging_image_tag: 0.0.2
   web_source_tag: develop-f562b2e
   web_image_tag: 0.0.1
   listing_api: https://listing.vaultofcards.io
