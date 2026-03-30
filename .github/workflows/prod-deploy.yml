@@ -17,8 +17,11 @@ jobs:
       messaging_changed: ${{ steps.diff.outputs.messaging_changed }}
       web_changed: ${{ steps.diff.outputs.web_changed }}
       listing_image_tag: ${{ steps.tags.outputs.listing_image_tag }}
+      listing_source_tag: ${{ steps.tags.outputs.listing_source_tag }}
       messaging_image_tag: ${{ steps.tags.outputs.messaging_image_tag }}
+      messaging_source_tag: ${{ steps.tags.outputs.messaging_source_tag }}
       web_image_tag: ${{ steps.tags.outputs.web_image_tag }}
+      web_source_tag: ${{ steps.tags.outputs.web_source_tag }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,8 +48,11 @@ jobs:
         id: tags
         run: |
           echo "listing_image_tag=$(yq '.prod.listing_image_tag' deploy.yaml)" >> $GITHUB_OUTPUT
+          echo "listing_source_tag=$(yq '.prod.listing_source_tag' deploy.yaml)" >> $GITHUB_OUTPUT
           echo "messaging_image_tag=$(yq '.prod.messaging_image_tag' deploy.yaml)" >> $GITHUB_OUTPUT
+          echo "messaging_source_tag=$(yq '.prod.messaging_source_tag' deploy.yaml)" >> $GITHUB_OUTPUT
           echo "web_image_tag=$(yq '.prod.web_image_tag' deploy.yaml)" >> $GITHUB_OUTPUT
+          echo "web_source_tag=$(yq '.prod.web_source_tag' deploy.yaml)" >> $GITHUB_OUTPUT
 
   deploy-listing:
     if: needs.detect-changes.outputs.listing_changed == 'true'
@@ -72,9 +78,10 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPO: nusiss-team-1-voc/tcgm-listing
+          SOURCE: ${{ needs.detect-changes.outputs.listing_source_tag }}
           VERSION: ${{ needs.detect-changes.outputs.listing_image_tag }}
         run: |
-          MANIFEST=$(aws ecr batch-get-image --repository-name "$REPO" --image-ids imageTag="develop-latest" --query 'images[0].imageManifest' --output text)
+          MANIFEST=$(aws ecr batch-get-image --repository-name "$REPO" --image-ids imageTag="$SOURCE" --query 'images[0].imageManifest' --output text)
           aws ecr put-image --repository-name "$REPO" --image-tag "$VERSION" --image-manifest "$MANIFEST" || true
 
       - name: Download current task definition
@@ -124,9 +131,10 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPO: nusiss-team-1-voc/tcgm-messaging
+          SOURCE: ${{ needs.detect-changes.outputs.messaging_source_tag }}
           VERSION: ${{ needs.detect-changes.outputs.messaging_image_tag }}
         run: |
-          MANIFEST=$(aws ecr batch-get-image --repository-name "$REPO" --image-ids imageTag="develop-latest" --query 'images[0].imageManifest' --output text)
+          MANIFEST=$(aws ecr batch-get-image --repository-name "$REPO" --image-ids imageTag="$SOURCE" --query 'images[0].imageManifest' --output text)
           aws ecr put-image --repository-name "$REPO" --image-tag "$VERSION" --image-manifest "$MANIFEST" || true
 
       - name: Download current task definition
@@ -176,9 +184,10 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPO: nusiss-team-1-voc/tcgm-web
+          SOURCE: ${{ needs.detect-changes.outputs.web_source_tag }}
           VERSION: ${{ needs.detect-changes.outputs.web_image_tag }}
         run: |
-          MANIFEST=$(aws ecr batch-get-image --repository-name "$REPO" --image-ids imageTag="develop-latest" --query 'images[0].imageManifest' --output text)
+          MANIFEST=$(aws ecr batch-get-image --repository-name "$REPO" --image-ids imageTag="$SOURCE" --query 'images[0].imageManifest' --output text)
           aws ecr put-image --repository-name "$REPO" --image-tag "$VERSION" --image-manifest "$MANIFEST" || true
 
       - name: Download current task definition
