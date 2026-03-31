@@ -33,8 +33,8 @@ export class RedisIoAdapter extends IoAdapter {
     const server = super.createIOServer(port, {
       ...options,
       cors: { origin: "*" },
-      path: "/messaging",
-      transports: ["websocket"]
+      path: "/ws",
+      transports: ["websocket", "polling"]
     }) as Server;
 
     server.adapter(this.redisAdapter);

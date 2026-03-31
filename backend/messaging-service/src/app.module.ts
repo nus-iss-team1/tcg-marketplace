@@ -9,6 +9,7 @@ import { DynamoDbModule } from "./dynamodb/dynamodb.module";
 import { RedisService } from "./redis/redis.service";
 import { RoomModule } from "./room/room.module";
 import { MessageModule } from "./message/message.module";
+import { MessagingGateway } from "./web-socket/messaging.gateway";
 
 @Module({
   imports: [
@@ -38,6 +39,6 @@ import { MessageModule } from "./message/message.module";
     MessageModule
   ],
   controllers: [AppController],
-  providers: [AppService, RedisService]
+  providers: [AppService, RedisService, MessagingGateway]
 })
 export class AppModule {}

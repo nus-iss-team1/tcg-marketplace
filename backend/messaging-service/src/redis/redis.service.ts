@@ -16,8 +16,7 @@ export class RedisService implements OnModuleInit {
     this.client = createClient({
       socket: {
         host: host,
-        port: port,
-        tls: true
+        port: port
       }
     });
 

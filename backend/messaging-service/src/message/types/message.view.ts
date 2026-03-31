@@ -12,6 +12,7 @@ const MessageViews = {
     "senderId",
     "content",
     "messageType",
+    "version",
     "reaction",
     "replyTo",
     "createdAt",

@@ -8,6 +8,7 @@ import { RoomModule } from "../room/room.module";
 @Module({
   imports: [ConfigModule, RoomModule],
   controllers: [MessageController],
-  providers: [MessageService, MessageRepository]
+  providers: [MessageService, MessageRepository],
+  exports: [MessageService]
 })
 export class MessageModule {}

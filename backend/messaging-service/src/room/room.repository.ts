@@ -114,9 +114,7 @@ export class RoomRepository {
         UpdateExpression: "SET lastSeenMessageId = :lastSeenMessageId",
         ExpressionAttributeValues: {
           ":lastSeenMessageId": messageId
-        },
-        ConditionExpression:
-          "attribute_not_exists(lastSeenMessageId) OR lastSeenMessageId < :lastSeenMessageId"
+        }
       });
 
       return await this.queryRooms(userId);
@@ -155,19 +153,8 @@ export class RoomRepository {
     userId: string,
     messageId: string,
     content: string,
-    datetime?: number
+    datetime: number
   ) {
-    let updateExpression = "SET latestMessage = :latestMessage, latestMessageId = :latestMessageId";
-    const expressionAttributeValues = {
-      ":latestMessage": content,
-      ":latestMessageId": messageId
-    };
-
-    if (datetime) {
-      updateExpression = updateExpression + ", updatedAt = :updatedAt";
-      expressionAttributeValues[":updatedAt"] = datetime;
-    }
-
     return {
       Update: {
         TableName: this.tableName,
@@ -175,8 +162,13 @@ export class RoomRepository {
           conversationId: conversationId,
           meta: `USER#${userId}`
         },
-        UpdateExpression: updateExpression,
-        ExpressionAttributeValues: expressionAttributeValues
+        UpdateExpression:
+          "SET latestMessage = :latestMessage, latestMessageId = :latestMessageId, updatedAt = :updatedAt",
+        ExpressionAttributeValues: {
+          ":latestMessage": content,
+          ":latestMessageId": messageId,
+          ":updatedAt": datetime
+        }
       }
     };
   }

@@ -66,9 +66,10 @@ export class MessageService {
       this.messageRepository.buildCreateVersion(conversationId, messageId, userId, 1, content, now)
     );
 
+    const latestMessageId = room?.latestMessageId ?? null;
     if (
-      room.latestMessageId === null ||
-      room.latestMessageId.toUpperCase() < messageId.toUpperCase()
+      room &&
+      (latestMessageId === null || latestMessageId.toUpperCase() < messageId.toUpperCase())
     ) {
       // update room with latest message
       transactItems.push(
@@ -129,7 +130,8 @@ export class MessageService {
           userId,
           room.recipientId,
           messageId,
-          content
+          content,
+          room.updatedAt
         )
       );
     }
@@ -160,7 +162,8 @@ export class MessageService {
           userId,
           room.recipientId,
           messageId,
-          "Message deleted"
+          "Message deleted",
+          room.updatedAt
         )
       );
     }

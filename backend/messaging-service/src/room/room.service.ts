@@ -15,11 +15,24 @@ export class RoomService {
   }
 
   async updateLastSeen(userId: string, params: MessageSeenDto) {
-    return await this.roomRepository.updateLastSeen(
-      userId,
-      params.conversationId,
-      params.messageId
-    );
+    const room = await this.getRoom(userId, params.conversationId);
+
+    if (!room) {
+      throw new ForbiddenException("Room does not exist or you are not authorised");
+    }
+
+    const lastSeenMessageId = room.lastSeenMessageId ?? "";
+
+    // if lastSeenMessageId is earlier, update the room
+    if (lastSeenMessageId.toUpperCase() < params.messageId.toUpperCase()) {
+      return await this.roomRepository.updateLastSeen(
+        userId,
+        params.conversationId,
+        params.messageId
+      );
+    } else {
+      return await this.roomRepository.queryRooms(userId);
+    }
   }
 
   async archiveRoom(userId: string, conversationId: string) {
@@ -29,7 +42,7 @@ export class RoomService {
       throw new ForbiddenException("Room does not exist or you are not authorised");
     }
 
-    return await this.roomRepository.archiveRoom(conversationId, userId);
+    return await this.roomRepository.archiveRoom(userId, conversationId);
   }
 
   async deleteRoom(userId: string, conversationId: string) {
@@ -39,7 +52,7 @@ export class RoomService {
       throw new ForbiddenException("Room does not exist or you are not authorised");
     }
 
-    return await this.roomRepository.deleteRoom(conversationId, userId);
+    return await this.roomRepository.deleteRoom(userId, conversationId);
   }
 
   getCreateRoomScript(
@@ -60,7 +73,7 @@ export class RoomService {
     recipientId: string,
     messageId: string,
     content: string,
-    datetime?: number
+    datetime: number
   ) {
     return [
       this.roomRepository.buildUpdateLatestMessage(
