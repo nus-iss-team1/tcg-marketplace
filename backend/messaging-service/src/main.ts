@@ -3,6 +3,8 @@ import { ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
 import { AppLoggerService } from "./logger/logger.service";
 import { overrideConsole } from "./logger/console.override";
+import { RedisIoAdapter } from "./redis/redis.adapter";
+import { RedisService } from "./redis/redis.service";
 
 async function bootstrap() {
   const port = process.env.PORT ?? 3002;
@@ -11,6 +13,7 @@ async function bootstrap() {
   });
 
   const logger = app.get(AppLoggerService);
+  const redisService = app.get(RedisService);
 
   app.setGlobalPrefix("messaging");
   app.enableCors({
@@ -42,6 +45,12 @@ async function bootstrap() {
       forbidNonWhitelisted: true
     })
   );
+
+  const adapter = new RedisIoAdapter(app, redisService);
+  adapter.connectToRedis().catch((err) => {
+    logger.error("Could not connect to Redis adapter", err);
+  });
+  app.useWebSocketAdapter(adapter);
 
   await app.listen(port);
   logger.log(`Application started on port ${port}`, "Startup");

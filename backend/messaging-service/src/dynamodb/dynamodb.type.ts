@@ -10,7 +10,8 @@ import {
   PutCommandInput,
   QueryCommandInput,
   ScanCommandInput,
-  UpdateCommandInput
+  UpdateCommandInput,
+  TransactWriteCommandInput
 } from "@aws-sdk/lib-dynamodb";
 
 type DynamoType =
@@ -49,3 +50,5 @@ export type DynamoCommandOutput =
   | ScanCommandOutput
   | UpdateCommandOutput
   | DeleteCommandOutput;
+
+export type TransactItem = NonNullable<TransactWriteCommandInput["TransactItems"]>[number];

@@ -2,10 +2,13 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import Joi from "joi";
 import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
 import { LoggerModule } from "./logger/logger.module";
 import { DynamoDbModule } from "./dynamodb/dynamodb.module";
-import { MessagingModule } from "./messaging/messaging.module";
+import { RedisService } from "./redis/redis.service";
+import { RoomModule } from "./room/room.module";
+import { MessageModule } from "./message/message.module";
 
 @Module({
   imports: [
@@ -31,9 +34,10 @@ import { MessagingModule } from "./messaging/messaging.module";
     AuthModule,
     LoggerModule,
     DynamoDbModule,
-    MessagingModule
+    RoomModule,
+    MessageModule
   ],
   controllers: [AppController],
-  providers: []
+  providers: [AppService, RedisService]
 })
 export class AppModule {}
