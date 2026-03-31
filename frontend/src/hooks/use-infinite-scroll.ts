@@ -2,7 +2,8 @@ import { useEffect, useRef } from "react";
 
 export function useInfiniteScroll(
   onLoadMore: () => void,
-  enabled: boolean
+  enabled: boolean,
+  resetKey?: string
 ) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const onLoadMoreRef = useRef(onLoadMore);
@@ -27,7 +28,7 @@ export function useInfiniteScroll(
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, []);
+  }, [resetKey]);
 
   return sentinelRef;
 }

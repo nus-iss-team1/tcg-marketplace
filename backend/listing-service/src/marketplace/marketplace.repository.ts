@@ -51,7 +51,9 @@ export class MarketplaceRepository {
       ":listingStatus": "DELETED"
     };
 
-    if (query.filter && query.filterValue) {
+    const hasFilter = !!(query.filter && query.filterValue);
+
+    if (hasFilter) {
       filterExpression += ` AND contains(${query.filter}, :${query.filter})`;
       expressionAttributeValues[`:${query.filter}`] = query.filterValue;
     }
@@ -63,12 +65,17 @@ export class MarketplaceRepository {
       FilterExpression: filterExpression,
       ExpressionAttributeValues: expressionAttributeValues,
       ...ListingProjections.overview,
-      Limit: query.limit,
       ScanIndexForward: query.order
     };
 
-    if (query.cursor) {
-      param.ExclusiveStartKey = query.cursor;
+    // Only apply Limit and cursor when not filtering.
+    // DynamoDB Limit applies before FilterExpression, so filtered
+    // queries need to scan the full partition to get all matches.
+    if (!hasFilter) {
+      param.Limit = query.limit;
+      if (query.cursor) {
+        param.ExclusiveStartKey = query.cursor;
+      }
     }
 
     try {
@@ -76,7 +83,7 @@ export class MarketplaceRepository {
 
       return {
         items: (result.Items as Listing[]) ?? [],
-        nextCursor: result.LastEvaluatedKey ?? null
+        nextCursor: hasFilter ? null : (result.LastEvaluatedKey ?? null)
       };
     } catch (err) {
       this.logger.error(err);
