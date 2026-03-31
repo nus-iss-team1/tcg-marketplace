@@ -65,7 +65,7 @@ export function ProfileContent({ profile, isOwnProfile }: ProfileContentProps) {
     }
   }, [profile.username, loadingMore]);
 
-  const sentinelRef = useInfiniteScroll(loadMore, !loadingListings && hasMore.current && !loadingMore);
+  const sentinelRef = useInfiniteScroll(loadMore, !loadingListings && hasMore.current && !loadingMore, profile.username);
 
   return (
     <div className="flex flex-col gap-3 w-full px-4">

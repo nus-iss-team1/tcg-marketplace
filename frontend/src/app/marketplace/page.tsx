@@ -61,9 +61,10 @@ function MarketplaceContent() {
         let nextCursor: string | undefined;
 
         if (activeQuery) {
+          const searchParams = { sort, order, filter: undefined as "title" | "cardName" | "sellerId" | undefined, filterValue: "" };
           const [byTitle, byCard] = await Promise.all([
-            fetchMarketplaceListings(gameType, { ...baseParams, filter: "title", filterValue: searchValue }),
-            fetchMarketplaceListings(gameType, { ...baseParams, filter: "cardName", filterValue: searchValue }),
+            fetchMarketplaceListings(gameType, { ...searchParams, filter: "title", filterValue: searchValue }),
+            fetchMarketplaceListings(gameType, { ...searchParams, filter: "cardName", filterValue: searchValue }),
           ]);
           const seen = new Set<string>();
           const merged: Listing[] = [];
@@ -119,7 +120,7 @@ function MarketplaceContent() {
     }
   }, [gameType, sort, order, activeQuery, loadingMore]);
 
-  const sentinelRef = useInfiniteScroll(loadMore, !loading && hasMore.current && !loadingMore);
+  const sentinelRef = useInfiniteScroll(loadMore, !loading && hasMore.current && !loadingMore, `${gameType}-${sort}-${order}-${activeQuery}`);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
