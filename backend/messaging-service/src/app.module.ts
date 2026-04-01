@@ -18,13 +18,14 @@ import { MessagingGateway } from "./web-socket/messaging.gateway";
       envFilePath: ".env",
       validationSchema: Joi.object({
         TZ: Joi.string().required(),
-        LOG_DIR: Joi.string().optional(),
+        LOG_DIR: Joi.string().required(),
         LOG_LEVEL: Joi.string().required(),
         AWS_REGION: Joi.string().required(),
-        AWS_ACCESS_KEY_ID: Joi.string().optional(),
-        AWS_SECRET_ACCESS_KEY: Joi.string().optional(),
+        AWS_ACCESS_KEY_ID: Joi.string().required(),
+        AWS_SECRET_ACCESS_KEY: Joi.string().required(),
         COGNITO_USER_POOL_ID: Joi.string().required(),
         COGNITO_APP_CLIENT_ID: Joi.string().required(),
+        MESSAGING_PLATFORM_TABLE: Joi.string().default("MessagingPlatform"),
         REDIS_HOST: Joi.string().required(),
         REDIS_PORT: Joi.number().default(6379)
       }),
