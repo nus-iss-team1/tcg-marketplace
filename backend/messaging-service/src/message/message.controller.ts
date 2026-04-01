@@ -26,7 +26,7 @@ export class MessageController {
   async getMessages(
     @CurrentUser("sub") userId: string,
     @Query("conversationId") conversationId: string,
-    @Query() cursor?: string
+    @Query("cursor") cursor?: string
   ) {
     return await this.messageService.getMessages(userId, conversationId, cursor);
   }

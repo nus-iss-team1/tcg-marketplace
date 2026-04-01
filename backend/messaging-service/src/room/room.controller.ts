@@ -20,17 +20,17 @@ export class RoomController {
     return await this.roomService.getRoom(userId, conversationId);
   }
 
-  @Patch(":conversationId/:messageId")
-  async updateLastSeen(@CurrentUser("sub") userId: string, @Param() params: MessageSeenDto) {
-    return await this.roomService.updateLastSeen(userId, params);
-  }
-
   @Patch(":conversationId/archive")
   async archiveRoom(
     @CurrentUser("sub") userId: string,
     @Param("conversationId") conversationId: string
   ) {
     return await this.roomService.archiveRoom(userId, conversationId);
+  }
+
+  @Patch(":conversationId/:messageId")
+  async updateLastSeen(@CurrentUser("sub") userId: string, @Param() params: MessageSeenDto) {
+    return await this.roomService.updateLastSeen(userId, params);
   }
 
   @Delete(":conversationId")
