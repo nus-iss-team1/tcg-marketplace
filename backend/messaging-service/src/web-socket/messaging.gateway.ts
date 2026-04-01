@@ -77,6 +77,7 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
   ) {
     await client.join(`room:${body.conversationId}`);
     this.logger.log(`${userId} joined room: ${body.conversationId}`);
+    return { joined: true };
   }
 
   @SubscribeMessage("room:seen")
@@ -168,6 +169,7 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
       userId: userId,
       typing: true
     });
+    return { ok: true };
   }
 
   @SubscribeMessage("typing:stop")
@@ -182,5 +184,6 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
       userId: userId,
       typing: false
     });
+    return { ok: true };
   }
 }

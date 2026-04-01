@@ -53,26 +53,26 @@ export class RedisService implements OnModuleInit {
   }
 
   async setOnline(userId: string) {
-    await this.client.set(`online:${userId}`, "1");
+    await this.client.set(`user:online:${userId}`, "1");
   }
   async setOffline(userId: string) {
-    await this.client.del(`online:${userId}`);
+    await this.client.del(`user:online:${userId}`);
   }
   async isOnline(userId: string) {
-    return (await this.client.exists(`online:${userId}`)) === 1;
+    return (await this.client.exists(`user:online:${userId}`)) === 1;
   }
 
   async addUserSocket(userId: string, socketId: string) {
-    await this.client.sAdd(`user_sockets:${userId}`, socketId);
+    await this.client.sAdd(`user:sockets:${userId}`, socketId);
   }
   async removeUserSocket(userId: string, socketId: string) {
-    await this.client.sRem(`user_sockets:${userId}`, socketId);
+    await this.client.sRem(`user:sockets:${userId}`, socketId);
   }
   async hasActiveSockets(userId: string) {
-    return (await this.client.sCard(`user_sockets:${userId}`)) > 0;
+    return (await this.client.sCard(`user:sockets:${userId}`)) > 0;
   }
   async getUserSockets(userId: string) {
-    return this.client.sMembers(`user_sockets:${userId}`);
+    return this.client.sMembers(`user:sockets:${userId}`);
   }
 
   async addTyping(conversationId: string, userId: string) {
