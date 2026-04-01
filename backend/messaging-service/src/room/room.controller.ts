@@ -3,7 +3,7 @@ import { RoomService } from "./room.service";
 import { CurrentUser } from "../auth/current-user.decorator";
 import { MessageSeenDto } from "./dto/room.dto";
 
-@Controller("rooms")
+@Controller("room")
 export class RoomController {
   constructor(private readonly roomService: RoomService) {}
 
