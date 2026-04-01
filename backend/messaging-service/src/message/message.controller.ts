@@ -18,7 +18,7 @@ export class MessageController {
   }
 
   @Delete()
-  async DeleteMessageDto(@CurrentUser("sub") userId: string, @Body() body: DeleteMessageDto) {
+  async deleteMessage(@CurrentUser("sub") userId: string, @Body() body: DeleteMessageDto) {
     return await this.messageService.deleteMessage(userId, body);
   }
 
