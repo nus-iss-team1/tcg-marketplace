@@ -15,19 +15,6 @@ async function bootstrap() {
   const logger = app.get(AppLoggerService);
   const redisService = app.get(RedisService);
 
-  const adapter = new RedisIoAdapter(app, redisService);
-  try {
-    await adapter.connectToRedis();
-  } catch (err) {
-    logger.error(
-      "Could not connect to Redis adapter",
-      err instanceof Error ? err.stack : String(err)
-    );
-    process.exit(1);
-  }
-  app.useWebSocketAdapter(adapter);
-  await app.init();
-
   app.setGlobalPrefix("messaging");
   app.enableCors({
     origin: (
@@ -58,6 +45,18 @@ async function bootstrap() {
       forbidNonWhitelisted: true
     })
   );
+
+  const adapter = new RedisIoAdapter(app, redisService);
+  try {
+    await adapter.connectToRedis();
+  } catch (err) {
+    logger.error(
+      "Could not connect to Redis adapter",
+      err instanceof Error ? err.stack : String(err)
+    );
+    process.exit(1);
+  }
+  app.useWebSocketAdapter(adapter);
 
   await app.listen(port);
   logger.log(`Application started on port ${port}`, "Startup");
