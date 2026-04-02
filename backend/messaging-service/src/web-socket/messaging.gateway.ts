@@ -61,7 +61,7 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
 
       this.logger.log(`Client connected: ${userId}`);
     } catch (err) {
-      this.logger.warn(`Unauthorized connection attempt: ${err}`);
+      this.logger.warn(`Unauthorized connection attempt: ${String(err)}`);
       client.disconnect();
     }
   }
