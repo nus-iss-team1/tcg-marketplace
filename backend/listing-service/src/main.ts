@@ -12,7 +12,7 @@ async function bootstrap() {
 
   const logger = app.get(AppLoggerService);
 
-  app.setGlobalPrefix("listing");
+
   app.enableCors({
     origin: (
       origin: string | undefined,

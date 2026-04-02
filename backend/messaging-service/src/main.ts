@@ -15,7 +15,7 @@ async function bootstrap() {
   const logger = app.get(AppLoggerService);
   const redisService = app.get(RedisService);
 
-  app.setGlobalPrefix("messaging");
+
   app.enableCors({
     origin: (
       origin: string | undefined,

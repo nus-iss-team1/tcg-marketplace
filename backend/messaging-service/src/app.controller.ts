@@ -24,6 +24,7 @@ export class AppController {
 
     return {
       status: "ok",
+      version: process.env.IMAGE_TAG || "unknown",
       checks: checks
     };
   }

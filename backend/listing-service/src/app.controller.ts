@@ -10,7 +10,8 @@ export class AppController {
   healthCheck() {
     return {
       service: "listing-service",
-      status: "ok"
+      status: "ok",
+      version: process.env.IMAGE_TAG || "unknown"
     };
   }
 }
