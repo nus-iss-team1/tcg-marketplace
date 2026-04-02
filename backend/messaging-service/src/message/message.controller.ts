@@ -8,8 +8,12 @@ export class MessageController {
   constructor(private readonly messageService: MessageService) {}
 
   @Post()
-  async createMessage(@CurrentUser("sub") userId: string, @Body() body: CreateMessageDto) {
-    return await this.messageService.createMessage(userId, body);
+  async createMessage(
+    @CurrentUser("sub") userId: string,
+    @CurrentUser("cognito:username") userName: string,
+    @Body() body: CreateMessageDto
+  ) {
+    return await this.messageService.createMessage(userId, body, userName);
   }
 
   @Patch()

@@ -2,9 +2,10 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { ConversationHeader } from "@/components/conversation-header";
-import { ConversationMessage, type Message } from "@/components/conversation-message";
+import { ConversationMessage } from "@/components/conversation-message";
 import { ConversationInput } from "@/components/conversation-input";
 import { cn } from "@/lib/utils";
+import type { Message } from "@/lib/messaging";
 import type { Listing } from "@/lib/listings";
 import {
   Accordion,
@@ -21,6 +22,7 @@ export interface ChatPartner {
 
 interface ChatroomProps {
   partner: ChatPartner;
+  currentUserId: string;
   senderName?: string;
   messages: Message[];
   onSend: (text: string) => void;
@@ -86,7 +88,7 @@ function ListingBanner({ listing }: { listing: Listing }) {
   );
 }
 
-export function Chatroom({ partner, senderName, messages, onSend, listing, className }: ChatroomProps) {
+export function Chatroom({ partner, currentUserId, senderName, messages, onSend, listing, className }: ChatroomProps) {
   const [draft, setDraft] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -104,21 +106,17 @@ export function Chatroom({ partner, senderName, messages, onSend, listing, class
   return (
     <div className={cn("flex flex-col min-h-0", className)}>
       <ConversationHeader
-        conversation={{
-          id: partner.id,
-          partnerName: partner.name,
-          imageUrl: partner.imageUrl,
-          latestText: "",
-          lastDate: new Date(),
-        }}
+        partnerName={partner.name}
+        partnerImageUrl={partner.imageUrl}
       />
       {listing && <ListingBanner listing={listing} />}
       <div className="mt-3 flex-1 flex flex-col-reverse overflow-y-auto space-y-3 space-y-reverse py-2 min-h-0">
         <div ref={messagesEndRef} />
         {[...messages].reverse().map((message, i) => (
           <ConversationMessage
-            key={message.id}
+            key={message.messageId}
             message={message}
+            currentUserId={currentUserId}
             partnerName={partner.name}
             imageUrl={partner.imageUrl}
             senderName={senderName}

@@ -231,6 +231,7 @@ export async function fetchSpecificListing(
 export interface Listing {
   listingId: string;
   sellerId?: string;
+  sellerSub?: string;
   sellerName?: string;
   gameName: string;
   cardId?: string;

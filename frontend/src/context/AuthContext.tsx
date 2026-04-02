@@ -18,6 +18,7 @@ import {
 } from "@/lib/cognito";
 
 interface AuthUser {
+  sub: string;
   username: string;
   givenName: string;
   familyName: string;
@@ -42,6 +43,7 @@ function parseSession(session: CognitoUserSession): AuthUser {
   const groups: string[] = payload["cognito:groups"] ?? [];
 
   return {
+    sub: payload.sub,
     username: payload["cognito:username"] ?? payload.sub,
     givenName: payload["given_name"] ?? "",
     familyName: payload["family_name"] ?? "",

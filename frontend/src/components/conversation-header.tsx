@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from "react";
 import Image from "next/image";
-import type { ConversationSummary } from "@/components/conversation-history-card";
 
 function getInitials(name: string) {
   return name
@@ -15,12 +14,13 @@ function getInitials(name: string) {
 }
 
 interface ConversationHeaderProps {
-  conversation?: ConversationSummary;
+  partnerName: string;
+  partnerImageUrl?: string;
 }
 
-export function ConversationHeader({ conversation }: ConversationHeaderProps) {
+export function ConversationHeader({ partnerName, partnerImageUrl }: ConversationHeaderProps) {
   const [imageFailed, setImageFailed] = useState(false);
-  const hasImage = !!conversation?.imageUrl && !imageFailed;
+  const hasImage = !!partnerImageUrl && !imageFailed;
 
   const handleImageError = useCallback(() => {
     setImageFailed(true);
@@ -31,21 +31,19 @@ export function ConversationHeader({ conversation }: ConversationHeaderProps) {
       <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground overflow-hidden">
         {hasImage ? (
           <Image
-            src={conversation?.imageUrl as string}
-            alt={conversation?.partnerName ?? "Conversation avatar"}
+            src={partnerImageUrl as string}
+            alt={partnerName}
             fill
             className="object-cover"
             onError={handleImageError}
           />
         ) : (
-          conversation?.partnerName ? getInitials(conversation.partnerName) : "?"
+          getInitials(partnerName)
         )}
       </div>
       <div>
         <p className="text-xs text-muted-foreground">Chat with</p>
-        <p className="text-sm font-semibold text-foreground">
-          {conversation?.partnerName ?? "Select a conversation"}
-        </p>
+        <p className="text-sm font-semibold text-foreground">{partnerName}</p>
       </div>
     </div>
   );

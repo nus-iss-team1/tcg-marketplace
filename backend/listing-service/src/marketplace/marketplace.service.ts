@@ -91,6 +91,7 @@ export class MarketplaceService {
 
   async createListing(
     username: string,
+    sub: string,
     listing: CreateListingDto,
     frontImage: Express.Multer.File,
     backImage?: Express.Multer.File
@@ -125,6 +126,7 @@ export class MarketplaceService {
         updatedAt: currentTs,
         updatedBy: username,
         sellerId: username,
+        sellerSub: sub,
         attachment: attachment,
         thumbnail: thumbnailKey,
         listingStatus: ListingStatus.ACTIVE,

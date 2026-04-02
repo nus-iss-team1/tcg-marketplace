@@ -52,7 +52,7 @@ import { ContentLayout } from "@/components/content-layout";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Chatroom } from "@/components/chatroom";
-import type { Message } from "@/components/conversation-message";
+import { MessagingClient, type Message } from "@/lib/messaging";
 
 export default function ViewListingPage() {
   return (
@@ -188,31 +188,111 @@ function ReadListingView({
   isOwner: boolean;
 }) {
   const { user } = useAuth();
+  const clientRef = useRef<MessagingClient | null>(null);
   const sellerId = listing.sellerId || "Unknown";
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [senderDisplayName, setSenderDisplayName] = useState("");
 
   const sellerDisplayName = listing.sellerName || sellerId;
+  const sellerSub = listing.sellerSub || "";
+  const userSub = user?.sub ?? "";
+  const userId = user?.username ?? "";
 
   useEffect(() => {
-    const username = user?.username;
-    if (!username) return;
+    if (!userId) return;
     let cancelled = false;
-    fetchSellerProfile(username).then((profile) => {
-      if (!cancelled) setSenderDisplayName(profile?.displayName || username);
+    fetchSellerProfile(userId).then((profile) => {
+      if (!cancelled) setSenderDisplayName(profile?.displayName || userId);
     }).catch(() => {
-      if (!cancelled) setSenderDisplayName(username);
+      if (!cancelled) setSenderDisplayName(userId);
     });
     return () => { cancelled = true; };
-  }, [user?.username]);
+  }, [userId]);
+
+  // Connect socket when chat opens
+  useEffect(() => {
+    if (!chatOpen || !userSub || !sellerSub || isOwner) return;
+
+    const client = new MessagingClient();
+    clientRef.current = client;
+    let cancelled = false;
+    const unsubs: (() => void)[] = [];
+
+    (async () => {
+      try {
+        const { getAccessToken: getToken } = await import("@/lib/cognito");
+        const accessToken = await getToken();
+        if (!accessToken || cancelled) return;
+
+        console.log("[listing-chat] initializing socket...");
+        client.init(accessToken);
+
+        // Attach listeners BEFORE connect
+        unsubs.push(client.onNewMessage((msg) => {
+          console.log("[listing-chat] ws message:new", msg.messageId);
+          setChatMessages((prev) => [...prev, msg]);
+        }));
+
+        unsubs.push(client.onMessageUpdated((msg) => {
+          console.log("[listing-chat] ws message:updated", msg.messageId);
+          setChatMessages((prev) =>
+            prev.map((m) => (m.messageId === msg.messageId ? msg : m))
+          );
+        }));
+
+        unsubs.push(client.onMessageDeleted((data) => {
+          console.log("[listing-chat] ws message:deleted", data.messageId);
+          setChatMessages((prev) =>
+            prev.filter((m) => m.messageId !== data.messageId)
+          );
+        }));
+
+        console.log("[listing-chat] connecting...");
+        await client.connect();
+        console.log("[listing-chat] socket connected");
+
+        // Fetch existing conversation with this seller
+        console.log("[listing-chat] fetching rooms to find existing conversation...");
+        const rooms = await client.fetchRooms();
+        const existingRoom = rooms.find((r) => r.recipientId === sellerSub);
+
+        if (existingRoom && !cancelled) {
+          console.log("[listing-chat] found existing room:", existingRoom.conversationId);
+          client.joinRoom(existingRoom.conversationId);
+          const res = await client.fetchMessages(existingRoom.conversationId);
+          console.log("[listing-chat] fetched messages:", res.data.length);
+          if (!cancelled) setChatMessages(res.data);
+        }
+      } catch (err) {
+        console.error("[listing-chat] init failed:", err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      unsubs.forEach((fn) => fn());
+      client.disconnect();
+      console.log("[listing-chat] cleanup complete");
+      clientRef.current = null;
+    };
+  }, [chatOpen, userSub, sellerSub, isOwner]);
 
   const handleChatSend = useCallback((text: string) => {
-    setChatMessages((prev) => [
-      ...prev,
-      { id: `send-${Date.now()}`, sender: "me", text, date: new Date() },
-    ]);
-  }, []);
+    if (!clientRef.current || !sellerSub) return;
+
+    const client = clientRef.current;
+    console.log("[listing-chat] sending message to:", sellerSub);
+    client.sendMessage({
+      recipientId: sellerSub,
+      content: text,
+      messageType: "text",
+    }).then((msg) => {
+      // Join the room so we receive further real-time updates
+      console.log("[listing-chat] message sent, joining room:", msg.conversationId);
+      client.joinRoom(msg.conversationId);
+    }).catch((err) => console.error("[listing-chat] send failed:", err));
+  }, [sellerSub]);
 
   return (
     <ContentLayout className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both]">
@@ -238,6 +318,7 @@ function ReadListingView({
                 </div>
                 <Chatroom
                   partner={{ id: sellerId, name: sellerDisplayName }}
+                  currentUserId={userSub}
                   senderName={senderDisplayName}
                   messages={chatMessages}
                   onSend={handleChatSend}

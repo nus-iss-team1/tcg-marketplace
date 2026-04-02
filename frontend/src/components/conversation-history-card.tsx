@@ -3,16 +3,10 @@
 import { useState, useCallback } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import type { Room } from "@/lib/messaging";
 
-export interface ConversationSummary {
-  id: string;
-  partnerName: string;
-  imageUrl?: string;
-  latestText: string;
-  lastDate: Date;
-}
-
-function formatConversationDate(date: Date) {
+function formatConversationDate(timestamp: number) {
+  const date = new Date(timestamp);
   const month = date.toLocaleString("en-US", { month: "short" });
   const day = date.getDate();
   return `${month} ${day}`;
@@ -29,18 +23,25 @@ function getInitials(name: string) {
 }
 
 interface ConversationHistoryCardProps {
-  conversation: ConversationSummary;
+  room: Room;
+  currentUserId: string;
+  partnerName: string;
+  partnerImageUrl?: string;
   isSelected: boolean;
   onSelect: () => void;
 }
 
 export function ConversationHistoryCard({
-  conversation,
+  room,
+  currentUserId,
+  partnerName,
+  partnerImageUrl,
   isSelected,
   onSelect,
 }: ConversationHistoryCardProps) {
+  const isSentByMe = room.latestMessageSenderId === currentUserId;
   const [imageFailed, setImageFailed] = useState(false);
-  const showImage = !!conversation.imageUrl && !imageFailed;
+  const showImage = !!partnerImageUrl && !imageFailed;
 
   const handleImageError = useCallback(() => {
     setImageFailed(true);
@@ -61,21 +62,24 @@ export function ConversationHistoryCard({
         <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground overflow-hidden">
           {showImage ? (
             <Image
-              src={conversation.imageUrl as string}
-              alt={conversation.partnerName}
+              src={partnerImageUrl as string}
+              alt={partnerName}
               fill
               className="object-cover"
-            onError={handleImageError}
+              onError={handleImageError}
             />
           ) : (
-            getInitials(conversation.partnerName)
+            getInitials(partnerName)
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-semibold text-foreground">{conversation.partnerName}</div>
-          <div className="mt-0.5 truncate text-xs text-muted-foreground normal-case">{conversation.latestText}</div>
+          <div className="text-xs font-semibold text-foreground">{partnerName}</div>
+          <div className="mt-0.5 truncate text-xs text-muted-foreground normal-case">
+            {isSentByMe && <span className="text-foreground">You: </span>}
+            {room.latestMessage}
+          </div>
         </div>
-        <div className="shrink-0 text-[10px] text-muted-foreground">{formatConversationDate(conversation.lastDate)}</div>
+        <div className="shrink-0 text-[10px] text-muted-foreground">{formatConversationDate(room.updatedAt)}</div>
       </div>
     </button>
   );

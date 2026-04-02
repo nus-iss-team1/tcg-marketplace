@@ -4,15 +4,10 @@ import { useCallback, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import type { Message } from "@/lib/messaging";
 
-export interface Message {
-  id: string;
-  sender: "me" | "partner";
-  text: string;
-  date: Date;
-}
-
-function formatMessageDate(date: Date) {
+function formatMessageDate(timestamp: number) {
+  const date = new Date(timestamp);
   const month = date.toLocaleString("en-US", { month: "short" });
   const day = date.getDate();
   const hours = String(date.getHours()).padStart(2, "0");
@@ -32,14 +27,15 @@ function getInitials(name: string) {
 
 interface ConversationMessageProps {
   message: Message;
+  currentUserId: string;
   partnerName: string;
   imageUrl?: string;
   senderName?: string;
   index?: number;
 }
 
-export function ConversationMessage({ message, partnerName, imageUrl, senderName, index = 0 }: ConversationMessageProps) {
-  const isPartner = message.sender === "partner";
+export function ConversationMessage({ message, currentUserId, partnerName, imageUrl, senderName, index = 0 }: ConversationMessageProps) {
+  const isPartner = message.senderId !== currentUserId;
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = isPartner && !!imageUrl && !imageFailed;
 
@@ -79,12 +75,12 @@ export function ConversationMessage({ message, partnerName, imageUrl, senderName
             ? "bg-card text-foreground border border-border"
             : "bg-primary text-primary-foreground"
         )}>
-          <p>{message.text}</p>
+          <p>{message.content}</p>
         <p className={cn(
           "mt-1 text-[10px]",
           isPartner ? "text-muted-foreground" : "text-primary-foreground/70"
         )}>
-          {formatMessageDate(message.date)}
+          {formatMessageDate(message.createdAt)}
         </p>
         </div>
       </div>

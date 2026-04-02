@@ -124,7 +124,17 @@ export class RoomRepository {
     }
   }
 
-  buildCreateRoom(conversationId: string, userId: string, recipientId: string, datetime: number) {
+  buildCreateRoom(
+    conversationId: string,
+    userId: string,
+    recipientId: string,
+    datetime: number,
+    userName?: string,
+    recipientName?: string,
+    latestMessageId?: string,
+    latestMessageSenderId?: string,
+    latestMessage?: string
+  ) {
     return {
       Put: {
         TableName: this.tableName,
@@ -133,8 +143,11 @@ export class RoomRepository {
           meta: `USER#${userId}`,
           userId: userId,
           recipientId: recipientId,
-          latestMessage: "",
-          latestMessageId: null,
+          ...(userName && { userName }),
+          ...(recipientName && { recipientName }),
+          latestMessage: latestMessage ?? "",
+          latestMessageId: latestMessageId ?? null,
+          ...(latestMessageSenderId && { latestMessageSenderId }),
           lastSeenMessageId: null,
           muted: false,
           pinned: false,
@@ -152,6 +165,7 @@ export class RoomRepository {
     conversationId: string,
     userId: string,
     messageId: string,
+    senderId: string,
     content: string,
     datetime: number
   ) {
@@ -163,10 +177,11 @@ export class RoomRepository {
           meta: `USER#${userId}`
         },
         UpdateExpression:
-          "SET latestMessage = :latestMessage, latestMessageId = :latestMessageId, updatedAt = :updatedAt",
+          "SET latestMessage = :latestMessage, latestMessageId = :latestMessageId, latestMessageSenderId = :senderId, updatedAt = :updatedAt",
         ExpressionAttributeValues: {
           ":latestMessage": content,
           ":latestMessageId": messageId,
+          ":senderId": senderId,
           ":updatedAt": datetime
         }
       }

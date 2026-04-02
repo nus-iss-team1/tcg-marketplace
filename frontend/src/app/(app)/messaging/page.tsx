@@ -1,53 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
-import { ConversationHistoryCard, type ConversationSummary } from "@/components/conversation-history-card";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { ConversationHistoryCard } from "@/components/conversation-history-card";
 import { Chatroom, type ChatPartner } from "@/components/chatroom";
-import type { Message } from "@/components/conversation-message";
 import { PageHeader } from "@/components/page-header";
 import { useAuth } from "@/context/AuthContext";
 import { fetchSellerProfile } from "@/lib/listings";
+import { MessagingClient, type Room, type Message } from "@/lib/messaging";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const conversationSummaries: ConversationSummary[] = [
-  {
-    id: "1",
-    partnerName: "Avery Lane",
-    imageUrl: "https://picsum.photos/seed/avery-lane/96/96",
-    latestText: "Sounds good — I can ship it tomorrow.",
-    lastDate: new Date("2026-04-02"),
-  },
-  {
-    id: "2",
-    partnerName: "Milo Chen",
-    latestText: "Can you confirm the card condition?",
-    lastDate: new Date("2026-03-30"),
-  },
-  {
-    id: "3",
-    partnerName: "Riley Park",
-    imageUrl: "https://picsum.photos/seed/riley-park/96/96",
-    latestText: "Thanks! I received it today.",
-    lastDate: new Date("2026-03-28"),
-  },
-];
-
-const initialMessages: Record<string, Message[]> = {
-  "1": [
-    { id: "m1", sender: "partner", text: "Hey, are you still selling the Charizard?", date: new Date("2026-04-02T09:14:00") },
-    { id: "m2", sender: "me", text: "Yes, the card is still available and in near-mint condition.", date: new Date("2026-04-02T09:22:00") },
-    { id: "m3", sender: "partner", text: "Sounds good — I can ship it tomorrow.", date: new Date("2026-04-02T09:27:00") },
-  ],
-  "2": [
-    { id: "m4", sender: "partner", text: "Can you confirm the card condition?", date: new Date("2026-03-30T14:50:00") },
-    { id: "m5", sender: "me", text: "It is lightly played with no bends or creases.", date: new Date("2026-03-30T14:58:00") },
-  ],
-  "3": [
-    { id: "m6", sender: "partner", text: "Thanks! I received it today.", date: new Date("2026-03-28T18:05:00") },
-  ],
-};
 
 export default function MessagingPage() {
   return (
@@ -59,47 +21,171 @@ export default function MessagingPage() {
 
 function MessagingContent() {
   const { user } = useAuth();
+  const clientRef = useRef<MessagingClient | null>(null);
+
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-  const [messagesByConversation, setMessagesByConversation] = useState<Record<string, Message[]>>(initialMessages);
+  const [messagesByConversation, setMessagesByConversation] = useState<Record<string, Message[]>>({});
   const [senderDisplayName, setSenderDisplayName] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const userSub = user?.sub ?? "";
+  const userId = user?.username ?? "";
 
   useEffect(() => {
     document.title = "Messages - VAULT OF CARDS";
   }, []);
 
   useEffect(() => {
-    const username = user?.username;
-    if (!username) return;
-    fetchSellerProfile(username).then((profile) => {
-      setSenderDisplayName(profile?.displayName || username);
+    if (!userId) return;
+    fetchSellerProfile(userId).then((profile) => {
+      setSenderDisplayName(profile?.displayName || userId);
     }).catch(() => {
-      setSenderDisplayName(username);
+      setSenderDisplayName(userId);
     });
-  }, [user?.username]);
+  }, [userId]);
 
-  const selectedConversation = conversationSummaries.find(
-    (c) => c.id === selectedConversationId
-  );
+  // Initialize client, connect socket, fetch rooms
+  useEffect(() => {
+    if (!userSub) return;
 
+    const client = new MessagingClient();
+    clientRef.current = client;
+
+    let cancelled = false;
+    const unsubs: (() => void)[] = [];
+
+    (async () => {
+      try {
+        // Get token and create socket synchronously
+        const { getAccessToken: getToken } = await import("@/lib/cognito");
+        const accessToken = await getToken();
+        if (!accessToken || cancelled) { setLoading(false); return; }
+
+        console.log("[messaging] initializing socket...");
+        client.init(accessToken);
+
+        // Attach listeners BEFORE connect so no events are missed
+        unsubs.push(client.onNewMessage((msg) => {
+          console.log("[messaging] ws message:new", msg.messageId, msg.conversationId);
+          setMessagesByConversation((prev) => ({
+            ...prev,
+            [msg.conversationId]: [...(prev[msg.conversationId] ?? []), msg],
+          }));
+          setRooms((prev) => {
+            const idx = prev.findIndex((r) => r.conversationId === msg.conversationId);
+            if (idx >= 0) {
+              const updated = { ...prev[idx], latestMessage: msg.content, latestMessageSenderId: msg.senderId, updatedAt: msg.createdAt };
+              const next = [...prev];
+              next.splice(idx, 1);
+              return [updated, ...next];
+            }
+            // New room — re-fetch rooms list
+            console.log("[messaging] new room detected, re-fetching rooms...");
+            client.fetchRooms().then((freshRooms) => {
+              setRooms(freshRooms);
+            }).catch((err) => console.error("[messaging] re-fetch rooms failed:", err));
+            return prev;
+          });
+        }));
+
+        unsubs.push(client.onMessageUpdated((msg) => {
+          console.log("[messaging] ws message:updated", msg.messageId);
+          setMessagesByConversation((prev) => {
+            const messages = prev[msg.conversationId];
+            if (!messages) return prev;
+            return { ...prev, [msg.conversationId]: messages.map((m) => m.messageId === msg.messageId ? msg : m) };
+          });
+        }));
+
+        unsubs.push(client.onMessageDeleted((data) => {
+          console.log("[messaging] ws message:deleted", data.messageId);
+          setMessagesByConversation((prev) => {
+            const messages = prev[data.conversationId];
+            if (!messages) return prev;
+            return { ...prev, [data.conversationId]: messages.filter((m) => m.messageId !== data.messageId) };
+          });
+        }));
+
+        unsubs.push(client.onDisconnect((reason) => {
+          console.warn("[messaging] socket disconnected:", reason);
+        }));
+
+        // Now connect
+        console.log("[messaging] connecting...");
+        await client.connect();
+        console.log("[messaging] socket connected");
+
+        // Fetch rooms
+        console.log("[messaging] fetching rooms...");
+        const fetchedRooms = await client.fetchRooms();
+        console.log("[messaging] fetched rooms:", fetchedRooms.length);
+        if (cancelled) return;
+        setRooms(fetchedRooms);
+      } catch (err) {
+        console.error("[messaging] init failed:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      unsubs.forEach((fn) => fn());
+      client.disconnect();
+      console.log("[messaging] cleanup complete");
+      clientRef.current = null;
+    };
+  }, [userSub]);
+
+  // Fetch messages when selecting a conversation
+  useEffect(() => {
+    if (!selectedConversationId || !clientRef.current) return;
+
+    const client = clientRef.current;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        console.log("[messaging] joining room:", selectedConversationId);
+        client.joinRoom(selectedConversationId);
+
+        console.log("[messaging] fetching messages for:", selectedConversationId);
+        const res = await client.fetchMessages(selectedConversationId);
+        console.log("[messaging] fetched messages:", res.data.length);
+        if (cancelled) return;
+        setMessagesByConversation((prev) => ({
+          ...prev,
+          [selectedConversationId]: res.data,
+        }));
+      } catch (err) {
+        console.error("[messaging] fetch messages failed:", err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedConversationId]);
+
+  const selectedRoom = rooms.find((r) => r.conversationId === selectedConversationId);
   const conversationMessages = selectedConversationId
     ? messagesByConversation[selectedConversationId] ?? []
     : [];
 
   const handleSend = useCallback((text: string) => {
-    if (!selectedConversationId) return;
+    if (!selectedConversationId || !clientRef.current) return;
 
-    const newMessage: Message = {
-      id: `${selectedConversationId}-send-${Date.now()}`,
-      sender: "me",
-      text,
-      date: new Date(),
-    };
+    const room = rooms.find((r) => r.conversationId === selectedConversationId);
+    if (!room) return;
 
-    setMessagesByConversation((current) => ({
-      ...current,
-      [selectedConversationId]: [...(current[selectedConversationId] ?? []), newMessage],
-    }));
-  }, [selectedConversationId]);
+    console.log("[messaging] sending message to:", room.recipientId);
+    clientRef.current.sendMessage({
+      recipientId: room.recipientId,
+      content: text,
+      messageType: "text",
+    }).catch((err) => console.error("[messaging] send failed:", err));
+  }, [selectedConversationId, rooms]);
 
   const handleSelectConversation = useCallback((id: string) => {
     setSelectedConversationId(id);
@@ -107,9 +193,20 @@ function MessagingContent() {
 
   const showConversationList = !selectedConversationId;
 
-  const partner: ChatPartner | null = selectedConversation
-    ? { id: selectedConversation.id, name: selectedConversation.partnerName, imageUrl: selectedConversation.imageUrl }
+  const partner: ChatPartner | null = selectedRoom
+    ? { id: selectedRoom.conversationId, name: selectedRoom.recipientName || selectedRoom.recipientId }
     : null;
+
+  if (loading) {
+    return (
+      <div className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both]">
+        <PageHeader title="Messages" />
+        <div className="flex flex-1 items-center justify-center">
+          <p className="text-xs text-muted-foreground">Loading conversations...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both]">
@@ -121,14 +218,20 @@ function MessagingContent() {
           "w-full sm:w-60 md:w-72 lg:w-80 shrink-0 overflow-y-auto min-h-0 space-y-1",
           showConversationList ? "block" : "hidden sm:block"
         )}>
-          {conversationSummaries.map((conversation) => (
-            <ConversationHistoryCard
-              key={conversation.id}
-              conversation={conversation}
-              isSelected={conversation.id === selectedConversationId}
-              onSelect={() => handleSelectConversation(conversation.id)}
-            />
-          ))}
+          {rooms.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-8">No conversations yet</p>
+          ) : (
+            rooms.map((room) => (
+              <ConversationHistoryCard
+                key={room.conversationId}
+                room={room}
+                currentUserId={userSub}
+                partnerName={room.recipientName || room.recipientId}
+                isSelected={room.conversationId === selectedConversationId}
+                onSelect={() => handleSelectConversation(room.conversationId)}
+              />
+            ))
+          )}
         </div>
 
         <div className="hidden sm:block w-px self-stretch bg-border" />
@@ -152,6 +255,7 @@ function MessagingContent() {
               </div>
               <Chatroom
                 partner={partner}
+                currentUserId={userSub}
                 senderName={senderDisplayName}
                 messages={conversationMessages}
                 onSend={handleSend}

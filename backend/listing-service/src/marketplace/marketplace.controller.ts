@@ -52,6 +52,7 @@ export class MarketplaceController {
   )
   async create(
     @CurrentUser("cognito:username") username: string,
+    @CurrentUser("sub") sub: string,
     @UploadedFiles()
     files: {
       frontImage?: Express.Multer.File[];
@@ -66,7 +67,7 @@ export class MarketplaceController {
       throw new BadRequestException("frontImage is required");
     }
 
-    return await this.marketplaceService.createListing(username, listing, frontImage, backImage);
+    return await this.marketplaceService.createListing(username, sub, listing, frontImage, backImage);
   }
 
   @Public()

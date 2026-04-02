@@ -18,6 +18,7 @@ const ListingViews = {
   specificListing: [
     "gameName",
     "sellerId",
+    "sellerSub",
     "listingId",
     "title",
     "description",

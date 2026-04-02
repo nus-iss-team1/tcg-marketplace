@@ -16,6 +16,10 @@ export const TCGMarketplaceSchema = {
       SellerListingIndex: "pk"
     }
   }),
+  sellerSub: field({
+    type: "string",
+    optional: true
+  }),
   listingId: field({
     type: "string",
     sk: true
@@ -110,6 +114,7 @@ export const TCGMarketplaceSchema = {
 export type Listing = {
   gameName: string;
   sellerId: string;
+  sellerSub?: string;
   listingId: string;
   listingUpdatedAt: string;
   listingCardName: string;

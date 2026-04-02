@@ -3,9 +3,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  turbopack: {
-    root: ".",
-  },
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
@@ -19,8 +16,8 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    const listingApi = process.env.NEXT_PUBLIC_LISTING_API || process.env.NEXT_PUBLIC_BACKEND_API;
-    const messagingApi = process.env.NEXT_PUBLIC_MESSAGING_API || process.env.NEXT_PUBLIC_BACKEND_API;
+    const listingApi = process.env.NEXT_PUBLIC_LISTING_API || process.env.NEXT_PUBLIC_BACKEND_API || "http://localhost:3001";
+    const messagingApi = process.env.NEXT_PUBLIC_MESSAGING_API || process.env.NEXT_PUBLIC_BACKEND_API || "http://localhost:3002";
     return [
       {
         source: "/api/listing/:path*",

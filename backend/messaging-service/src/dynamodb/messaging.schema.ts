@@ -32,6 +32,10 @@ export const MessagingPlatformSchema = {
   latestMessage: field({
     type: "string"
   }),
+  latestMessageSenderId: field({
+    type: "string",
+    optional: true
+  }),
   content: field({
     type: "string"
   }),
@@ -69,6 +73,14 @@ export const MessagingPlatformSchema = {
   recipientId: field({
     type: "string"
   }),
+  userName: field({
+    type: "string",
+    optional: true
+  }),
+  recipientName: field({
+    type: "string",
+    optional: true
+  }),
   archived: field({
     type: "boolean"
   }),
@@ -89,7 +101,10 @@ export type Room = {
   meta: string;
   userId: string;
   recipientId: string;
+  userName?: string;
+  recipientName?: string;
   latestMessage: MessageType;
+  latestMessageSenderId?: string;
   latestMessageId: string | null;
   lastSeenMessageId: string | null;
   muted: boolean;

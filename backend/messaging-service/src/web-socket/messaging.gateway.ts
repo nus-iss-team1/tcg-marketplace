@@ -19,6 +19,7 @@ import { AllWsExceptionFilter } from "./ws-exception.filter";
 import { JoinRoomDto, MessageSeenDto } from "../room/dto/room.dto";
 import { RedisService } from "../redis/redis.service";
 import { CreateMessageDto, DeleteMessageDto, EditMessageDto } from "../message/dto/message.dto";
+import { CognitoVerifierService } from "../auth/cognito-verifier.service";
 
 @UseGuards(WsCognitoAuthGuard)
 @WebSocketGateway()
@@ -31,24 +32,38 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
     private readonly logger: AppLoggerService,
     private readonly redisService: RedisService,
     private readonly messageService: MessageService,
-    private readonly roomService: RoomService
+    private readonly roomService: RoomService,
+    private readonly cognitoVerifier: CognitoVerifierService
   ) {}
 
   async handleConnection(client: SocketWithUser) {
-    const userId = client.data.user?.sub;
+    try {
+      const authHeader = client.handshake.headers?.authorization ?? client.handshake.auth?.token;
 
-    if (!userId) {
-      this.logger.warn("Unauthorized connection attempt");
+      if (!authHeader) {
+        this.logger.warn("Unauthorized connection attempt: missing token");
+        client.disconnect();
+        return;
+      }
+
+      const token = typeof authHeader === "string" && authHeader.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : authHeader as string;
+
+      const payload = await this.cognitoVerifier.verifyToken(token);
+      client.data.user = payload;
+
+      const userId = payload.sub;
+
+      await this.redisService.addUserSocket(userId, client.id);
+      await this.redisService.setOnline(userId);
+      await client.join(`user:${userId}`);
+
+      this.logger.log(`Client connected: ${userId}`);
+    } catch (err) {
+      this.logger.warn(`Unauthorized connection attempt: ${err}`);
       client.disconnect();
-      return;
     }
-
-    await this.redisService.addUserSocket(userId, client.id);
-    await this.redisService.setOnline(userId);
-
-    await client.join(`user:${userId}`);
-
-    this.logger.log(`Client connected: ${userId}`);
   }
 
   async handleDisconnect(client: SocketWithUser) {
@@ -121,7 +136,8 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
     @ConnectedSocket() client: SocketWithUser,
     @MessageBody() body: CreateMessageDto
   ) {
-    const result = await this.messageService.createMessage(userId, body);
+    const userName = client.data.user?.["cognito:username"];
+    const result = await this.messageService.createMessage(userId, body, userName);
 
     await client.join(`room:${result.conversationId}`);
 

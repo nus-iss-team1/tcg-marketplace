@@ -59,11 +59,15 @@ export class RoomService {
     conversationId: string,
     userId: string,
     recipientId: string,
-    datetime: number
+    datetime: number,
+    userName?: string,
+    recipientName?: string,
+    messageId?: string,
+    content?: string
   ) {
     return [
-      this.roomRepository.buildCreateRoom(conversationId, userId, recipientId, datetime),
-      this.roomRepository.buildCreateRoom(conversationId, recipientId, userId, datetime)
+      this.roomRepository.buildCreateRoom(conversationId, userId, recipientId, datetime, userName, recipientName, messageId, userId, content),
+      this.roomRepository.buildCreateRoom(conversationId, recipientId, userId, datetime, recipientName, userName, messageId, userId, content)
     ];
   }
 
@@ -72,6 +76,7 @@ export class RoomService {
     userId: string,
     recipientId: string,
     messageId: string,
+    senderId: string,
     content: string,
     datetime: number
   ) {
@@ -80,6 +85,7 @@ export class RoomService {
         conversationId,
         userId,
         messageId,
+        senderId,
         content,
         datetime
       ),
@@ -87,6 +93,7 @@ export class RoomService {
         conversationId,
         recipientId,
         messageId,
+        senderId,
         content,
         datetime
       )

@@ -36,7 +36,7 @@ export class MessageService {
     };
   }
 
-  async createMessage(userId: string, params: CreateMessageDto) {
+  async createMessage(userId: string, params: CreateMessageDto, userName?: string) {
     const { recipientId, content, messageType, replyTo } = params;
     const conversationId = generateConversationId(userId, recipientId);
     const messageId = ulid();
@@ -47,7 +47,7 @@ export class MessageService {
     const room = await this.roomService.getRoom(userId, conversationId);
     if (!room) {
       transactItems.push(
-        ...this.roomService.getCreateRoomScript(conversationId, userId, recipientId, now)
+        ...this.roomService.getCreateRoomScript(conversationId, userId, recipientId, now, userName, undefined, messageId, content)
       );
     }
 
@@ -78,6 +78,7 @@ export class MessageService {
           userId,
           recipientId,
           messageId,
+          userId,
           content,
           now
         )
@@ -130,6 +131,7 @@ export class MessageService {
           userId,
           room.recipientId,
           messageId,
+          userId,
           content,
           room.updatedAt
         )
@@ -162,6 +164,7 @@ export class MessageService {
           userId,
           room.recipientId,
           messageId,
+          userId,
           "Message deleted",
           room.updatedAt
         )
