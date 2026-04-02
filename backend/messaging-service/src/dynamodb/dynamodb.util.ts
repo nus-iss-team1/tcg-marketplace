@@ -39,3 +39,7 @@ export function handleDynamoError(error: unknown): never {
   }
   throw new HttpException("Unknown error", HttpStatus.INTERNAL_SERVER_ERROR);
 }
+
+export function padVersion(version: number): string {
+  return String(version).padStart(5, "0");
+}

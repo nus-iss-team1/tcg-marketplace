@@ -20,5 +20,5 @@
     "strict": true,
     "esModuleInterop": true
   },
-  "include": ["src/**/*", "src/common/types/*.d.ts", "test/**/*"]
+  "include": ["src/**/*", "src/messaging/types/*.d.ts", "test/**/*"]
 }

@@ -14,8 +14,14 @@ async function bootstrap() {
 
   app.setGlobalPrefix("listing");
   app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-      if (!origin || /^https?:\/\/([^/]*\.)?(dev\.vaultofcards\.io|vaultofcards\.io|localhost:\d+)$/.test(origin)) {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) => {
+      if (
+        !origin ||
+        /^https?:\/\/([^/]*\.)?(dev\.vaultofcards\.io|vaultofcards\.io|localhost:\d+)$/.test(origin)
+      ) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
