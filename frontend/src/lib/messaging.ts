@@ -2,10 +2,21 @@ import { getAccessToken } from "@/lib/cognito";
 import { io, Socket } from "socket.io-client";
 
 const BASE_URL = "";
-const WS_URL =
-  process.env.NEXT_PUBLIC_MESSAGING_API ||
-  process.env.NEXT_PUBLIC_BACKEND_API ||
-  "http://localhost:3002";
+
+export async function fetchMessagingConfig(): Promise<{ messagingApi: string }> {
+  try {
+    const res = await fetch("/api/config");
+    const config = await res.json();
+    if (config.messagingApi) {
+      console.debug("[MessagingConfig] using server config:", config.messagingApi);
+      return { messagingApi: config.messagingApi };
+    }
+  } catch (err) {
+    console.warn("[MessagingConfig] failed to fetch config:", err);
+  }
+  console.debug("[MessagingConfig] defaulting to localhost:3002");
+  return { messagingApi: "http://localhost:3002" };
+}
 
 async function authHeaders(): Promise<Record<string, string>> {
   const token = await getAccessToken();
@@ -94,12 +105,12 @@ export class MessagingClient {
    * once the connection is established. Listeners can be attached immediately
    * after calling init() — they bind to the socket before it connects.
    */
-  init(token: string): void {
+  init(token: string, wsUrl: string): void {
     if (this.socket) return;
 
-    console.debug("[MessagingClient] creating socket to", WS_URL);
+    console.debug("[MessagingClient] creating socket to", wsUrl);
 
-    this.socket = io(WS_URL, {
+    this.socket = io(wsUrl, {
       path: "/ws",
       transports: ["websocket", "polling"],
       auth: { token },
@@ -129,11 +140,9 @@ export class MessagingClient {
       return;
     }
 
-    // If no socket yet, create one (backward compat)
+    // If no socket yet, caller must call init() first
     if (!this.socket) {
-      const token = await getAccessToken();
-      if (!token) throw new Error("Not authenticated");
-      this.init(token);
+      throw new Error("Socket not initialized — call init(token, wsUrl) first");
     }
 
     if (this.connectPromise) return this.connectPromise;

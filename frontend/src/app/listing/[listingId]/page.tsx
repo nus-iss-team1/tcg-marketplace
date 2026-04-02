@@ -52,7 +52,7 @@ import { ContentLayout } from "@/components/content-layout";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Chatroom } from "@/components/chatroom";
-import { MessagingClient, type Message } from "@/lib/messaging";
+import { MessagingClient, fetchMessagingConfig, type Message } from "@/lib/messaging";
 
 export default function ViewListingPage() {
   return (
@@ -221,12 +221,15 @@ function ReadListingView({
 
     (async () => {
       try {
-        const { getAccessToken: getToken } = await import("@/lib/cognito");
+        const [{ getAccessToken: getToken }, config] = await Promise.all([
+          import("@/lib/cognito"),
+          fetchMessagingConfig(),
+        ]);
         const accessToken = await getToken();
         if (!accessToken || cancelled) return;
 
         console.log("[listing-chat] initializing socket...");
-        client.init(accessToken);
+        client.init(accessToken, config.messagingApi);
 
         // Attach listeners BEFORE connect
         unsubs.push(client.onNewMessage((msg) => {

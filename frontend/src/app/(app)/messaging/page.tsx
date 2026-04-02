@@ -6,7 +6,7 @@ import { Chatroom, type ChatPartner } from "@/components/chatroom";
 import { PageHeader } from "@/components/page-header";
 import { useAuth } from "@/context/AuthContext";
 import { fetchSellerProfile } from "@/lib/listings";
-import { MessagingClient, type Room, type Message } from "@/lib/messaging";
+import { MessagingClient, fetchMessagingConfig, type Room, type Message } from "@/lib/messaging";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -57,13 +57,15 @@ function MessagingContent() {
 
     (async () => {
       try {
-        // Get token and create socket synchronously
-        const { getAccessToken: getToken } = await import("@/lib/cognito");
+        const [{ getAccessToken: getToken }, config] = await Promise.all([
+          import("@/lib/cognito"),
+          fetchMessagingConfig(),
+        ]);
         const accessToken = await getToken();
         if (!accessToken || cancelled) { setLoading(false); return; }
 
         console.log("[messaging] initializing socket...");
-        client.init(accessToken);
+        client.init(accessToken, config.messagingApi);
 
         // Attach listeners BEFORE connect so no events are missed
         unsubs.push(client.onNewMessage((msg) => {
