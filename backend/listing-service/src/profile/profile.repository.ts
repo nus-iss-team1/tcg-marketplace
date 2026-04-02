@@ -43,7 +43,7 @@ export class ProfileRepository {
     try {
       const result = await this.dynamoDbService.get({
         TableName: this.tableName,
-        Key: { userId },
+        Key: { userId: userId },
         ...ProfileProjections.full
       });
       return (result.Item as UserProfile) ?? null;
@@ -72,7 +72,7 @@ export class ProfileRepository {
     try {
       await this.dynamoDbService.update({
         TableName: this.tableName,
-        Key: { userId },
+        Key: { userId: userId },
         UpdateExpression: updateStatement,
         ExpressionAttributeNames: attributeNames,
         ExpressionAttributeValues: attributeValues,
@@ -81,7 +81,7 @@ export class ProfileRepository {
 
       const result = await this.dynamoDbService.get({
         TableName: this.tableName,
-        Key: { userId },
+        Key: { userId: userId },
         ...ProfileProjections.full
       });
       return result.Item as UserProfile;

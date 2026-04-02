@@ -1,7 +1,5 @@
 import type { NextConfig } from "next";
 
-const listingApi = process.env.LISTING_API || process.env.BACKEND_API || "http://localhost:3001";
-const messagingApi = process.env.MESSAGING_API || process.env.BACKEND_API || "http://localhost:3002";
 
 const nextConfig: NextConfig = {
   output: "standalone",
