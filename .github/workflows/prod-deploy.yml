@@ -98,8 +98,6 @@ jobs:
           task-definition: task-def.json
           container-name: app
           image: ${{ steps.login-ecr.outputs.registry }}/nusiss-team-1-voc/tcgm-listing:${{ needs.detect-changes.outputs.listing_image_tag }}
-          environment-variables: |
-            IMAGE_TAG=${{ needs.detect-changes.outputs.listing_image_tag }}
 
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
@@ -153,8 +151,6 @@ jobs:
           task-definition: task-def.json
           container-name: app
           image: ${{ steps.login-ecr.outputs.registry }}/nusiss-team-1-voc/tcgm-messaging:${{ needs.detect-changes.outputs.messaging_image_tag }}
-          environment-variables: |
-            IMAGE_TAG=${{ needs.detect-changes.outputs.messaging_image_tag }}
 
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
