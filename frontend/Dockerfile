@@ -15,7 +15,6 @@ COPY . .
 # Cognito config – inlined into the JS bundle at build time
 ARG NEXT_PUBLIC_COGNITO_USER_POOL_ID
 ARG NEXT_PUBLIC_COGNITO_CLIENT_ID
-ARG NEXT_PUBLIC_BACKEND_API
 ARG NEXT_PUBLIC_LISTING_API
 ARG NEXT_PUBLIC_MESSAGING_API
 ARG NEXT_PUBLIC_IMAGE_TAG
@@ -23,9 +22,8 @@ ARG NEXT_PUBLIC_IMAGE_TAG
 # Disable telemetry during build for privacy/speed
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Use placeholder for backend API so rewrites compile at build time.
-# The entrypoint script replaces this with the real value at container start.
-ENV BACKEND_API=http://baked-backend-api.internal
+# Use placeholder for API URLs so rewrites compile at build time.
+# The entrypoint script replaces these with the real values at container start.
 ENV LISTING_API=http://baked-listing-api.internal
 ENV MESSAGING_API=http://baked-messaging-api.internal
 RUN npm run build
@@ -60,6 +58,6 @@ EXPOSE 3000
 ENV PORT=3000
 
 # Runtime env vars — set these when running the container:
-# COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID, BACKEND_API, IMAGE_TAG, CDN_HOSTNAME
+# LISTING_API, MESSAGING_API, MESSAGING_WS_API
 
 ENTRYPOINT ["./entrypoint.sh"]

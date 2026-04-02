@@ -529,6 +529,109 @@ Resources:
         DNSName: !GetAtt ListingApiCustomDomain.RegionalDomainName
         HostedZoneId: !GetAtt ListingApiCustomDomain.RegionalHostedZoneId
 
+  # ════════════════════════════════════════════════════════════
+  # Public ALB for WebSocket (Socket.io)
+  # ════════════════════════════════════════════════════════════
+
+  WsALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Condition: HasDomain
+    Properties:
+      GroupDescription: Allow inbound HTTPS from internet for WebSocket
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !If
+            - HasEnvPrefix
+            - !Sub "${ProjectNamespace}-${Environment}-ws-alb-sg"
+            - !Sub "${ProjectNamespace}-ws-alb-sg"
+
+  # Allow ECS tasks to receive traffic from the public WebSocket ALB
+  ECSSecurityGroupWsIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: HasDomain
+    Properties:
+      GroupId: !Ref ECSSecurityGroup
+      IpProtocol: tcp
+      FromPort: 0
+      ToPort: 65535
+      SourceSecurityGroupId: !Ref WsALBSecurityGroup
+
+  WsALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Condition: HasDomain
+    Properties:
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-ws-alb"
+        - !Sub "${ProjectNamespace}-ws-alb"
+      Scheme: internet-facing
+      Type: application
+      Subnets:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+      SecurityGroups:
+        - !Ref WsALBSecurityGroup
+      LoadBalancerAttributes:
+        - Key: routing.http.drop_invalid_header_fields.enabled
+          Value: "true"
+        - Key: idle_timeout.timeout_seconds
+          Value: "3600"
+
+  WsMessagingTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Condition: HasDomain
+    Properties:
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-ws-msg-tg"
+        - !Sub "${ProjectNamespace}-ws-msg-tg"
+      Port: 3002
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 30
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      TargetGroupAttributes:
+        - Key: stickiness.enabled
+          Value: "true"
+        - Key: stickiness.type
+          Value: lb_cookie
+        - Key: stickiness.lb_cookie.duration_seconds
+          Value: "86400"
+
+  WsALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: HasDomain
+    Properties:
+      LoadBalancerArn: !Ref WsALB
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref ACMCertificate
+      SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref WsMessagingTargetGroup
+
+  WsDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: HasDomain
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Sub "ws.${BaseDomainName}"
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt WsALB.DNSName
+        HostedZoneId: !GetAtt WsALB.CanonicalHostedZoneID
+
   # ── Messaging subdomain ────────────────────────────────
   MessagingApiCustomDomain:
     Type: AWS::ApiGatewayV2::DomainName
@@ -639,3 +742,19 @@ Outputs:
         - HasEnvPrefix
         - !Sub "${ProjectNamespace}-${Environment}-ECSSecurityGroupId"
         - !Sub "${ProjectNamespace}-ECSSecurityGroupId"
+  WsMessagingTargetGroupArn:
+    Condition: HasDomain
+    Value: !Ref WsMessagingTargetGroup
+    Export:
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-WsMessagingTargetGroupArn"
+        - !Sub "${ProjectNamespace}-WsMessagingTargetGroupArn"
+  WsALBDnsName:
+    Condition: HasDomain
+    Value: !GetAtt WsALB.DNSName
+    Export:
+      Name: !If
+        - HasEnvPrefix
+        - !Sub "${ProjectNamespace}-${Environment}-WsALBDnsName"
+        - !Sub "${ProjectNamespace}-WsALBDnsName"

@@ -16,7 +16,6 @@ replace_placeholder() {
   fi
 }
 
-replace_placeholder "http://baked-backend-api.internal" "$BACKEND_API"
 replace_placeholder "http://baked-listing-api.internal" "$LISTING_API"
 replace_placeholder "http://baked-messaging-api.internal" "$MESSAGING_API"
 

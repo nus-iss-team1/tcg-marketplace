@@ -2,6 +2,6 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   return NextResponse.json({
-    messagingApi: process.env.MESSAGING_API || "",
+    messagingApi: process.env.MESSAGING_WS_API || process.env.MESSAGING_API || "",
   });
 }

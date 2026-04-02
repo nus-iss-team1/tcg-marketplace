@@ -452,7 +452,7 @@ Resources:
           PortMappings:
             - ContainerPort: 3000
           Environment:
-            - Name: BACKEND_API
+            - Name: LISTING_API
               Value: !Sub
                 - "http://${ALBDns}"
                 - ALBDns: !If
@@ -461,6 +461,20 @@ Resources:
                         Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
                     - !ImportValue
                         Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+            - Name: MESSAGING_API
+              Value: !Sub
+                - "http://${ALBDns}"
+                - ALBDns: !If
+                    - HasEnvPrefix
+                    - !ImportValue
+                        Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
+                    - !ImportValue
+                        Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+            - Name: MESSAGING_WS_API
+              Value: !If
+                - HasDomain
+                - !Sub "https://ws.${BaseDomainName}"
+                - ""
             - Name: NEXT_PUBLIC_LISTING_API
               Value: !If
                 - HasDomain
@@ -645,6 +659,17 @@ Resources:
               Fn::Sub: "${ProjectNamespace}-${Environment}-MessagingTargetGroupArn"
             - !ImportValue
               Fn::Sub: "${ProjectNamespace}-MessagingTargetGroupArn"
+        - !If
+          - HasDomain
+          - ContainerName: app
+            ContainerPort: 3002
+            TargetGroupArn: !If
+              - HasEnvPrefix
+              - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-${Environment}-WsMessagingTargetGroupArn"
+              - !ImportValue
+                Fn::Sub: "${ProjectNamespace}-WsMessagingTargetGroupArn"
+          - !Ref AWS::NoValue
 
   # ------------------------------------------------------------
   # Auto Scaling
