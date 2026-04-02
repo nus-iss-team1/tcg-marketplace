@@ -332,7 +332,7 @@ Resources:
       Protocol: HTTP
       VpcId: !Ref VPC
       TargetType: ip
-      HealthCheckPath: /listing/health
+      HealthCheckPath: /health
       HealthCheckIntervalSeconds: 30
       HealthyThresholdCount: 2
       UnhealthyThresholdCount: 3
@@ -364,7 +364,7 @@ Resources:
       Protocol: HTTP
       VpcId: !Ref VPC
       TargetType: ip
-      HealthCheckPath: /messaging/health
+      HealthCheckPath: /health
       HealthCheckIntervalSeconds: 30
       HealthyThresholdCount: 2
       UnhealthyThresholdCount: 3
