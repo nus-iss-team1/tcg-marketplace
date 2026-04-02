@@ -24,11 +24,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/listing/:path*",
-        destination: `${listingApi}/listing/:path*`,
+        destination: `${listingApi}/:path*`,
       },
       {
         source: "/api/messaging/:path*",
-        destination: `${messagingApi}/messaging/:path*`,
+        destination: `${messagingApi}/:path*`,
       },
     ];
   },
