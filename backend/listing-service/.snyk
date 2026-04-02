@@ -11,3 +11,9 @@ ignore:
     - '* > path-to-regexp':
         reason: Patched via npm overrides to 8.4.0
         expires: 2026-06-28T00:00:00.000Z
+  SNYK-JS-LODASH-15869625:
+    - '* > lodash':
+        reason: >-
+          Transitive dep of @nestjs/config; no patched version available.
+          _.template() is not used with untrusted input in this service.
+        expires: 2026-07-02T00:00:00.000Z
