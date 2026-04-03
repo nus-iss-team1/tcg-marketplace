@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { ConversationHistoryCard } from "@/components/conversation-history-card";
 import { Chatroom, type ChatPartner } from "@/components/chatroom";
 import { PageHeader } from "@/components/page-header";
@@ -20,7 +21,8 @@ export default function MessagingPage() {
 }
 
 function MessagingContent() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const clientRef = useRef<MessagingClient | null>(null);
 
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -31,6 +33,12 @@ function MessagingContent() {
 
   const userSub = user?.sub ?? "";
   const userId = user?.username ?? "";
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/login?redirect=/messaging");
+    }
+  }, [authLoading, user, router]);
 
   useEffect(() => {
     document.title = "Messages - VAULT OF CARDS";

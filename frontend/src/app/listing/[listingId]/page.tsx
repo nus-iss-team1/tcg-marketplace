@@ -188,9 +188,11 @@ function ReadListingView({
   isOwner: boolean;
 }) {
   const { user } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const clientRef = useRef<MessagingClient | null>(null);
   const sellerId = listing.sellerId || "Unknown";
-  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(searchParams.get("chat") === "true");
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [senderDisplayName, setSenderDisplayName] = useState("");
 
@@ -441,7 +443,14 @@ function ReadListingView({
 
                 <SellerSection
                   sellerId={sellerId}
-                  onMessage={!isOwner ? () => setChatOpen(true) : undefined}
+                  onMessage={!isOwner ? () => {
+                    if (!user) {
+                      const returnUrl = `/listing/${listing.listingId}?game=${encodeURIComponent(listing.gameName)}&chat=true`;
+                      router.push(`/login?redirect=${encodeURIComponent(returnUrl)}`);
+                      return;
+                    }
+                    setChatOpen(true);
+                  } : undefined}
                 />
               </div>
             )}
