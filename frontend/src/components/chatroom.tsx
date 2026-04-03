@@ -46,7 +46,7 @@ function ListingBanner({ listing }: { listing: Listing }) {
   const meetupDetails = pickupMatch ? pickupMatch[2] : null;
 
   return (
-    <Accordion type="single" collapsible className="mb-3">
+    <Accordion type="single" collapsible className="mb-0">
       <AccordionItem value="listing" className="border-0">
         <AccordionTrigger className="px-3 py-2 hover:no-underline">
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -91,6 +91,7 @@ function ListingBanner({ listing }: { listing: Listing }) {
 export function Chatroom({ partner, currentUserId, senderName, messages, onSend, listing, className }: ChatroomProps) {
   const [draft, setDraft] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -109,20 +110,20 @@ export function Chatroom({ partner, currentUserId, senderName, messages, onSend,
         partnerName={partner.name}
         partnerImageUrl={partner.imageUrl}
       />
-      {listing && <ListingBanner listing={listing} />}
       <div className="mt-3 flex-1 flex flex-col-reverse overflow-y-auto space-y-3 space-y-reverse py-2 min-h-0">
-        <div ref={messagesEndRef} />
-        {[...messages].reverse().map((message, i) => (
-          <ConversationMessage
-            key={message.messageId}
-            message={message}
-            currentUserId={currentUserId}
-            partnerName={partner.name}
-            imageUrl={partner.imageUrl}
-            senderName={senderName}
-            index={i}
-          />
-        ))}
+
+          <div ref={messagesEndRef} />
+          {[...messages].reverse().map((message, i) => (
+            <ConversationMessage
+              key={message.messageId}
+              message={message}
+              currentUserId={currentUserId}
+              partnerName={partner.name}
+              imageUrl={partner.imageUrl}
+              senderName={senderName}
+              index={i}
+            />
+          ))}
       </div>
       <ConversationInput
         value={draft}
