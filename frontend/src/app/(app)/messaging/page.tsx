@@ -219,10 +219,10 @@ function MessagingContent() {
   }
 
   return (
-    <div className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both]">
+    <div className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both] overflow-hidden max-h-[calc(100vh-4rem)]">
       <PageHeader title="Messages" />
 
-      <div className="flex flex-1 gap-8 sm:gap-10 min-h-0 max-h-[calc(100vh-8rem)]">
+      <div className="flex flex-1 gap-8 sm:gap-10 min-h-0">
         {/* Conversation list */}
         <div className={cn(
           "w-full sm:w-60 md:w-72 lg:w-80 shrink-0 overflow-y-auto min-h-0 space-y-1",
@@ -248,7 +248,7 @@ function MessagingContent() {
 
         {/* Chat panel */}
         <div className={cn(
-          "flex-1 min-w-0 flex flex-col",
+          "flex-1 min-w-0 min-h-0 flex flex-col",
           selectedConversationId ? "flex" : "hidden sm:flex"
         )}>
           {partner ? (
@@ -269,7 +269,7 @@ function MessagingContent() {
                 senderName={senderDisplayName}
                 messages={conversationMessages}
                 onSend={handleSend}
-                className="flex-1"
+                className="flex-1 min-h-0"
               />
             </>
           ) : (
