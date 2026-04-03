@@ -22,6 +22,10 @@ Parameters:
     Type: String
     Default: ""
     Description: "Existing Route 53 Hosted Zone ID. Required when BaseDomainName is set."
+  CertificateArn:
+    Type: String
+    Default: ""
+    Description: "ARN of ACM certificate covering base domain and wildcard (*.domain)."
 
 Conditions:
   HasEnvPrefix: !Not [!Equals [!Ref Environment, ""]]
@@ -456,20 +460,7 @@ Resources:
       AutoDeploy: true
 
   # ── Custom Domains (conditional) ───────────────────────────
-  # Certificate for base domain (dev.vaultofcards.io / vaultofcards.io)
-  ACMCertificate:
-    Type: AWS::CertificateManager::Certificate
-    Condition: HasDomain
-    Properties:
-      DomainName: !Ref BaseDomainName
-      SubjectAlternativeNames:
-        - !Sub "*.${BaseDomainName}"
-      ValidationMethod: DNS
-      DomainValidationOptions:
-        - DomainName: !Ref BaseDomainName
-          HostedZoneId: !Ref HostedZoneId
-        - DomainName: !Sub "*.${BaseDomainName}"
-          HostedZoneId: !Ref HostedZoneId
+  # ACM certificate is managed externally and passed via CertificateArn parameter.
 
   # ── Base domain (<base>) ──────────────────────────────────
   ApiCustomDomain:
@@ -479,7 +470,7 @@ Resources:
       DomainName: !Ref BaseDomainName
       DomainNameConfigurations:
         - EndpointType: REGIONAL
-          CertificateArn: !Ref ACMCertificate
+          CertificateArn: !Ref CertificateArn
 
   ApiDomainMapping:
     Type: AWS::ApiGatewayV2::ApiMapping
@@ -508,7 +499,7 @@ Resources:
       DomainName: !Sub "listing.${BaseDomainName}"
       DomainNameConfigurations:
         - EndpointType: REGIONAL
-          CertificateArn: !Ref ACMCertificate
+          CertificateArn: !Ref CertificateArn
 
   ListingApiDomainMapping:
     Type: AWS::ApiGatewayV2::ApiMapping
@@ -615,7 +606,7 @@ Resources:
       Port: 443
       Protocol: HTTPS
       Certificates:
-        - CertificateArn: !Ref ACMCertificate
+        - CertificateArn: !Ref CertificateArn
       SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
       DefaultActions:
         - Type: forward
@@ -640,7 +631,7 @@ Resources:
       DomainName: !Sub "messaging.${BaseDomainName}"
       DomainNameConfigurations:
         - EndpointType: REGIONAL
-          CertificateArn: !Ref ACMCertificate
+          CertificateArn: !Ref CertificateArn
 
   MessagingApiDomainMapping:
     Type: AWS::ApiGatewayV2::ApiMapping

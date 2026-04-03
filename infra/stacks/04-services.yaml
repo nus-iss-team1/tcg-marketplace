@@ -27,15 +27,9 @@ Parameters:
     Type: String
     Default: ""
     Description: "Base domain (e.g. dev.vaultofcards.io). Leave empty to skip."
-  BaseDomainName:
-    Type: String
-    Default: ""
-    Description: "Base domain (e.g. dev.vaultofcards.io). Leave empty to skip."
-
 Conditions:
   HasEnvPrefix: !Not [!Equals [!Ref Environment, ""]]
   IsHA: !Equals [!Ref HighAvailability, "true"]
-  HasDomain: !Not [!Equals [!Ref BaseDomainName, ""]]
   HasDomain: !Not [!Equals [!Ref BaseDomainName, ""]]
 
 Resources:
@@ -452,6 +446,20 @@ Resources:
           PortMappings:
             - ContainerPort: 3000
           Environment:
+            - Name: COGNITO_USER_POOL_ID
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-${Environment}-UserPoolId"
+                - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-dev-UserPoolId"
+            - Name: COGNITO_CLIENT_ID
+              Value: !If
+                - HasEnvPrefix
+                - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-${Environment}-UserPoolClientId"
+                - !ImportValue
+                  Fn::Sub: "${ProjectNamespace}-dev-UserPoolClientId"
             - Name: LISTING_API
               Value: !Sub
                 - "http://${ALBDns}"
