@@ -222,7 +222,7 @@ function MessagingContent() {
     <div className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both]">
       <PageHeader title="Messages" />
 
-      <div className="flex flex-1 gap-8 sm:gap-10 min-h-0">
+      <div className="flex flex-1 gap-8 sm:gap-10 min-h-0 max-h-[calc(100vh-8rem)]">
         {/* Conversation list */}
         <div className={cn(
           "w-full sm:w-60 md:w-72 lg:w-80 shrink-0 overflow-y-auto min-h-0 space-y-1",

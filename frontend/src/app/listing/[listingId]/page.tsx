@@ -300,15 +300,15 @@ function ReadListingView({
   }, [sellerSub]);
 
   return (
-    <ContentLayout className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both]">
-      <div className="flex flex-1 flex-col lg:flex-row gap-6 lg:gap-16 h-full">
+    <ContentLayout className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both] min-h-0">
+      <div className="flex flex-1 flex-col lg:flex-row gap-6 lg:gap-16 min-h-0">
         {/* Left — Images */}
         <div className={`w-3/5 sm:w-3/5 md:w-2/5 mx-auto lg:mx-0 lg:w-1/2 xl:w-2/5 shrink-0 ${chatOpen ? "hidden lg:block" : ""}`}>
           <ImageCarousel attachment={listing.attachment} />
         </div>
 
         {/* Right — Details or Chat */}
-        <div className="flex-1 min-w-0 flex flex-col">
+        <div className="flex-1 min-w-0 flex flex-col max-h-[calc(100vh-8rem)] overflow-y-auto">
             {chatOpen ? (
               <div key="chat" className="flex-1 flex flex-col min-h-0 animate-[fade-up_0.3s_ease-out_both]">
                 <div className="flex items-center gap-2 mb-4">
