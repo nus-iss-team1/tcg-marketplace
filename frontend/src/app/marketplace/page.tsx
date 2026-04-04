@@ -12,7 +12,6 @@ import { fetchMarketplaceListings, type Listing } from "@/lib/listings";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
-import { Plus } from "lucide-react";
 
 const SORT_OPTIONS = [
   { value: "updatedAt", label: "Recent" },
@@ -137,17 +136,16 @@ function MarketplaceContent() {
 
   return (
     <>
-      <div className="shrink-0 flex items-start justify-between">
+      <div className="shrink-0">
         <PageHeader title="Marketplace" description={gameType} />
-        {user && (
-          <Button asChild size="sm" className="shrink-0 mt-1">
-            <Link href="/listing/create">
-              <Plus className="h-4 w-4 mr-1" />
-              Create Listing
-            </Link>
-          </Button>
-        )}
       </div>
+      {user && (
+        <div className="flex justify-end mb-2">
+          <Button asChild size="sm">
+            <Link href="/listing/create">Create Listing</Link>
+          </Button>
+        </div>
+      )}
 
       {/* Search + Sort */}
       <div className="sticky top-12 sm:top-14 z-40 mb-4 w-full mx-auto bg-background/40 backdrop-blur-md px-3 py-2">
@@ -214,13 +212,9 @@ function MarketplaceContent() {
               : "This category is awaiting its first listing. Be the first to showcase your cards."
           }
         >
-          {activeQuery ? (
+          {activeQuery && (
             <Button size="sm" variant="secondary" onClick={handleClearSearch}>
               Clear Search
-            </Button>
-          ) : (
-            <Button asChild size="sm">
-              <Link href="/listing/create">Create Listing</Link>
             </Button>
           )}
         </EmptyState>
