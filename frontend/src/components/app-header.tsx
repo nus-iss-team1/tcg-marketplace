@@ -94,7 +94,7 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem asChild className="focus:bg-transparent hover:bg-transparent hover:text-muted-foreground">
-                  <Link href="/profile">Profile</Link>
+                  <Link href="/profile">Profile <span className="text-muted-foreground lowercase">(@{user.username})</span></Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="focus:bg-transparent hover:bg-transparent hover:text-muted-foreground">
                   <Link href="/messaging">Messages</Link>
