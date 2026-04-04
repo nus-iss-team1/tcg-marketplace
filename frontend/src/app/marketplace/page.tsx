@@ -10,7 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchMarketplaceListings, type Listing } from "@/lib/listings";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 
 const SORT_OPTIONS = [
   { value: "updatedAt", label: "Recent" },
@@ -30,6 +32,7 @@ export default function MarketplacePage() {
 }
 
 function MarketplaceContent() {
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const gameType = searchParams.get("game") || "Pokemon TCG";
 
@@ -134,8 +137,16 @@ function MarketplaceContent() {
 
   return (
     <>
-      <div className="shrink-0">
+      <div className="shrink-0 flex items-start justify-between">
         <PageHeader title="Marketplace" description={gameType} />
+        {user && (
+          <Button asChild size="sm" className="shrink-0 mt-1">
+            <Link href="/listing/create">
+              <Plus className="h-4 w-4 mr-1" />
+              Create Listing
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Search + Sort */}
