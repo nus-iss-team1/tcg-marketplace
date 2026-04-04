@@ -507,6 +507,8 @@ Resources:
                           Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
                       - !ImportValue
                           Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+            - Name: IMAGE_TAG
+              Value: !Ref WebImageTag
           LogConfiguration:
             LogDriver: awslogs
             Options:
