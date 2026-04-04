@@ -29,18 +29,7 @@ export class ProfileService {
 
   async getProfile(userId: string) {
     this.logger.log(`Fetching profile for user: ${userId}`, "ProfileService");
-
-    const profile = await this.profileRepo.getProfile(userId);
-    if (!profile) {
-      this.logger.log(`Profile not found for user: ${userId}, auto-creating`, "ProfileService");
-      const defaultProfile: UserProfile = {
-        userId,
-        displayName: userId,
-        joinedAt: Date.now()
-      };
-      return await this.profileRepo.createProfile(defaultProfile);
-    }
-    return profile;
+    return await this.profileRepo.getProfile(userId);
   }
 
   async getProfileBySub(sub: string) {

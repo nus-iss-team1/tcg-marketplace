@@ -16,7 +16,7 @@ import {
   refreshSession,
   type SignUpAttributes,
 } from "@/lib/cognito";
-import { fetchSellerProfile, createSellerProfile } from "@/lib/listings";
+import { createSellerProfile } from "@/lib/listings";
 
 interface AuthUser {
   sub: string;
@@ -55,12 +55,9 @@ function parseSession(session: CognitoUserSession): AuthUser {
 
 async function ensureProfile(username: string) {
   try {
-    const profile = await fetchSellerProfile(username);
-    if (!profile) {
-      await createSellerProfile(username);
-    }
+    await createSellerProfile(username);
   } catch {
-    // non-blocking — profile will be created on next login
+    // profile already exists — that's fine
   }
 }
 
