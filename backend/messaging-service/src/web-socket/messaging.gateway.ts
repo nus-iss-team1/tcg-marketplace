@@ -46,9 +46,10 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
         return;
       }
 
-      const token = typeof authHeader === "string" && authHeader.startsWith("Bearer ")
-        ? authHeader.split(" ")[1]
-        : authHeader as string;
+      const token =
+        typeof authHeader === "string" && authHeader.startsWith("Bearer ")
+          ? authHeader.split(" ")[1]
+          : authHeader;
 
       const payload = await this.cognitoVerifier.verifyToken(token);
       client.data.user = payload;

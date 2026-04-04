@@ -66,8 +66,28 @@ export class RoomService {
     content?: string
   ) {
     return [
-      this.roomRepository.buildCreateRoom(conversationId, userId, recipientId, datetime, userName, recipientName, messageId, userId, content),
-      this.roomRepository.buildCreateRoom(conversationId, recipientId, userId, datetime, recipientName, userName, messageId, userId, content)
+      this.roomRepository.buildCreateRoom(
+        conversationId,
+        userId,
+        recipientId,
+        datetime,
+        userName,
+        recipientName,
+        messageId,
+        userId,
+        content
+      ),
+      this.roomRepository.buildCreateRoom(
+        conversationId,
+        recipientId,
+        userId,
+        datetime,
+        recipientName,
+        userName,
+        messageId,
+        userId,
+        content
+      )
     ];
   }
 
