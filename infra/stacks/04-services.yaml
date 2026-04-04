@@ -461,23 +461,29 @@ Resources:
                 - !ImportValue
                   Fn::Sub: "${ProjectNamespace}-dev-UserPoolClientId"
             - Name: LISTING_API
-              Value: !Sub
-                - "http://${ALBDns}"
-                - ALBDns: !If
-                    - HasEnvPrefix
-                    - !ImportValue
-                        Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
-                    - !ImportValue
-                        Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+              Value: !If
+                - HasDomain
+                - !Sub "https://listing.${BaseDomainName}"
+                - !Sub
+                  - "http://${ALBDns}"
+                  - ALBDns: !If
+                      - HasEnvPrefix
+                      - !ImportValue
+                          Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
+                      - !ImportValue
+                          Fn::Sub: "${ProjectNamespace}-ALBDnsName"
             - Name: MESSAGING_API
-              Value: !Sub
-                - "http://${ALBDns}"
-                - ALBDns: !If
-                    - HasEnvPrefix
-                    - !ImportValue
-                        Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
-                    - !ImportValue
-                        Fn::Sub: "${ProjectNamespace}-ALBDnsName"
+              Value: !If
+                - HasDomain
+                - !Sub "https://messaging.${BaseDomainName}"
+                - !Sub
+                  - "http://${ALBDns}"
+                  - ALBDns: !If
+                      - HasEnvPrefix
+                      - !ImportValue
+                          Fn::Sub: "${ProjectNamespace}-${Environment}-ALBDnsName"
+                      - !ImportValue
+                          Fn::Sub: "${ProjectNamespace}-ALBDnsName"
             - Name: MESSAGING_WS_API
               Value: !If
                 - HasDomain
