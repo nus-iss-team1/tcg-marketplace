@@ -8,7 +8,7 @@ import { XIcon } from "lucide-react";
 import { ListingCard } from "@/components/listing-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchMarketplaceListings, type Listing } from "@/lib/listings";
+import { fetchMarketplaceListings, getCardTypes, type Listing, type CardType } from "@/lib/listings";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -30,10 +30,59 @@ export default function MarketplacePage() {
   );
 }
 
+function GameTypeSelector() {
+  const [cardTypes, setCardTypes] = useState<CardType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    document.title = "Marketplace - VAULT OF CARDS";
+    getCardTypes()
+      .then(setCardTypes)
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <>
+      <PageHeader title="Marketplace" description="Choose a game" />
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 w-full rounded-md" />
+          ))}
+        </div>
+      ) : cardTypes.length === 0 ? (
+        <EmptyState
+          title="No games available"
+          description="Check back later for available card games."
+        />
+      ) : (
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 animate-[fade-up_0.4s_ease-out_both]">
+          {cardTypes.map((game) => (
+            <Link
+              key={game.value}
+              href={`/marketplace?game=${encodeURIComponent(game.value)}`}
+              className="w-48 text-center text-xs text-muted-foreground border border-border px-3 py-1 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors duration-200 ease-in-out"
+            >
+              {game.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 function MarketplaceContent() {
-  const { user } = useAuth();
   const searchParams = useSearchParams();
-  const gameType = searchParams.get("game") || "Pokemon TCG";
+  const gameType = searchParams.get("game");
+
+  if (!gameType) return <GameTypeSelector />;
+
+  return <MarketplaceListings gameType={gameType} />;
+}
+
+function MarketplaceListings({ gameType }: { gameType: string }) {
+  const { user } = useAuth();
 
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
