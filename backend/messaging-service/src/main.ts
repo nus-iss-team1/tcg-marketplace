@@ -15,7 +15,6 @@ async function bootstrap() {
   const logger = app.get(AppLoggerService);
   const redisService = app.get(RedisService);
 
-
   app.enableCors({
     origin: (
       origin: string | undefined,

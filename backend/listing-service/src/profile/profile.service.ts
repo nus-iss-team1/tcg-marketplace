@@ -15,8 +15,8 @@ export class ProfileService {
     this.logger.log(`Creating profile for user: ${userId}`, "ProfileService");
 
     const profile: UserProfile = {
-      userId,
-      ...(sub && { sub }),
+      userId: userId,
+      ...(sub && { sub: sub }),
       displayName: dto.displayName,
       address: dto.address,
       bio: dto.bio,

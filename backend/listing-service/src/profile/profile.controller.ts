@@ -32,10 +32,7 @@ export class ProfileController {
   }
 
   @Patch()
-  async update(
-    @CurrentUser("cognito:username") username: string,
-    @Body() dto: UpdateProfileDto
-  ) {
+  async update(@CurrentUser("cognito:username") username: string, @Body() dto: UpdateProfileDto) {
     return await this.profileService.updateProfile(username, dto);
   }
 }

@@ -67,7 +67,13 @@ export class MarketplaceController {
       throw new BadRequestException("frontImage is required");
     }
 
-    return await this.marketplaceService.createListing(username, sub, listing, frontImage, backImage);
+    return await this.marketplaceService.createListing(
+      username,
+      sub,
+      listing,
+      frontImage,
+      backImage
+    );
   }
 
   @Public()

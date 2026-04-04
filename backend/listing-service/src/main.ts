@@ -12,7 +12,6 @@ async function bootstrap() {
 
   const logger = app.get(AppLoggerService);
 
-
   app.enableCors({
     origin: (
       origin: string | undefined,

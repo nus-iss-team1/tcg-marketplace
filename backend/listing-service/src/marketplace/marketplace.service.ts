@@ -310,7 +310,11 @@ export class MarketplaceService {
     uploadedKeys: string[]
   ) {
     if (frontImageAction === ImageAction.REPLACE && frontImage) {
-      const [frontKey, thumbnailKey] = await this.s3Service.uploadImage(frontImage, listingId, true);
+      const [frontKey, thumbnailKey] = await this.s3Service.uploadImage(
+        frontImage,
+        listingId,
+        true
+      );
       attachment.front = frontKey;
       uploadedKeys.push(frontKey, thumbnailKey);
     }
