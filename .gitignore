@@ -1,3 +1,8 @@
 .vscode
 /node_modules
 .claude/
+
+# Environment files (contain secrets)
+.env
+.env.local
+!.env.template

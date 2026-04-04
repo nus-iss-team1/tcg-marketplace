@@ -25,7 +25,7 @@ import { MessagingGateway } from "./web-socket/messaging.gateway";
         AWS_SECRET_ACCESS_KEY: Joi.string().optional(),
         COGNITO_USER_POOL_ID: Joi.string().required(),
         COGNITO_APP_CLIENT_ID: Joi.string().required(),
-        MESSAGING_PLATFORM_TABLE: Joi.string().default("MessagingPlatform"),
+        MESSAGING_PLATFORM_TABLE: Joi.string().required(),
         REDIS_HOST: Joi.string().required(),
         REDIS_PORT: Joi.number().default(6379)
       }),

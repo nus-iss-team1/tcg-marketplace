@@ -26,9 +26,9 @@ import { ProfileModule } from "./profile/profile.module";
         CDN_URL: Joi.string().required(),
         COGNITO_USER_POOL_ID: Joi.string().required(),
         COGNITO_APP_CLIENT_ID: Joi.string().required(),
-        TCG_MARKETPLACE_TABLE: Joi.string().default("TCGMarketplace"),
-        GAME_CARD_LOOKUP_TABLE: Joi.string().default("GameCardLookup"),
-        USER_PROFILE_TABLE: Joi.string().default("UserProfile")
+        TCG_MARKETPLACE_TABLE: Joi.string().required(),
+        GAME_CARD_LOOKUP_TABLE: Joi.string().required(),
+        USER_PROFILE_TABLE: Joi.string().required()
       }),
       validationOptions: {
         abortEarly: true
