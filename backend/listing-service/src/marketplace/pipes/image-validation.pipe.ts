@@ -5,7 +5,7 @@ import { MAX_SIZE } from "../../s3/constants/s3.constant";
 export class ImageUploadPipe implements PipeTransform {
   constructor(
     private readonly maxSize = MAX_SIZE, // 10MB
-    private readonly allowedTypes = ["image/jpeg", "image/png"]
+    private readonly allowedTypes = ["image/jpeg", "image/png", "image/webp"]
   ) {}
 
   transform(file?: Express.Multer.File): Express.Multer.File | undefined {
