@@ -5,9 +5,9 @@ dev:
   listing_api: https://listing.dev.vaultofcards.io
   messaging_api: https://messaging.dev.vaultofcards.io
 prod:
-  listing_source_tag: develop-latest
+  listing_source_tag: develop-ac04084
   listing_image_tag: v1.0.0
-  messaging_source_tag: develop-latest
+  messaging_source_tag: develop-ac04084
   messaging_image_tag: v1.0.0
-  web_source_tag: develop-latest
+  web_source_tag: develop-bdf5639
   web_image_tag: v1.0.0
