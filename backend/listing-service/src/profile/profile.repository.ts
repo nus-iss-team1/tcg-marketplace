@@ -53,6 +53,28 @@ export class ProfileRepository {
     }
   }
 
+  async getProfileBySub(sub: string) {
+    try {
+      const projection = ProfileProjections.full;
+      const result = await this.dynamoDbService.query({
+        TableName: this.tableName,
+        IndexName: "SubIndex",
+        KeyConditionExpression: "#sub = :sub",
+        ExpressionAttributeValues: { ":sub": sub },
+        ProjectionExpression: projection.ProjectionExpression,
+        ExpressionAttributeNames: {
+          ...projection.ExpressionAttributeNames,
+          "#sub": "sub"
+        },
+        Limit: 1
+      });
+      return (result.Items?.[0] as UserProfile) ?? null;
+    } catch (err) {
+      this.logger.error(err);
+      handleDynamoError(err);
+    }
+  }
+
   async updateProfile(userId: string, updates: Partial<UserProfile>) {
     const { userId: _userId, joinedAt: _joinedAt, ...updateFields } = updates;
 

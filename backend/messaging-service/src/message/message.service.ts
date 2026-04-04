@@ -47,7 +47,16 @@ export class MessageService {
     const room = await this.roomService.getRoom(userId, conversationId);
     if (!room) {
       transactItems.push(
-        ...this.roomService.getCreateRoomScript(conversationId, userId, recipientId, now, userName, undefined, messageId, content)
+        ...this.roomService.getCreateRoomScript(
+          conversationId,
+          userId,
+          recipientId,
+          now,
+          userName,
+          undefined,
+          messageId,
+          content
+        )
       );
     }
 

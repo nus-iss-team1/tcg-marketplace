@@ -6,6 +6,7 @@ type ProfileKey = keyof typeof UserProfileSchema;
 const ProfileViews = {
   full: [
     "userId",
+    "sub",
     "displayName",
     "address",
     "bio",

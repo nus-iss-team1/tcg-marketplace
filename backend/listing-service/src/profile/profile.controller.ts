@@ -12,10 +12,17 @@ export class ProfileController {
 
   @Post()
   async create(
+    @CurrentUser("sub") sub: string,
     @CurrentUser("cognito:username") username: string,
     @Body() dto: CreateProfileDto
   ) {
-    return await this.profileService.createProfile(username, dto);
+    return await this.profileService.createProfile(username, dto, sub);
+  }
+
+  @Public()
+  @Get("sub/:sub")
+  async getProfileBySub(@Param("sub") sub: string) {
+    return await this.profileService.getProfileBySub(sub);
   }
 
   @Public()

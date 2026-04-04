@@ -2,6 +2,7 @@ import { field } from "../../dynamodb/dynamodb.util";
 
 export const UserProfileSchema = {
   userId: field({ type: "string", pk: true }),
+  sub: field({ type: "string", optional: true, gsi: { SubIndex: "pk" } }),
   displayName: field({ type: "string" }),
   address: field({ type: "string", optional: true }),
   bio: field({ type: "string", optional: true }),
@@ -15,6 +16,7 @@ export const UserProfileSchema = {
 
 export type UserProfile = {
   userId: string;
+  sub?: string;
   displayName: string;
   address?: string;
   bio?: string;

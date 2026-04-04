@@ -16,6 +16,7 @@ import {
   refreshSession,
   type SignUpAttributes,
 } from "@/lib/cognito";
+import { fetchSellerProfile, createSellerProfile } from "@/lib/listings";
 
 interface AuthUser {
   sub: string;
@@ -52,6 +53,17 @@ function parseSession(session: CognitoUserSession): AuthUser {
   };
 }
 
+async function ensureProfile(username: string) {
+  try {
+    const profile = await fetchSellerProfile(username);
+    if (!profile) {
+      await createSellerProfile(username);
+    }
+  } catch {
+    // non-blocking — profile will be created on next login
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,7 +71,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     getCurrentSession()
       .then((session) => {
-        if (session) setUser(parseSession(session));
+        if (session) {
+          const parsed = parseSession(session);
+          setUser(parsed);
+          ensureProfile(parsed.username);
+        }
       })
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
@@ -67,7 +83,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (username: string, password: string) => {
     const session = await cognitoSignIn(username, password);
-    setUser(parseSession(session));
+    const parsed = parseSession(session);
+    setUser(parsed);
+    ensureProfile(parsed.username);
   };
 
   const signUp = async (username: string, password: string, attrs: SignUpAttributes) => {

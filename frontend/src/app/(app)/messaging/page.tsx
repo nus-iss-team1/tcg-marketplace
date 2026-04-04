@@ -6,7 +6,7 @@ import { ConversationHistoryCard } from "@/components/conversation-history-card"
 import { Chatroom, type ChatPartner } from "@/components/chatroom";
 import { PageHeader } from "@/components/page-header";
 import { useAuth } from "@/context/AuthContext";
-import { fetchSellerProfile } from "@/lib/listings";
+import { fetchSellerProfile, fetchProfileBySub } from "@/lib/listings";
 import { MessagingClient, fetchMessagingConfig, type Room, type Message } from "@/lib/messaging";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -29,6 +29,7 @@ function MessagingContent() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messagesByConversation, setMessagesByConversation] = useState<Record<string, Message[]>>({});
   const [senderDisplayName, setSenderDisplayName] = useState("");
+  const [partnerNames, setPartnerNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   const userSub = user?.sub ?? "";
@@ -52,6 +53,35 @@ function MessagingContent() {
       setSenderDisplayName(userId);
     });
   }, [userId]);
+
+  // Resolve partner display names for rooms missing recipientName
+  useEffect(() => {
+    const unresolvedIds = rooms
+      .filter((r) => !r.recipientName)
+      .map((r) => r.recipientId)
+      .filter((id) => !partnerNames[id]);
+
+    const uniqueIds = [...new Set(unresolvedIds)];
+    if (uniqueIds.length === 0) return;
+
+    let cancelled = false;
+    Promise.all(
+      uniqueIds.map((id) =>
+        fetchProfileBySub(id)
+          .then((p) => [id, p?.displayName || id] as const)
+          .catch(() => [id, id] as const)
+      )
+    ).then((results) => {
+      if (cancelled) return;
+      setPartnerNames((prev) => {
+        const next = { ...prev };
+        for (const [id, name] of results) next[id] = name;
+        return next;
+      });
+    });
+
+    return () => { cancelled = true; };
+  }, [rooms]);
 
   // Initialize client, connect socket, fetch rooms
   useEffect(() => {
@@ -204,7 +234,7 @@ function MessagingContent() {
   const showConversationList = !selectedConversationId;
 
   const partner: ChatPartner | null = selectedRoom
-    ? { id: selectedRoom.conversationId, name: selectedRoom.recipientName || selectedRoom.recipientId }
+    ? { id: selectedRoom.conversationId, name: selectedRoom.recipientName || partnerNames[selectedRoom.recipientId] || selectedRoom.recipientId }
     : null;
 
   if (loading) {
@@ -236,7 +266,7 @@ function MessagingContent() {
                 key={room.conversationId}
                 room={room}
                 currentUserId={userSub}
-                partnerName={room.recipientName || room.recipientId}
+                partnerName={room.recipientName || partnerNames[room.recipientId] || room.recipientId}
                 isSelected={room.conversationId === selectedConversationId}
                 onSelect={() => handleSelectConversation(room.conversationId)}
               />

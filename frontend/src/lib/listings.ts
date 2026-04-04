@@ -333,6 +333,29 @@ function mockFetchSellerProfile(sellerId: string): SellerProfile | null {
   };
 }
 
+/* ── POST /api/listing/profile ── */
+
+export async function createSellerProfile(
+  displayName: string
+): Promise<SellerProfile> {
+  const headers = await authHeaders();
+  const res = await fetch(`${BASE_URL}/api/listing/profile`, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({ displayName }),
+  });
+  if (!res.ok) throw new Error("Failed to create profile");
+  const json = await res.json();
+  return {
+    username: json.userId,
+    displayName: json.displayName,
+    address: json.address,
+    joinedAt: json.joinedAt,
+    bio: json.bio,
+    preferredPayment: json.preferredPayment,
+  };
+}
+
 /* ── GET /api/listing/profile/<userId> ── */
 
 export async function fetchSellerProfile(
@@ -343,6 +366,26 @@ export async function fetchSellerProfile(
   const res = await fetch(`${BASE_URL}/api/listing/profile/${encodeURIComponent(userId)}`);
   if (!res.ok) return null;
   const json = await res.json();
+  return {
+    username: json.userId,
+    displayName: json.displayName,
+    address: json.address,
+    joinedAt: json.joinedAt,
+    bio: json.bio,
+    preferredPayment: json.preferredPayment,
+  };
+}
+
+/* ── GET /api/listing/profile/sub/<sub> ── */
+
+export async function fetchProfileBySub(
+  sub: string
+): Promise<SellerProfile | null> {
+  const res = await fetch(`${BASE_URL}/api/listing/profile/sub/${encodeURIComponent(sub)}`);
+  if (!res.ok) return null;
+  const text = await res.text();
+  if (!text) return null;
+  const json = JSON.parse(text);
   return {
     username: json.userId,
     displayName: json.displayName,

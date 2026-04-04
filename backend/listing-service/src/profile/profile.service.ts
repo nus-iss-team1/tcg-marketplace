@@ -11,11 +11,12 @@ export class ProfileService {
     private readonly profileRepo: ProfileRepository
   ) {}
 
-  async createProfile(userId: string, dto: CreateProfileDto) {
+  async createProfile(userId: string, dto: CreateProfileDto, sub?: string) {
     this.logger.log(`Creating profile for user: ${userId}`, "ProfileService");
 
     const profile: UserProfile = {
       userId,
+      ...(sub && { sub }),
       displayName: dto.displayName,
       address: dto.address,
       bio: dto.bio,
@@ -40,6 +41,11 @@ export class ProfileService {
       return await this.profileRepo.createProfile(defaultProfile);
     }
     return profile;
+  }
+
+  async getProfileBySub(sub: string) {
+    this.logger.log(`Fetching profile by sub: ${sub}`, "ProfileService");
+    return await this.profileRepo.getProfileBySub(sub);
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
