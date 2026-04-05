@@ -16,7 +16,12 @@ import {
 } from "./types/marketplace.type";
 import { Listing } from "./types/marketplace.schema";
 import { padPrice } from "../dynamodb/dynamodb.util";
-import { CreateListingDto, QueryListingDto, UpdateListingDto } from "./dto/marketplace.dto";
+import {
+  CreateListingDto,
+  QueryListingDto,
+  UpdateListingDto,
+  UpdateListingStatusDto
+} from "./dto/marketplace.dto";
 import { IMAGE_FOLDER, THUMBNAIL_FOLDER } from "../s3/constants/s3.constant";
 import { AppLoggerService } from "../logger/logger.service";
 
@@ -323,6 +328,35 @@ export class MarketplaceService {
       attachment.back = backKey;
       uploadedKeys.push(backKey);
     }
+  }
+
+  async updateListingStatus(
+    username: string,
+    role: string[],
+    gameName: string,
+    listingId: string,
+    listing: UpdateListingStatusDto
+  ) {
+    const isAdmin = (role ?? []).includes("admin");
+    let record: Listing;
+
+    // check if role is admin or username is owner of the record
+    if (isAdmin) {
+      record = await this.marketplaceRepo.retrieveSpecificListing(gameName, listingId);
+    } else {
+      const result = await this.marketplaceRepo.retrieveSpecificSellerListing(username, listingId);
+      record = result[0];
+    }
+
+    if (!record) {
+      throw new ForbiddenException("Record doesn't exist or unauthorized");
+    }
+
+    return await this.marketplaceRepo.updateListingStatus(
+      gameName,
+      listingId,
+      listing.listingStatus
+    );
   }
 
   async deleteListing(username: string, role: string[], gameName: string, listingId: string) {

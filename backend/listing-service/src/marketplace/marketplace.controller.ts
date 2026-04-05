@@ -21,7 +21,8 @@ import {
   CreateListingDto,
   QueryListingDto,
   QuerySellerListingDto,
-  UpdateListingDto
+  UpdateListingDto,
+  UpdateListingStatusDto
 } from "./dto/marketplace.dto";
 import { ImageUploadPipe } from "./pipes/image-validation.pipe";
 import { MAX_SIZE } from "../s3/constants/s3.constant";
@@ -97,6 +98,23 @@ export class MarketplaceController {
     return await this.marketplaceService.specificListing(gameName, listingId);
   }
 
+  @Patch(":gameName/:listingId/status")
+  async updateStatus(
+    @CurrentUser("cognito:username") username: string,
+    @CurrentUser("cognito:groups") role: string[],
+    @Param("gameName") gameName: string,
+    @Param("listingId") listingId: string,
+    @Body() body: UpdateListingStatusDto
+  ) {
+    return await this.marketplaceService.updateListingStatus(
+      username,
+      role,
+      gameName,
+      listingId,
+      body
+    );
+  }
+
   @Patch(":gameName/:listingId")
   @UseInterceptors(
     FileFieldsInterceptor(
@@ -145,6 +163,7 @@ export class MarketplaceController {
     );
   }
 
+  /** @deprecated Use updateStatus() instead */
   @Delete(":gameName/:listingId")
   async delete(
     @CurrentUser("cognito:username") username: string,

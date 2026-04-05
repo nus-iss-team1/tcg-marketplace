@@ -13,7 +13,13 @@ import {
   Min,
   ValidateNested
 } from "class-validator";
-import { FilterListing, ImageAction, OrderListing, SortListing } from "../types/marketplace.type";
+import {
+  FilterListing,
+  ImageAction,
+  ListingStatus,
+  OrderListing,
+  SortListing
+} from "../types/marketplace.type";
 
 class PaymentMethodDto {
   @IsDefined()
@@ -102,6 +108,12 @@ export class UpdateListingDto extends BaseListingDto {
   @IsNotEmpty()
   @IsEnum(ImageAction)
   readonly backImageAction!: ImageAction;
+}
+
+export class UpdateListingStatusDto {
+  @IsNotEmpty()
+  @IsEnum(ListingStatus)
+  readonly listingStatus!: ListingStatus;
 }
 
 export class QueryListingDto {

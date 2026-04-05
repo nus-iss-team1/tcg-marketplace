@@ -3,7 +3,7 @@ import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { instanceToPlain } from "class-transformer";
 import { Listing } from "./types/marketplace.schema";
-import { QueryListing } from "./types/marketplace.type";
+import { ListingStatus, QueryListing } from "./types/marketplace.type";
 import { handleDynamoError } from "../dynamodb/dynamodb.util";
 import { AppLoggerService } from "../logger/logger.service";
 import { ListingProjections } from "./types/marketplace.view";
@@ -197,6 +197,38 @@ export class MarketplaceRepository {
         UpdateExpression: updateStatement,
         ExpressionAttributeNames: attributeNames,
         ExpressionAttributeValues: attributeValues,
+        ConditionExpression: "attribute_exists(listingId)"
+      });
+
+      // retrieve updated result
+      const result = await this.dynamoDbService.get({
+        TableName: this.tableName,
+        Key: {
+          gameName: gameName,
+          listingId: listingId
+        },
+        ...ListingProjections.specificListing
+      });
+
+      return result.Item as Listing;
+    } catch (err) {
+      this.logger.error(err);
+      handleDynamoError(err);
+    }
+  }
+
+  async updateListingStatus(gameName: string, listingId: string, listingStatus: ListingStatus) {
+    try {
+      await this.dynamoDbService.update({
+        TableName: this.tableName,
+        Key: {
+          gameName: gameName,
+          listingId: listingId
+        },
+        UpdateExpression: "SET listingStatus = :listingStatus",
+        ExpressionAttributeValues: {
+          ":listingStatus": listingStatus
+        },
         ConditionExpression: "attribute_exists(listingId)"
       });
 
