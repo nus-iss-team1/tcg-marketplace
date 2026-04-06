@@ -45,7 +45,10 @@ export class MessageService {
 
     // if room doesn't exist - create room
     const room = await this.roomService.getRoom(userId, conversationId);
-    const listingChanged = listingId && listingGameName && (!room || room.listingId !== listingId || room.listingGameName !== listingGameName);
+    const listingChanged =
+      listingId &&
+      listingGameName &&
+      (!room || room.listingId !== listingId || room.listingGameName !== listingGameName);
 
     if (!room) {
       transactItems.push(

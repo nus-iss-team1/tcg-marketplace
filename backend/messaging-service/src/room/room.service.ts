@@ -105,8 +105,18 @@ export class RoomService {
     listingGameName: string
   ) {
     return [
-      this.roomRepository.buildUpdateListingContext(conversationId, userId, listingId, listingGameName),
-      this.roomRepository.buildUpdateListingContext(conversationId, recipientId, listingId, listingGameName)
+      this.roomRepository.buildUpdateListingContext(
+        conversationId,
+        userId,
+        listingId,
+        listingGameName
+      ),
+      this.roomRepository.buildUpdateListingContext(
+        conversationId,
+        recipientId,
+        listingId,
+        listingGameName
+      )
     ];
   }
 

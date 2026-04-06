@@ -299,7 +299,7 @@ function ReadListingView({
       console.log("[listing-chat] message sent, joining room:", msg.conversationId);
       client.joinRoom(msg.conversationId);
     }).catch((err) => console.error("[listing-chat] send failed:", err));
-  }, [sellerSub]);
+  }, [sellerSub, listing.listingId, listing.gameName]);
 
   return (
     <ContentLayout className="flex flex-1 flex-col w-full animate-[fade-up_0.4s_ease-out_both] min-h-0">

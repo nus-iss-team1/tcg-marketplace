@@ -157,8 +157,8 @@ export class RoomRepository {
           deleted: false,
           createdAt: datetime,
           updatedAt: datetime,
-          ...(listingId && { listingId }),
-          ...(listingGameName && { listingGameName })
+          ...(listingId && { listingId: listingId }),
+          ...(listingGameName && { listingGameName: listingGameName })
         },
         ConditionExpression: "attribute_not_exists(conversationId)"
       }
@@ -178,8 +178,7 @@ export class RoomRepository {
           conversationId: conversationId,
           meta: `USER#${userId}`
         },
-        UpdateExpression:
-          "SET listingId = :listingId, listingGameName = :listingGameName",
+        UpdateExpression: "SET listingId = :listingId, listingGameName = :listingGameName",
         ExpressionAttributeValues: {
           ":listingId": listingId,
           ":listingGameName": listingGameName
