@@ -40,6 +40,8 @@ export interface Room {
   pinned: boolean;
   archived: boolean;
   updatedAt: number;
+  listingId?: string;
+  listingGameName?: string;
 }
 
 export type MessageType = "text" | "image" | "video" | "file" | "sticker";
@@ -68,6 +70,8 @@ export interface CreateMessageBody {
   content: string;
   messageType: MessageType;
   replyTo?: string;
+  listingId?: string;
+  listingGameName?: string;
 }
 
 export interface EditMessageBody {

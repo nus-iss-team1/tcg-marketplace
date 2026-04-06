@@ -63,7 +63,9 @@ export class RoomService {
     userName?: string,
     recipientName?: string,
     messageId?: string,
-    content?: string
+    content?: string,
+    listingId?: string,
+    listingGameName?: string
   ) {
     return [
       this.roomRepository.buildCreateRoom(
@@ -75,7 +77,9 @@ export class RoomService {
         recipientName,
         messageId,
         userId,
-        content
+        content,
+        listingId,
+        listingGameName
       ),
       this.roomRepository.buildCreateRoom(
         conversationId,
@@ -86,8 +90,23 @@ export class RoomService {
         userName,
         messageId,
         userId,
-        content
+        content,
+        listingId,
+        listingGameName
       )
+    ];
+  }
+
+  getUpdateListingContextScript(
+    conversationId: string,
+    userId: string,
+    recipientId: string,
+    listingId: string,
+    listingGameName: string
+  ) {
+    return [
+      this.roomRepository.buildUpdateListingContext(conversationId, userId, listingId, listingGameName),
+      this.roomRepository.buildUpdateListingContext(conversationId, recipientId, listingId, listingGameName)
     ];
   }
 
@@ -98,7 +117,9 @@ export class RoomService {
     messageId: string,
     senderId: string,
     content: string,
-    datetime: number
+    datetime: number,
+    listingId?: string,
+    listingGameName?: string
   ) {
     return [
       this.roomRepository.buildUpdateLatestMessage(
@@ -107,7 +128,9 @@ export class RoomService {
         messageId,
         senderId,
         content,
-        datetime
+        datetime,
+        listingId,
+        listingGameName
       ),
       this.roomRepository.buildUpdateLatestMessage(
         conversationId,
@@ -115,7 +138,9 @@ export class RoomService {
         messageId,
         senderId,
         content,
-        datetime
+        datetime,
+        listingId,
+        listingGameName
       )
     ];
   }

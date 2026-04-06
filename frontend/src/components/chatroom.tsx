@@ -4,9 +4,9 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { ConversationHeader } from "@/components/conversation-header";
 import { ConversationMessage } from "@/components/conversation-message";
 import { ConversationInput } from "@/components/conversation-input";
+import { ConversationListingBanner } from "@/components/conversation-listing-banner";
 import { cn } from "@/lib/utils";
 import type { Message } from "@/lib/messaging";
-import type { Listing } from "@/lib/listings";
 
 export interface ChatPartner {
   id: string;
@@ -17,15 +17,17 @@ export interface ChatPartner {
 interface ChatroomProps {
   partner: ChatPartner;
   currentUserId: string;
+  currentUsername?: string;
   senderName?: string;
   messages: Message[];
   onSend: (text: string) => void;
-  listing?: Listing;
+  listingId?: string;
+  listingGameName?: string;
   className?: string;
 }
 
 
-export function Chatroom({ partner, currentUserId, senderName, messages, onSend, className }: ChatroomProps) {
+export function Chatroom({ partner, currentUserId, currentUsername, senderName, messages, onSend, listingId, listingGameName, className }: ChatroomProps) {
   const [draft, setDraft] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -46,6 +48,11 @@ export function Chatroom({ partner, currentUserId, senderName, messages, onSend,
         partnerName={partner.name}
         partnerImageUrl={partner.imageUrl}
       />
+      {listingId && listingGameName && (
+        <div className="mt-2">
+          <ConversationListingBanner listingId={listingId} gameName={listingGameName} currentUserId={currentUsername} />
+        </div>
+      )}
       <div className="mt-3 flex-1 flex flex-col-reverse overflow-y-auto space-y-3 space-y-reverse py-2 min-h-0">
 
           <div ref={messagesEndRef} />

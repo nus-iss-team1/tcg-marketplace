@@ -37,7 +37,7 @@ export class MessageService {
   }
 
   async createMessage(userId: string, params: CreateMessageDto, userName?: string) {
-    const { recipientId, content, messageType, replyTo } = params;
+    const { recipientId, content, messageType, replyTo, listingId, listingGameName } = params;
     const conversationId = generateConversationId(userId, recipientId);
     const messageId = ulid();
     const now = DateTime.now().toMillis();
@@ -45,6 +45,8 @@ export class MessageService {
 
     // if room doesn't exist - create room
     const room = await this.roomService.getRoom(userId, conversationId);
+    const listingChanged = listingId && listingGameName && (!room || room.listingId !== listingId || room.listingGameName !== listingGameName);
+
     if (!room) {
       transactItems.push(
         ...this.roomService.getCreateRoomScript(
@@ -55,7 +57,9 @@ export class MessageService {
           userName,
           undefined,
           messageId,
-          content
+          content,
+          listingId,
+          listingGameName
         )
       );
     }
@@ -80,7 +84,7 @@ export class MessageService {
       room &&
       (latestMessageId === null || latestMessageId.toUpperCase() < messageId.toUpperCase())
     ) {
-      // update room with latest message
+      // update room with latest message (and listing context if changed)
       transactItems.push(
         ...this.roomService.getUpdateLatestMessageScript(
           conversationId,
@@ -89,7 +93,20 @@ export class MessageService {
           messageId,
           userId,
           content,
-          now
+          now,
+          listingChanged ? listingId : undefined,
+          listingChanged ? listingGameName : undefined
+        )
+      );
+    } else if (room && listingChanged) {
+      // listing changed but message isn't latest — update listing context separately
+      transactItems.push(
+        ...this.roomService.getUpdateListingContextScript(
+          conversationId,
+          userId,
+          recipientId,
+          listingId,
+          listingGameName
         )
       );
     }

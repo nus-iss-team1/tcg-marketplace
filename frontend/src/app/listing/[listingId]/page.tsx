@@ -292,6 +292,8 @@ function ReadListingView({
       recipientId: sellerSub,
       content: text,
       messageType: "text",
+      listingId: listing.listingId,
+      listingGameName: listing.gameName,
     }).then((msg) => {
       // Join the room so we receive further real-time updates
       console.log("[listing-chat] message sent, joining room:", msg.conversationId);
@@ -324,10 +326,12 @@ function ReadListingView({
                 <Chatroom
                   partner={{ id: sellerId, name: sellerDisplayName }}
                   currentUserId={userSub}
+                  currentUsername={userId}
                   senderName={senderDisplayName}
                   messages={chatMessages}
                   onSend={handleChatSend}
-                  listing={listing}
+                  listingId={listing.listingId}
+                  listingGameName={listing.gameName}
                   className="flex-1 min-h-0"
                 />
               </div>
