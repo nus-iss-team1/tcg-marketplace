@@ -19,9 +19,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { getCardTypes, type CardType } from "@/lib/listings";
+import { useMessaging } from "@/context/MessagingContext";
 
 export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
   const { user, signOut } = useAuth();
+  const { hasUnread } = useMessaging();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [cardTypes, setCardTypes] = useState<CardType[]>([]);
@@ -46,10 +48,13 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden h-8 w-8 shrink-0"
+            className="relative md:hidden h-8 w-8 shrink-0"
             onClick={() => setSidebarOpen(true)}
           >
             <MenuIcon className="h-5 w-5" />
+            {hasUnread && (
+              <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-red-500 animate-scale-in" />
+            )}
             <span className="sr-only">Menu</span>
           </Button>
         )}
@@ -87,9 +92,12 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
             {/* Desktop: Account dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="hidden md:flex items-center gap-1 h-8 rounded-none px-1 text-xs">
+                <Button variant="ghost" className="relative hidden md:flex items-center gap-1 h-8 rounded-none px-1 text-xs">
                   Account
                   <ChevronDownIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                  {hasUnread && (
+                    <span className="absolute top-0.5 right-0 h-2 w-2 rounded-full bg-red-500" />
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -97,7 +105,12 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
                   <Link href="/profile">Profile <span className="text-muted-foreground lowercase">(@{user.username})</span></Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="focus:bg-transparent hover:bg-transparent hover:text-muted-foreground">
-                  <Link href="/messaging">Messages</Link>
+                  <Link href="/messaging">
+                    Messages
+                    {hasUnread && (
+                      <span className="ml-auto h-2 w-2 rounded-full bg-red-500 animate-scale-in" />
+                    )}
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="focus:bg-transparent hover:bg-transparent hover:text-muted-foreground">
                   <Link href="/settings">Settings</Link>
@@ -160,6 +173,9 @@ export function AppHeader({ children }: { children?: React.ReactNode } = {}) {
                 className="flex items-center gap-3 rounded-none px-3 py-2.5 text-xs hover:text-muted-foreground transition-colors"
               >
                 Messages
+                {hasUnread && (
+                  <span className="ml-auto h-2 w-2 rounded-full bg-red-500 animate-scale-in" />
+                )}
               </Link>
               <Link
                 href="/settings"

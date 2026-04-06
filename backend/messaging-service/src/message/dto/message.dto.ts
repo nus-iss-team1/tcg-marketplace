@@ -18,6 +18,14 @@ export class CreateMessageDto {
   @IsOptional()
   @IsString()
   readonly replyTo?: string;
+
+  @IsOptional()
+  @IsString()
+  readonly listingId?: string;
+
+  @IsOptional()
+  @IsString()
+  readonly listingGameName?: string;
 }
 
 export class EditMessageDto {

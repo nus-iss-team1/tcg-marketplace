@@ -18,7 +18,9 @@ const RoomViews = {
     "muted",
     "pinned",
     "archived",
-    "updatedAt"
+    "updatedAt",
+    "listingId",
+    "listingGameName"
   ]
 } as const satisfies Record<string, readonly RoomKey[]>;
 

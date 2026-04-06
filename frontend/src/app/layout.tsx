@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Bebas_Neue } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
+import { MessagingProvider } from "@/context/MessagingContext";
 import { AppShell } from "@/components/app-shell";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
@@ -49,17 +50,19 @@ export default function RootLayout({
           }}
         />
         <AuthProvider>
-          <AppShell>
-            {children}
-          </AppShell>
-          <Toaster />
-          {process.env.IMAGE_TAG && (
-            <div className="fixed bottom-1 right-2 z-50">
-              <span className="text-[10px] text-muted-foreground/50 font-mono">
-                {process.env.IMAGE_TAG}
-              </span>
-            </div>
-          )}
+          <MessagingProvider>
+            <AppShell>
+              {children}
+            </AppShell>
+              <Toaster />
+            {process.env.IMAGE_TAG && (
+              <div className="fixed bottom-1 right-2 z-50">
+                <span className="text-[10px] text-muted-foreground/50 font-mono">
+                  {process.env.IMAGE_TAG}
+                </span>
+              </div>
+            )}
+          </MessagingProvider>
         </AuthProvider>
       </body>
     </html>

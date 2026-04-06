@@ -93,6 +93,14 @@ export const MessagingPlatformSchema = {
   }),
   pinned: field({
     type: "boolean"
+  }),
+  listingId: field({
+    type: "string",
+    optional: true
+  }),
+  listingGameName: field({
+    type: "string",
+    optional: true
   })
 };
 
@@ -113,6 +121,8 @@ export type Room = {
   deleted: boolean;
   createdAt: number;
   updatedAt: number;
+  listingId?: string;
+  listingGameName?: string;
 };
 
 export type Message = {

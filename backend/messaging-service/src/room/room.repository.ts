@@ -133,7 +133,9 @@ export class RoomRepository {
     recipientName?: string,
     latestMessageId?: string,
     latestMessageSenderId?: string,
-    latestMessage?: string
+    latestMessage?: string,
+    listingId?: string,
+    listingGameName?: string
   ) {
     return {
       Put: {
@@ -154,9 +156,33 @@ export class RoomRepository {
           archived: false,
           deleted: false,
           createdAt: datetime,
-          updatedAt: datetime
+          updatedAt: datetime,
+          ...(listingId && { listingId: listingId }),
+          ...(listingGameName && { listingGameName: listingGameName })
         },
         ConditionExpression: "attribute_not_exists(conversationId)"
+      }
+    };
+  }
+
+  buildUpdateListingContext(
+    conversationId: string,
+    userId: string,
+    listingId: string,
+    listingGameName: string
+  ) {
+    return {
+      Update: {
+        TableName: this.tableName,
+        Key: {
+          conversationId: conversationId,
+          meta: `USER#${userId}`
+        },
+        UpdateExpression: "SET listingId = :listingId, listingGameName = :listingGameName",
+        ExpressionAttributeValues: {
+          ":listingId": listingId,
+          ":listingGameName": listingGameName
+        }
       }
     };
   }
@@ -167,8 +193,11 @@ export class RoomRepository {
     messageId: string,
     senderId: string,
     content: string,
-    datetime: number
+    datetime: number,
+    listingId?: string,
+    listingGameName?: string
   ) {
+    const hasListing = listingId && listingGameName;
     return {
       Update: {
         TableName: this.tableName,
@@ -176,13 +205,15 @@ export class RoomRepository {
           conversationId: conversationId,
           meta: `USER#${userId}`
         },
-        UpdateExpression:
-          "SET latestMessage = :latestMessage, latestMessageId = :latestMessageId, latestMessageSenderId = :senderId, updatedAt = :updatedAt",
+        UpdateExpression: hasListing
+          ? "SET latestMessage = :latestMessage, latestMessageId = :latestMessageId, latestMessageSenderId = :senderId, updatedAt = :updatedAt, listingId = :listingId, listingGameName = :listingGameName"
+          : "SET latestMessage = :latestMessage, latestMessageId = :latestMessageId, latestMessageSenderId = :senderId, updatedAt = :updatedAt",
         ExpressionAttributeValues: {
           ":latestMessage": content,
           ":latestMessageId": messageId,
           ":senderId": senderId,
-          ":updatedAt": datetime
+          ":updatedAt": datetime,
+          ...(hasListing && { ":listingId": listingId, ":listingGameName": listingGameName })
         }
       }
     };

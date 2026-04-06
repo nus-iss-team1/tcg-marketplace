@@ -550,6 +550,26 @@ export async function updateListing(request: UpdateListingRequest): Promise<List
   return res.json();
 }
 
+/* ── PATCH /api/listing/marketplace/<gameName>/<listingId>/status ── */
+
+export async function setListingStatus(
+  gameName: string,
+  listingId: string,
+  listingStatus: "ACTIVE" | "SOLD" | "DELETED"
+): Promise<Listing> {
+  const headers = await authHeaders();
+  const res = await fetch(
+    `${BASE_URL}/api/listing/marketplace/${encodeURIComponent(gameName)}/${encodeURIComponent(listingId)}/status`,
+    {
+      method: "PATCH",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ listingStatus }),
+    }
+  );
+  if (!res.ok) throw new Error("Failed to update listing status");
+  return res.json();
+}
+
 /* ── DELETE /api/listing/marketplace/<gameName>/<listingId> ── */
 
 export interface DeleteListingRequest {
