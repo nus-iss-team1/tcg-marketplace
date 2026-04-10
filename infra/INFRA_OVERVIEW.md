@@ -63,14 +63,105 @@ In dev, if AZ-a goes down, private traffic in AZ-b is also disrupted since it ro
 
 ---
 
-## Traffic Flow
+## Architecture Diagram
 
-```
-User → Public WebSocket ALB ──────────────────→ ECS Messaging (Socket.io)
+```mermaid
+flowchart TB
+    User(["👤 User"])
 
-User → API Gateway → VPC Link → Internal ALB → ECS Listing   (:3001)
-                                              → ECS Messaging (:3002)
-                                              → ECS Web       (:3000)
+    subgraph AWS_Global["AWS Global"]
+        R53["Route 53\nDNS + ACM Certs"]
+        CF["CloudFront CDN"]
+        S3["S3\nStatic Assets"]
+        Cognito["Cognito\nUser Pool"]
+        ECR["ECR\ntcgm-listing\ntcgm-messaging\ntcgm-web"]
+        APIGW["API Gateway\nHTTP v2"]
+        DDB["DynamoDB\nTCGMarketplace\nMessagingPlatform\nGameCardLookup\nUserProfile"]
+        CW["CloudWatch\nAlarms + Logs"]
+    end
+
+    subgraph VPC["VPC  10.0.0.0/16"]
+        subgraph Public_AZ_A["Public Subnet AZ-a  10.0.1.0/24"]
+            NAT_A["NAT Gateway\n(AZ-a)"]
+            WS_ALB["Public WebSocket ALB\n:443"]
+        end
+
+        subgraph Public_AZ_B["Public Subnet AZ-b  10.0.2.0/24"]
+            NAT_B["NAT Gateway\n(AZ-b)\nprod only"]
+            WS_ALB
+        end
+
+        subgraph Private_AZ_A["Private Subnet AZ-a  10.0.3.0/24"]
+            INT_ALB["Internal ALB\n:80"]
+            ECS_L_A["ECS Fargate\nListing :3001"]
+            ECS_M_A["ECS Fargate\nMessaging :3002"]
+            ECS_W_A["ECS Fargate\nWeb :3000"]
+            Redis["ElastiCache Redis\n:6379"]
+        end
+
+        subgraph Private_AZ_B["Private Subnet AZ-b  10.0.4.0/24"]
+            ECS_L_B["ECS Fargate\nListing :3001"]
+            ECS_M_B["ECS Fargate\nMessaging :3002"]
+            ECS_W_B["ECS Fargate\nWeb :3000"]
+        end
+
+        VPCLink["VPC Link"]
+    end
+
+    %% User entry points
+    User --> R53
+    R53 --> CF
+    R53 --> APIGW
+    R53 --> WS_ALB
+
+    %% Static assets
+    CF --> S3
+
+    %% REST API path
+    APIGW --> VPCLink
+    VPCLink --> INT_ALB
+    INT_ALB --> ECS_L_A & ECS_L_B
+    INT_ALB --> ECS_M_A & ECS_M_B
+    INT_ALB --> ECS_W_A & ECS_W_B
+
+    %% WebSocket path
+    WS_ALB --> ECS_M_A & ECS_M_B
+
+    %% Messaging → Redis
+    ECS_M_A --> Redis
+    ECS_M_B --> Redis
+
+    %% ECS → Data plane
+    ECS_L_A & ECS_L_B --> DDB
+    ECS_M_A & ECS_M_B --> DDB
+    ECS_W_A & ECS_W_B --> DDB
+
+    %% Outbound via NAT
+    ECS_L_A & ECS_M_A & ECS_W_A -.->|egress| NAT_A
+    ECS_L_B & ECS_M_B & ECS_W_B -.->|egress prod| NAT_B
+    ECS_L_B & ECS_M_B & ECS_W_B -.->|egress dev| NAT_A
+
+    %% Auth & Images
+    ECS_L_A & ECS_M_A & ECS_W_A --> Cognito
+    ECR -.->|pull images| ECS_L_A & ECS_M_A & ECS_W_A
+
+    %% Monitoring
+    ECS_L_A & ECS_M_A & ECS_W_A --> CW
+
+    %% Styling
+    classDef awsGlobal fill:#f0f4ff,stroke:#4a6fa5,color:#1a1a2e
+    classDef publicSubnet fill:#fff8e1,stroke:#f0a500,color:#3e2600
+    classDef privateSubnet fill:#e8f5e9,stroke:#388e3c,color:#1b3a1f
+    classDef ecs fill:#c8e6c9,stroke:#2e7d32,color:#1b3a1f
+    classDef data fill:#fce4ec,stroke:#c62828,color:#3e0000
+    classDef alb fill:#e3f2fd,stroke:#1565c0,color:#0d2137
+    classDef nat fill:#fff3e0,stroke:#e65100,color:#3e1a00
+
+    class Cognito,ECR,APIGW,DDB,CW,CF,S3,R53 awsGlobal
+    class WS_ALB,INT_ALB,VPCLink alb
+    class NAT_A,NAT_B nat
+    class ECS_L_A,ECS_M_A,ECS_W_A,ECS_L_B,ECS_M_B,ECS_W_B ecs
+    class Redis data
 ```
 
 All ECS tasks live in private subnets with no direct internet exposure. Outbound traffic flows through NAT gateways.
