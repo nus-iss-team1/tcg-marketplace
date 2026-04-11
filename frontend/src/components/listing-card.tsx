@@ -54,7 +54,7 @@ export function ListingCard({ listing, index, animationDelayOffset = 0, onImageL
               onError={handleError}
             />
           ) : (
-            <ImagePlaceholder className="w-full" seed={listing.listingId} />
+            <ImagePlaceholder className="w-full" seed={listing.listingId} cardName={listing.cardName} gameName={listing.gameName} />
           )}
         </div>
       </div>

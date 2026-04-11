@@ -91,6 +91,13 @@ function MarketplaceListings({ gameType }: { gameType: string }) {
   const hasMore = useRef(true);
 
   const [query, setQuery] = useState("");
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const [activeQuery, setActiveQuery] = useState("");
   const [sort, setSort] = useState<SortType>("updatedAt");
   const [order, setOrder] = useState<"ASC" | "DESC">("DESC");
@@ -206,7 +213,7 @@ function MarketplaceListings({ gameType }: { gameType: string }) {
               placeholder="Search..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full pl-4 pr-6 py-1 text-sm bg-muted border-0 outline-none px-4 max-w-[500px] placeholder:text-muted-foreground placeholder:capitalize"
+              className={`w-full pl-4 pr-6 py-1 text-sm border-0 outline-none px-4 max-w-[500px] placeholder:text-muted-foreground placeholder:capitalize transition-colors ${scrolled ? "bg-transparent" : "bg-muted"}`}
             />
             {(query || activeQuery) && (
               <button
