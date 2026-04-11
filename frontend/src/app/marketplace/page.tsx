@@ -206,7 +206,7 @@ function MarketplaceListings({ gameType }: { gameType: string }) {
               placeholder="Search..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full pl-4 pr-6 py-1 text-sm bg-transparent border-0 outline-none placeholder:text-muted-foreground placeholder:capitalize"
+              className="w-full pl-4 pr-6 py-1 text-sm bg-muted border-0 outline-none px-4 max-w-[500px] placeholder:text-muted-foreground placeholder:capitalize"
             />
             {(query || activeQuery) && (
               <button
