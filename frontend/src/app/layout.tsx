@@ -55,10 +55,10 @@ export default function RootLayout({
               {children}
             </AppShell>
               <Toaster />
-            {process.env.IMAGE_TAG && (
+            {process.env.NEXT_PUBLIC_IMAGE_TAG && (
               <div className="fixed bottom-1 right-2 z-50">
                 <span className="text-[10px] text-muted-foreground/50 font-mono">
-                  {process.env.IMAGE_TAG}
+                  {process.env.NEXT_PUBLIC_IMAGE_TAG}
                 </span>
               </div>
             )}
