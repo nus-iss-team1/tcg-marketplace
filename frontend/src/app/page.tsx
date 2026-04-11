@@ -55,7 +55,7 @@ export default function LandingPage() {
             <div className="text-center max-w-5xl mx-auto">
               <CardTitle className="text-7xl sm:text-8xl md:text-8xl lg:text-9xl leading-none animate-[fade-up_0.5s_ease-out_0.1s_both]">
                 <span className="bg-linear-to-r from-foreground to-foreground/85 bg-clip-text text-transparent">
-                  The marketplace for every collector!
+                  The marketplace for every collector
                 </span>
               </CardTitle>
               <CardDescription className="mt-3 mx-auto sm:mt-4 text-xs sm:text-sm text-muted-foreground leading-relaxed text-center w-full sm:w-96 md:w-md lg:w-lg animate-[fade-up_0.5s_ease-out_0.2s_both]">
