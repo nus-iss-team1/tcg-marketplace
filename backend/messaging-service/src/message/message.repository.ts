@@ -31,8 +31,7 @@ export class MessageRepository {
         ":meta": `MESSAGE#`
       },
       ...MessageProjections.overview,
-      Limit: 20,
-      ScanIndexForward: false
+      Limit: 20
     };
 
     if (cursor) {
