@@ -12,14 +12,18 @@ pip install locust
 
 ```bash
 locust -f tcg-marketplace/infra/stress-test/locustfile.py --host=https://dev.vaultofcards.io
+
+or
+
+locust -f tcg-marketplace/infra/stress-test/locustfile.py --host=https://vaultofcards.io
 ```
 
 Open `http://localhost:8089` in your browser.
 
 ## Usage
 
-1. Set number of users (use 500)
-2. Set spawn rate (use 20 users/sec)
+1. Set number of users (use 700)
+2. Set spawn rate (use 50 users/sec)
 3. Click "Start swarming"
 4. Monitor the live charts for requests/sec, response times, and failures
 
@@ -43,8 +47,8 @@ Open `http://localhost:8089` in your browser.
 3. Observe ECS automatically respawn a replacement task (~1 min for first stop of task, ~4 mins for second stop of same task)
 
 ### Scenario 2 — Scalability
-1. Run Locust with ~500 users
+1. Run Locust with ~700 users
 2. Monitor web-service CPU in ECS console Health and Metrics page with Health panel set to 1h and local timezone
-3. When CPU exceeds 70%, ECS auto-scales from 1 to 2 tasks
+3. When CPU exceeds 40%, ECS auto-scales from 2 to 4 tasks
 4. Observe the new task appear in the Tasks tab
 5. Show in Locust the Chart Page for No. of Users, Response Time (ms) and Total Requests per Second
