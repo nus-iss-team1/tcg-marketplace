@@ -38,12 +38,12 @@ class PaymentMethodDto {
 class BaseListingDto {
   @IsNotEmpty()
   @IsString()
-  @MaxLength(100)
+  @MaxLength(500)
   readonly title!: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @MaxLength(5000)
   readonly description?: string;
 
   @IsOptional()
@@ -69,7 +69,7 @@ class BaseListingDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(100)
+  @MaxLength(1000)
   readonly pickUp?: string;
 }
 
