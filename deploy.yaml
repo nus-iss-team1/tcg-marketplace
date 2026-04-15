@@ -5,9 +5,9 @@ dev:
   listing_api: https://listing.dev.vaultofcards.io
   messaging_api: https://messaging.dev.vaultofcards.io
 prod:
-  listing_source_tag: develop-ac04084
-  listing_image_tag: v1.0.1
-  messaging_source_tag: develop-ac04084
-  messaging_image_tag: v1.0.1
-  web_source_tag: develop-90de062
-  web_image_tag: v1.0.1
+  listing_source_tag: develop-9d985d3
+  listing_image_tag: 1.1.0
+  messaging_source_tag: develop-46b368f
+  messaging_image_tag: 1.1.0
+  web_source_tag: develop-6d65934
+  web_image_tag: 1.1.0
